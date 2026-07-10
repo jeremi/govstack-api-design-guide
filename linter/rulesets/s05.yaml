@@ -1,0 +1,165 @@
+# Rules for §5 URL structure and versioning. Source text: ../../rules.yaml.
+#
+# Implements guide rules 5.1, 5.3, 5.4, 5.6, 5.9 (implemented) and 5.5
+# (partial-proxy). Strict-only siblings 5.2, 5.7, 5.8 live in
+# rulesets/s05-strict.yaml. Severity policy and formats follow
+# <SCRATCHPAD>/linter-conventions.md.
+functionsDir: "../functions"
+functions:
+  - pathSegments
+  - valuePattern
+  - mediaTypeExpected
+  - envelopeShape
+  - securityCoverage
+rules:
+  # 5.1 [M] MUST — major version prefix /v{N}/... on every path.
+  # exemptPaths carves out the guide 5.9 UNVERSIONED operational endpoints:
+  # "Each BB MUST expose an UNVERSIONED operational liveness endpoint at /health
+  # ... A separate /ready endpoint MAY be exposed." Those exact path keys cannot
+  # carry a /v{N}/ prefix, so 5.1 must not fire on them.
+  govstack-5.1:
+    description: "Every path must start with a major version prefix /v{N}/ (guide 5.1, [M])."
+    message: "[5.1][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#51-major-version-in-the-path
+    severity: error
+    formats: [oas3_1]
+    given: $.paths
+    then:
+      function: pathSegments
+      functionOptions: { check: versionPrefix, exemptPaths: ['/health', '/ready'] }
+
+  # 5.3 [M] MUST — multi-word path segments must be kebab-case.
+  govstack-5.3:
+    description: "Path segments must be kebab-case (guide 5.3, [M])."
+    message: "[5.3][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#53-kebab-case-path-segments
+    severity: error
+    formats: [oas3_1]
+    given: $.paths
+    then:
+      function: pathSegments
+      functionOptions: { check: segmentCasing, casing: kebab }
+
+  # 5.4 [M] SHOULD — path hierarchy shallow: at most two levels of nesting
+  # after /v{N}/. "Levels of nesting" counts resource/action segments only:
+  # `{param}` path parameters do NOT count. Guide 5.8/15.5 mandate
+  # POST /v1/operations/{operationId}/cancel and 16.11 mandates
+  # .../subscriptions/{subscriptionId}/rotate-secret (three raw segments, two
+  # non-param levels), so params must be skipped when counting depth.
+  govstack-5.4:
+    description: "Path hierarchy should have at most two levels of nesting after /v{N}/ (guide 5.4, [M])."
+    message: "[5.4][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#54-shallow-path-nesting
+    severity: warn
+    formats: [oas3_1]
+    given: $.paths
+    then:
+      function: pathSegments
+      functionOptions: { check: maxDepthAfterVersion, max: 2 }
+
+  # 5.5 [M+R] MUST — PROXY (bucket B), notched one step: MUST -> warn.
+  # Verifies: GET/DELETE operations do not declare a query parameter whose
+  # NAME looks identifier-shaped (exactly "id", camelCase "...Id", or
+  # snake_case "..._id").
+  # Does NOT verify: the converse (that every identifier which SHOULD be a
+  # path parameter actually is one), identifier query params under other
+  # HTTP methods, or identifier-shaped names outside this lexical pattern.
+  # Pure name-shape heuristic; false positives are possible on legitimate
+  # non-identifying filter params that happen to end in "Id".
+  govstack-5.5:
+    description: "GET/DELETE must not identify a resource via an id-shaped query parameter (guide 5.5, [M+R], proxy)."
+    message: "[5.5][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#55-identifiers-as-path-parameters
+    severity: warn
+    formats: [oas3_1]
+    given: "$.paths[*][get,delete].parameters[?(@.in=='query')].name"
+    then:
+      function: valuePattern
+      functionOptions:
+        name: "query parameter"
+        forbidPattern: '(^id$)|([a-z0-9]Id$)|(_id$)'
+
+  # 5.6 [M] MUST — query parameter names follow the §9 JSON naming
+  # convention (camelCase). Covers both path-item-level (shared) and
+  # operation-level query parameters.
+  govstack-5.6:
+    description: "Query parameter names must be camelCase per §9 (guide 5.6, [M])."
+    message: "[5.6][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#56-query-parameter-naming
+    severity: error
+    formats: [oas3_1]
+    given:
+      - "$.paths[*].parameters[?(@.in=='query')].name"
+      - "$.paths[*][get,put,post,delete,options,head,patch,trace].parameters[?(@.in=='query')].name"
+    then:
+      function: valuePattern
+      functionOptions:
+        name: "query parameter"
+        match: '^[a-z][a-zA-Z0-9]*$'
+
+  # 5.9 [M+R] — mixed MUST NOT / MUST / MAY, split per sentence group (each
+  # its own severity per the mixed-strength convention; all checkable clauses
+  # here are MUST-level so all four are `error`).
+  # NOT checked: the MAY clause (a separate /ready endpoint is optional, so
+  # there is nothing to assert if absent) and "MUST NOT expose
+  # system-internal detail" (not mechanically decidable from the spec alone).
+  govstack-5.9-presence:
+    description: "An unversioned /health liveness endpoint must be exposed (guide 5.9, [M+R])."
+    message: "[5.9][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint
+    severity: error
+    formats: [oas3_1]
+    given: $.paths
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: ["/health"]
+
+  # Scoped to the SUCCESS (200) response only. Guide 5.9's health+json media
+  # type describes the health PAYLOAD; guide 11.1 separately REQUIRES 4xx/5xx to
+  # be application/problem+json, so a responses[*] scope would make /health's
+  # error responses unsatisfiable (health+json vs problem+json conflict).
+  govstack-5.9-media-type:
+    description: "/health 200 response must declare media type application/health+json (guide 5.9, [M+R])."
+    message: "[5.9][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths['/health'].get.responses['200'].content"
+    then:
+      function: mediaTypeExpected
+      functionOptions:
+        require: ['application/health\+json']
+
+  # Scoped to the SUCCESS (200) response only — same 5.9-vs-11.1 interplay as
+  # 5.9-media-type above: the pass|fail|warn health enum belongs to the
+  # health+json 200 payload, not to the problem+json error responses.
+  govstack-5.9-status-enum:
+    description: "/health 200 response body must declare status with enum pass|fail|warn (guide 5.9, [M+R])."
+    message: "[5.9][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths['/health'].get.responses['200'].content[*].schema"
+    then:
+      function: envelopeShape
+      functionOptions:
+        requiredProperties: [status]
+        properties:
+          status:
+            enum: ["pass", "fail", "warn"]
+
+  govstack-5.9-no-auth:
+    description: "/health (and /ready, if present) must not require citizen authentication (guide 5.9, [M+R])."
+    message: "[5.9][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint
+    severity: error
+    formats: [oas3_1]
+    given:
+      - "$.paths['/health'].get"
+      - "$.paths['/ready'].get"
+    then:
+      function: securityCoverage
+      functionOptions: { mode: none }

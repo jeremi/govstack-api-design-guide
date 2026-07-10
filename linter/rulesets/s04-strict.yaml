@@ -1,0 +1,21 @@
+# STRICT-only rules for §4 — ships only via ../strict.yaml (opt-in).
+#
+# 4.4 [R] — STRICT-ONLY heuristic proxy, severity warn per strict-only policy.
+# Flags operation descriptions that are byte-identical across >=2 distinct
+# operations: a strong copy-paste signal (the guide cites this exact audit
+# finding). Does NOT verify that a non-duplicated description is actually
+# accurate for its operation - that needs reading the operation's real
+# behaviour, which is not mechanically checkable.
+functionsDir: "../functions"
+functions:
+  - s04-duplicateDescriptions
+rules:
+  govstack-4.4:
+    description: "operation descriptions must not be copy-pasted verbatim across operations (guide 4.4, [R], strict proxy)."
+    message: "[4.4][R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#44-accurate-operation-descriptions
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: $
+    then:
+      function: s04-duplicateDescriptions

@@ -1,0 +1,50 @@
+# Rules for §19 localisation — generated from the guide; see coverage.yaml.
+#
+# Implements guide rule 19.4 as a partial-proxy (bucket B). Source text:
+# ../../rules.yaml. 19.1-19.3 (honouring request language, not translating
+# stable content, default response language) are runtime behaviour, out of
+# scope for a static linter.
+#
+# 19.4's "Responses or messages with localised content MUST include the
+# response language header" cannot be checked directly: whether a document
+# node carries "localised content" is not decidable from a static spec. The
+# proxy inverts the MUST into its checkable half: wherever the localisation
+# *input* signal is present (Accept-Language / acceptLanguage), the paired
+# *output* header MUST also be present. Severity is notched one step down
+# from the rule's MUST per the partial-proxy policy (MUST -> warn).
+functionsDir: "../functions"
+functions:
+  - s19-localisationHeaders
+rules:
+  # 19.4 [M+R] OpenAPI half — PROXY. Does NOT verify that a response actually
+  # carries localised content when Accept-Language is absent; only that, once
+  # an operation accepts Accept-Language, some response declares
+  # Content-Language.
+  govstack-19.4-openapi:
+    description: "operations accepting Accept-Language must have a response declaring Content-Language (guide 19.4, [M+R], proxy)."
+    message: "[19.4][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-e/19-localisation.md#194-declare-the-response-language
+    severity: warn
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,patch,options,head,trace]"
+    then:
+      function: s19-localisationHeaders
+      functionOptions:
+        surface: openapi
+
+  # 19.4 [M+R] AsyncAPI half — PROXY, coarser: pairing is done at the channel
+  # level (any message on the channel declaring acceptLanguage requires some
+  # message on the same channel to declare contentLanguage), because guide
+  # 17.9 puts these two headers on *different* messages (inbound vs outbound)
+  # by design, so a per-message check would misfire on compliant specs.
+  govstack-19.4-asyncapi:
+    description: "channels with an acceptLanguage message must have a message declaring contentLanguage (guide 19.4, [M+R], proxy)."
+    message: "[19.4][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-e/19-localisation.md#194-declare-the-response-language
+    severity: warn
+    formats: [aas3]
+    given: $.channels[*]
+    then:
+      function: s19-localisationHeaders
+      functionOptions:
+        surface: asyncapi

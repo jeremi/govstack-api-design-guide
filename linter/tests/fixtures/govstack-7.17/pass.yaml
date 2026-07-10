@@ -1,0 +1,41 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Fixture for govstack-7.17 — PUT declares an If-Match parameter and a 412 response.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/things/{thingId}:
+    parameters:
+      - name: thingId
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      operationId: replaceThing
+      summary: Replace a thing
+      description: Replaces a thing in its entirety.
+      tags: [things]
+      parameters:
+        - name: If-Match
+          in: header
+          required: false
+          description: Conditional update precondition (RFC 9110 If-Match).
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: OK
+        '412':
+          description: Precondition Failed
+        '500':
+          description: Internal Server Error

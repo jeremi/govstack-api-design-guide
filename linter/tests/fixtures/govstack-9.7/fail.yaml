@@ -1,0 +1,12 @@
+openapi: 3.1.0
+info:
+  title: Section 9.7 fail
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Status:
+      type: string
+      enum:
+        - active
+        - pendingReview

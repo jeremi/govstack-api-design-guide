@@ -1,0 +1,39 @@
+asyncapi: 3.0.0
+info:
+  title: Payments commands
+  version: 1.0.0
+channels:
+  submitPayment:
+    address: org.govstack.pay.v1.payment.submit
+    messages:
+      cmd:
+        $ref: '#/components/messages/SubmitPayment'
+operations:
+  onSubmitPayment:
+    action: receive
+    channel:
+      $ref: '#/channels/submitPayment'
+    messages:
+      - $ref: '#/channels/submitPayment/messages/cmd'
+components:
+  messages:
+    # 17.16: a command message exists but no rejection/failure message using the
+    # §11 error envelope is defined anywhere.
+    SubmitPayment:
+      payload:
+        type: object
+        required: [specversion, id, source, type, data]
+        properties:
+          specversion:
+            const: "1.0"
+          id:
+            type: string
+          source:
+            type: string
+          type:
+            type: string
+          data:
+            type: object
+      examples:
+        - name: sample
+          payload: {}

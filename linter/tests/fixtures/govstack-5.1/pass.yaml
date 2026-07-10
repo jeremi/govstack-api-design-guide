@@ -1,0 +1,29 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API with a versioned path.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/events:
+    get:
+      operationId: listEvents
+      summary: List events
+      description: Returns a page of events.
+      tags: [Events]
+      responses:
+        "200":
+          description: A page of events.
+  # Guide 5.9 mandates an UNVERSIONED /health endpoint; 5.1 must not fire on it.
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness check
+      description: Unversioned operational liveness probe (guide 5.9).
+      tags: [Health]
+      security: []
+      responses:
+        "200":
+          description: OK

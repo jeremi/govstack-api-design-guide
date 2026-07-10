@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API with an action endpoint missing the resource identifier.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/events/cancel:
+    post:
+      operationId: cancelEvent
+      summary: Cancel event
+      description: Cancels an event without identifying which one (anti-pattern path).
+      tags: [Events]
+      responses:
+        "200":
+          description: The cancelled event.

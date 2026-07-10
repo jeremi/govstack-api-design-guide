@@ -1,0 +1,97 @@
+# Rules for §6 HTTP methods — generated from the guide; see coverage.yaml
+#
+# Implements guide rules 6.1, 6.4, 6.5, 6.6, 6.7. Source text: ../../rules.yaml.
+# Severity policy and formats follow <SCRATCHPAD>/linter-conventions.md.
+# surface: OpenAPI for all of §6 (these are HTTP-method semantics; AsyncAPI
+# has no GET/PUT/PATCH/DELETE/POST), so every rule uses formats: [oas3_1].
+functionsDir: "../functions"
+functions:
+  - mediaTypeExpected
+  - operationResponses
+  - s06-bulkMutationSelection
+rules:
+  # 6.1 [M+R] — GET requests MUST NOT carry a body. (The "safe and
+  # idempotent" behavioural half of this rule is not mechanically checkable
+  # from a static document; only the request-body absence is enforced here.)
+  govstack-6.1:
+    description: "GET operations must not declare a requestBody (guide 6.1, [M+R])."
+    message: "[6.1][M+R] GET operations must not declare a requestBody; move any selection/filter criteria to query parameters."
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/6-http-methods.md#61-get-is-safe-and-idempotent
+    severity: error
+    formats: [oas3_1]
+    given: $.paths[*].get
+    then:
+      field: requestBody
+      function: undefined
+
+  # 6.4 [M+R] — PATCH request bodies MUST use application/merge-patch+json;
+  # the RFC 6902 application/json-patch+json media type MAY additionally be
+  # present. Plain application/json (a common mistake, treating PATCH like
+  # PUT) is explicitly forbidden. Other/exotic media types are not
+  # enumerated here (not decidable which ones are "wrong" in general), so
+  # this forbid list is illustrative, not exhaustive.
+  govstack-6.4:
+    description: "PATCH request bodies must use application/merge-patch+json (guide 6.4, [M+R])."
+    message: "[6.4][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/6-http-methods.md#64-patch-uses-json-merge-patch
+    severity: error
+    formats: [oas3_1]
+    given: $.paths[*].patch.requestBody.content
+    then:
+      function: mediaTypeExpected
+      functionOptions:
+        require: ['application/merge-patch\+json']
+        forbid: ['^application/json$']
+
+  # 6.5 [M+R] — PROXY (bucket B), notched one step: MUST -> warn.
+  # Verifies: DELETE only declares success statuses from {200, 202, 204}
+  # (forbids the common alternatives among the standard 2xx range), and that
+  # a 204 response (if declared) has no content/body.
+  # Does NOT verify: that a 200/202 response body actually "describes the
+  # resulting state" or is a genuine §15 Operation, nor which delete strategy
+  # (sync hard / soft / async) an implementation actually uses.
+  govstack-6.5:
+    description: "DELETE responses must be 204(no body)/200/202 (guide 6.5, [M+R], proxy)."
+    message: "[6.5][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/6-http-methods.md#65-delete-response-semantics
+    severity: warn
+    formats: [oas3_1]
+    given: $.paths[*].delete
+    then:
+      - function: operationResponses
+        functionOptions:
+          forbid: ['201', '203', '205', '206', '207', '208', '226']
+      - field: responses.204.content
+        function: undefined
+
+  # 6.6 [M+R] — POST .../search MUST return 200, not 201. The given filters
+  # to path keys ending in "/search" via a JSONPath property filter (verified
+  # to resolve through both the bundler and the CLI).
+  govstack-6.6:
+    description: "POST .../search must return 200, not 201 (guide 6.6, [M+R])."
+    message: "[6.6][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/6-http-methods.md#66-post-search-for-complex-queries
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths[?(@property.endsWith('/search'))].post"
+    then:
+      function: operationResponses
+      functionOptions:
+        require: ['200']
+        forbid: ['201']
+
+  # 6.7 [M+R] — PROXY (bucket B), notched one step: MUST -> warn.
+  # Verifies: a collection-targeted (no "{param}" segment) PUT/PATCH/DELETE
+  # declares >=1 query parameter (path-item- or operation-level).
+  # Does NOT verify: that the parameter actually scopes/limits which records
+  # get mutated, nor the append-only-resource carve-out (needs external
+  # knowledge of which resources are designated append-only).
+  govstack-6.7:
+    description: "collection-targeted PUT/PATCH/DELETE must declare an explicit selection parameter (guide 6.7, [M+R], proxy)."
+    message: "[6.7][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/6-http-methods.md#67-bulk-mutation-needs-explicit-selection
+    severity: warn
+    formats: [oas3_1]
+    given: "$.paths[?(!@property.includes('{'))]"
+    then:
+      function: s06-bulkMutationSelection

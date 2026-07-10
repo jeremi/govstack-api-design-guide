@@ -1,0 +1,251 @@
+# Rules for §10 data types and formats — generated from the guide; see coverage.yaml
+#
+# Implements guide rules 10.1-10.10. Source text: ../../rules.yaml.
+# Severity policy and formats follow <SCRATCHPAD>/linter-conventions.md.
+#
+# All ten rules here are bucket-B PROXIES: the guide's `surface` for every 10.x
+# rule is "Universal" (OpenAPI request/response bodies AND AsyncAPI message
+# payloads), but a linter can only see property NAMES and their declared JSON
+# Schema keywords, not what the field actually means or what data flows through
+# it at runtime. Each rule below picks a name heuristic (e.g. properties ending
+# in "Id", "At", "Date") and asserts the matching property's schema declares
+# the mechanically-checkable part of the guide's MUST. Per the severity policy,
+# every proxy here runs one notch below its class's strength: all ten rules are
+# MUST-strength in rules.yaml, so all run at `warn` (not `error`).
+#
+# Shared `given`: every rule scans the same set of schema-bearing locations,
+# via the `DataSchemas` alias below — components.schemas / inline OpenAPI
+# request+response body schemas for oas3_1 docs, components.messages/channel
+# message payloads for aas3 docs. schemaFieldFormat's underlying walker
+# recurses into nested properties/allOf/items/$defs, so declaring the schema
+# root is enough to reach nested fields too.
+functionsDir: "../functions"
+functions:
+  - schemaFieldFormat
+aliases:
+  DataSchemas:
+    description: "Every JSON Schema node that may declare data-type fields: OpenAPI reusable/inline body schemas, or AsyncAPI message payloads."
+    targets:
+      - formats: [oas3_1]
+        given:
+          - $.components.schemas[*]
+          - "$.paths[*][get,put,post,delete,options,head,patch,trace].requestBody.content[*].schema"
+          - "$.paths[*][get,put,post,delete,options,head,patch,trace].responses[*].content[*].schema"
+      - formats: [aas3]
+        given:
+          - $.components.messages[*].payload
+          - $.channels[*].messages[*].payload
+rules:
+  # 10.1 [M+R] — PROXY (bucket B), MUST -> warn.
+  # Guide: resource identifiers MUST be opaque, URL-safe, server-generated,
+  # globally-unique strings; UUID v4 SHOULD be the default; ULID/KSUID/other
+  # opaque ids MAY be used; statutory identifiers MAY be exempted from the
+  # opacity requirement subject to §8.6. This proxy only checks that
+  # properties named "id" or ending in "Id" declare type: string. It does NOT
+  # verify opacity, URL-safety, global uniqueness, server-generation, that a
+  # UUID (if used) is v4, or the statutory-identifier §8.6 exception.
+  govstack-10.1:
+    description: "Properties named id/*Id must declare type: string, not an integer (guide 10.1, [M+R], proxy)."
+    message: "[10.1][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#101-opaque-server-generated-identifiers
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: "#DataSchemas"
+    then:
+      function: schemaFieldFormat
+      functionOptions:
+        namePattern: '(^id$|Id$)'
+        require: { type: string }
+
+  # 10.2 [M] — PROXY (bucket B), MUST -> warn.
+  # Guide: timestamps MUST be RFC 3339 with timezone, declared as
+  # format: date-time. Proxy: properties ending in "At" or "Timestamp"
+  # (createdAt, updatedAt, eventTimestamp) must declare type: string,
+  # format: date-time. Does NOT verify the value itself is RFC 3339 with an
+  # explicit timezone offset (that's a data-instance check, out of scope for a
+  # schema-shape linter) or catch timestamp fields using other naming
+  # conventions.
+  govstack-10.2:
+    description: "Properties ending in At/Timestamp must declare type: string, format: date-time (guide 10.2, [M], proxy)."
+    message: "[10.2][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#102-rfc-3339-timestamps
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: "#DataSchemas"
+    then:
+      function: schemaFieldFormat
+      functionOptions:
+        namePattern: '(At|Timestamp)$'
+        require: { type: string, format: date-time }
+
+  # 10.3 [M] — PROXY (bucket B), MUST -> warn.
+  # Guide: dates without time MUST be RFC 3339 calendar dates, declared as
+  # format: date. Proxy: properties ending in "Date" (birthDate, dueDate) must
+  # declare type: string, format: date. Does NOT verify the value itself is a
+  # valid RFC 3339 calendar date, or catch date fields under other naming
+  # conventions.
+  govstack-10.3:
+    description: "Properties ending in Date must declare type: string, format: date (guide 10.3, [M], proxy)."
+    message: "[10.3][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#103-rfc-3339-calendar-dates
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: "#DataSchemas"
+    then:
+      function: schemaFieldFormat
+      functionOptions:
+        namePattern: 'Date$'
+        require: { type: string, format: date }
+
+  # 10.4 [M+R] — PROXY (bucket B), MUST -> warn.
+  # Guide: monetary amounts MUST use the object { amount: string (decimal),
+  # currency: string (ISO 4217) }; floats MUST NOT be used for money. Proxy:
+  # properties ending in "amount"/"price"/"balance" (case-insensitive) must
+  # not declare type: number or type: integer. This flags a money field typed
+  # as a bare number (float or minor-units integer) but does NOT verify the
+  # replacement is actually the { amount, currency } object shape, that
+  # `amount` is a decimal string, or that `currency` is present/ISO 4217
+  # (that last part is 10.10's job on the "currency"-named sibling).
+  govstack-10.4:
+    description: "Properties ending in amount/price/balance must not declare type: number or integer (guide 10.4, [M+R], proxy)."
+    message: "[10.4][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#104-decimal-string-monetary-amounts
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: "#DataSchemas"
+    then:
+      function: schemaFieldFormat
+      functionOptions:
+        namePattern: '(amount|price|balance)$'
+        nameFlags: i
+        require: { forbidType: [number, integer] }
+
+  # 10.5 [M+R] — PROXY (bucket B), MUST -> warn.
+  # Guide: phone numbers MUST be E.164 strings. Proxy: properties whose name
+  # contains "phone" (case-insensitive) must declare type: string and an
+  # E.164-shaped pattern (^\+[1-9]\d{1,14}$). Does NOT verify the number is a
+  # real, dialable E.164 number, only that the schema's `pattern` keyword is
+  # exactly this regex.
+  govstack-10.5:
+    description: "Properties matching *phone* must declare type: string with an E.164 pattern (guide 10.5, [M+R], proxy)."
+    message: "[10.5][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#105-e164-phone-numbers
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: "#DataSchemas"
+    then:
+      function: schemaFieldFormat
+      functionOptions:
+        namePattern: 'phone'
+        nameFlags: i
+        require: { type: string, pattern: '^\+[1-9]\d{1,14}$' }
+
+  # 10.6 [M+R] — PROXY (bucket B), MUST -> warn.
+  # Guide: email addresses MUST be RFC 5322 strings, declared as
+  # format: email. Proxy: properties whose name contains "email"
+  # (case-insensitive) must declare type: string, format: email. Does NOT
+  # verify the value is actually a deliverable/valid RFC 5322 address.
+  govstack-10.6:
+    description: "Properties matching *email* must declare type: string, format: email (guide 10.6, [M+R], proxy)."
+    message: "[10.6][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#106-rfc-5322-email-addresses
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: "#DataSchemas"
+    then:
+      function: schemaFieldFormat
+      functionOptions:
+        namePattern: 'email'
+        nameFlags: i
+        require: { type: string, format: email }
+
+  # 10.7 [M+R] — PROXY (bucket B), MUST -> warn.
+  # Guide: large binary uploads MUST use multipart/form-data or a dedicated
+  # binary endpoint; small inline payloads (signatures, certificates, QR
+  # codes, attestations) MAY be base64-encoded in JSON bodies, but if so the
+  # field MUST declare contentEncoding: base64 and a documented size limit.
+  # This proxy only checks the base64-in-JSON half: properties named after
+  # the guide's own examples (signature, certificate, qrCode, attestation)
+  # must declare type: string, contentEncoding: base64, and a maxLength. It
+  # does NOT verify the large-binary-upload MUST (multipart/dedicated
+  # endpoint), does not catch base64 fields under other names, and treats
+  # "a documented size limit" as satisfied by any maxLength value rather than
+  # checking it is a reasonable bound.
+  govstack-10.7:
+    description: "Base64 fields (signature/certificate/qrCode/attestation) must declare contentEncoding: base64 and maxLength (guide 10.7, [M+R], proxy)."
+    message: "[10.7][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#107-binary-uploads-and-base64-payloads
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: "#DataSchemas"
+    then:
+      function: schemaFieldFormat
+      functionOptions:
+        namePattern: '(signature|certificate|qrCode|qr_code|attestation)'
+        nameFlags: i
+        require: { type: string, contentEncoding: base64, mustDeclare: [maxLength] }
+
+  # 10.8 [M+R] — PROXY (bucket B), MUST -> warn.
+  # Guide: country codes MUST be ISO 3166-1 alpha-2. Proxy: properties whose
+  # name contains "country" (case-insensitive) must declare type: string and
+  # the alpha-2 shape pattern ^[A-Z]{2}$. Does NOT verify the two letters are
+  # an actual assigned ISO 3166-1 code (vs. any two uppercase letters), and a
+  # schema that instead constrains the value via an `enum` of valid codes
+  # (with no `pattern` keyword) will be flagged even though it is compliant —
+  # a known false-positive of this proxy.
+  govstack-10.8:
+    description: "Properties matching *country* must declare type: string with an ISO 3166-1 alpha-2 pattern (guide 10.8, [M+R], proxy)."
+    message: "[10.8][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#108-iso-3166-1-country-codes
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: "#DataSchemas"
+    then:
+      function: schemaFieldFormat
+      functionOptions:
+        namePattern: 'country'
+        nameFlags: i
+        require: { type: string, pattern: '^[A-Z]{2}$' }
+
+  # 10.9 [M+R] — PROXY (bucket B), MUST -> warn.
+  # Guide: language codes MUST be BCP 47. Proxy: properties whose name
+  # contains "language" or "locale" (case-insensitive) must declare
+  # type: string and a common-case BCP 47 shape pattern (primary subtag,
+  # optional script, optional region/UN M49 area). Does NOT implement the
+  # full BCP 47 grammar (extended language subtags, variants, extensions,
+  # private-use subtags), only the common language[-script][-region] shape.
+  govstack-10.9:
+    description: "Properties matching *language*/*locale* must declare type: string with a BCP 47 shape pattern (guide 10.9, [M+R], proxy)."
+    message: "[10.9][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#109-bcp-47-language-codes
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: "#DataSchemas"
+    then:
+      function: schemaFieldFormat
+      functionOptions:
+        namePattern: '(language|locale)'
+        nameFlags: i
+        require: { type: string, pattern: '^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$' }
+
+  # 10.10 [M+R] — PROXY (bucket B), MUST -> warn.
+  # Guide: currency codes MUST be ISO 4217. Proxy: properties named "currency"
+  # or ending in the camelCase word "Currency" (e.g. baseCurrency,
+  # currencyCode) must declare type: string and the alpha-3 shape pattern
+  # ^[A-Z]{3}$. Deliberately NOT a plain unanchored "contains currency"
+  # match: that would also catch unrelated fields like a "concurrencyToken"
+  # optimistic-locking field. Does NOT verify the three letters are an
+  # actually-assigned ISO 4217 code, and (like 10.8) a schema using an `enum`
+  # of valid codes instead of `pattern` is a known false-positive.
+  govstack-10.10:
+    description: "Properties matching currency/*Currency* must declare type: string with an ISO 4217 alpha-3 pattern (guide 10.10, [M+R], proxy)."
+    message: "[10.10][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#1010-iso-4217-currency-codes
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: "#DataSchemas"
+    then:
+      function: schemaFieldFormat
+      functionOptions:
+        namePattern: '(^currency|Currency)'
+        require: { type: string, pattern: '^[A-Z]{3}$' }

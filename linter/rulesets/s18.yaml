@@ -1,0 +1,135 @@
+# Rules for §18 compatibility and lifecycle — generated from the guide; see coverage.yaml.
+#
+# Implements guide rules 18.1, 18.2, 18.5, 18.7. Source text: ../../rules.yaml.
+# Severity policy and formats follow <SCRATCHPAD>/linter-conventions.md.
+# 18.3/18.4 (backward-/breaking-change diffing against a previous version) and
+# 18.6 (informative) are out of scope for this fragment.
+#
+# Custom functions: s18-versionMajorConsistency reads info.version alongside
+# paths/channels in one pass (18.2); no shared function combines those two
+# reads. s18-deprecatedHeaders (18.5) walks operations directly instead of
+# relying on a `given` JSONPath filter chained after a bracketed method list
+# ($.paths[*][get,put,...][?(@.deprecated == true)]) — that chained-filter
+# form does not select reliably against this repo's installed Spectral/nimma
+# version (confirmed by inspecting nimma's compiled matcher; the filter
+# silently matches nothing regardless of the predicate). valuePattern /
+# extensionShape are shared.
+functionsDir: "../functions"
+functions:
+  - valuePattern
+  - extensionShape
+  - s18-versionMajorConsistency
+  - s18-deprecatedHeaders
+rules:
+  # 18.1 [M] — info.version MUST follow SemVer. Surface: Universal, so this
+  # checks both OpenAPI and AsyncAPI documents. formats widened the same way
+  # as the 2.5/3.5 info rules so a wrong-spec-version doc still gets told its
+  # info.version is non-SemVer.
+  govstack-18.1:
+    description: "info.version must be a SemVer string (guide 18.1, [M])."
+    message: "[18.1][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/18-compatibility-and-lifecycle.md#181-semver-versioning
+    severity: error
+    formats: [oas3, aas2, aas3]
+    given: $.info.version
+    then:
+      function: valuePattern
+      functionOptions:
+        name: info.version
+        match: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-.]+)?(?:\+[0-9A-Za-z-.]+)?$'
+
+  # 18.2 [M] OpenAPI half — a path's /v{N}/ prefix (when present) MUST match
+  # info.version's major segment. Paths lacking a version prefix entirely are
+  # guide 5.1's concern, not this rule's.
+  govstack-18.2-openapi:
+    description: "OpenAPI path version prefixes must match info.version's major segment (guide 18.2, [M])."
+    message: "[18.2][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel
+    severity: error
+    formats: [oas3]
+    given: $
+    then:
+      function: s18-versionMajorConsistency
+      functionOptions:
+        surface: openapi
+
+  # 18.2 [M] AsyncAPI half — a channel address MUST include the major version,
+  # consistent with info.version's major segment. Does NOT verify the text's
+  # alternative "equivalent machine-readable version field documented in
+  # govstack-asyncapi-common.yaml" (needs the vendored common file, out of
+  # scope here); only the address-embedded convention is checked.
+  govstack-18.2-asyncapi:
+    description: "AsyncAPI channel addresses must include a major version matching info.version's major segment (guide 18.2, [M])."
+    message: "[18.2][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel
+    severity: error
+    formats: [aas2, aas3]
+    given: $
+    then:
+      function: s18-versionMajorConsistency
+      functionOptions:
+        surface: asyncapi
+
+  # 18.5 [M+R] — deprecated OpenAPI operations MUST return a Deprecation
+  # header (RFC 9745) and a Sunset header (RFC 8594). Checked on 2xx
+  # responses (the primary success contract); the RFC 9745/8594 structured-
+  # field VALUE syntax is not checkable from a static header declaration, only
+  # the headers' presence is. Given is the whole paths object rather than a
+  # filtered operation list — see the functions: comment above for why.
+  govstack-18.5:
+    description: "deprecated operations must declare Deprecation and Sunset response headers (guide 18.5, [M+R])."
+    message: "[18.5][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/18-compatibility-and-lifecycle.md#185-deprecation-and-sunset-headers
+    severity: error
+    formats: [oas3_1]
+    given: $.paths
+    then:
+      function: s18-deprecatedHeaders
+
+  # 18.7 [M+R] — AsyncAPI channels/operations/messages that declare
+  # x-govstack-deprecated MUST shape it as {since, sunset, replacement,
+  # reason}. Detecting "is this deprecated" relies on the extension's own
+  # presence, since AsyncAPI 3.0 has no native `deprecated` flag; an entity
+  # deprecated only in prose without the extension cannot be detected this
+  # way.
+  govstack-18.7:
+    description: "x-govstack-deprecated must declare since, sunset, replacement, and reason (guide 18.7, [M+R])."
+    message: "[18.7][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/18-compatibility-and-lifecycle.md#187-asyncapi-deprecation-metadata
+    severity: error
+    formats: [aas3]
+    given:
+      - "$.channels[?(@['x-govstack-deprecated'])]"
+      - "$.operations[?(@['x-govstack-deprecated'])]"
+      - "$.components.messages[?(@['x-govstack-deprecated'])]"
+    then:
+      function: extensionShape
+      functionOptions:
+        extension: x-govstack-deprecated
+        valueType: object
+        requiredKeys: [since, sunset, replacement, reason]
+
+  # 18.7 [M+R] — the same deprecated channels/operations/messages MUST also
+  # note the deprecation in their description. Plain-text presence check for
+  # a "deprecat*" mention; cannot verify the description is substantively
+  # useful.
+  govstack-18.7-description:
+    description: "deprecated channels/operations/messages must mention the deprecation in their description (guide 18.7, [M+R])."
+    message: "[18.7][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/18-compatibility-and-lifecycle.md#187-asyncapi-deprecation-metadata
+    severity: error
+    formats: [aas3]
+    given:
+      - "$.channels[?(@['x-govstack-deprecated'])]"
+      - "$.operations[?(@['x-govstack-deprecated'])]"
+      - "$.components.messages[?(@['x-govstack-deprecated'])]"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [description]
+          properties:
+            description:
+              type: string
+              pattern: '[Dd]eprecat'

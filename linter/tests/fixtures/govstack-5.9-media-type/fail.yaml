@@ -1,0 +1,28 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API whose /health endpoint uses the wrong media type.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness check
+      description: Returns basic liveness status for this BB.
+      tags: [Health]
+      security: []
+      responses:
+        "200":
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [pass, fail, warn]

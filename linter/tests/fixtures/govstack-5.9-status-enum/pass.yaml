@@ -1,0 +1,42 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API with a compliant /health endpoint.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness check
+      description: Returns basic liveness status for this BB.
+      tags: [Health]
+      security: []
+      responses:
+        "200":
+          description: Service is healthy.
+          content:
+            application/health+json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [pass, fail, warn]
+        # Per guide 11.1, the error response is problem+json with an integer
+        # `status`, NOT the health pass|fail|warn enum. 5.9-status-enum is scoped
+        # to the 200 response, so this problem envelope must NOT fire it.
+        "500":
+          description: Service is unhealthy.
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                required: [type, title, status]
+                properties:
+                  type: { type: string, format: uri }
+                  title: { type: string }
+                  status: { type: integer }

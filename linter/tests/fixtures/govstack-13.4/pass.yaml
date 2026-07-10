@@ -1,0 +1,23 @@
+# 13.4 pass: scope strings follow the default bb:{bb-code}:{resource}:{action} shape.
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+components:
+  securitySchemes:
+    OAuth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://example.org/token
+          scopes:
+            bb:registry:person:read: read persons
+            bb:registry:person:write: write persons
+paths:
+  /v1/things:
+    get:
+      security:
+        - OAuth: [bb:registry:person:read]
+      responses:
+        '200':
+          description: ok

@@ -1,0 +1,29 @@
+openapi: 3.1.0
+info:
+  title: Fixture API
+  version: 1.0.0
+  description: Fixture for govstack-11.1.
+  contact: {}
+paths:
+  /v1/foos/{id}:
+    get:
+      operationId: getFoo
+      summary: Get a foo
+      description: Get a foo by id.
+      tags: [foos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object }
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema: { type: object }

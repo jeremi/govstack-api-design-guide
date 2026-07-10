@@ -1,0 +1,22 @@
+# GovStack API Design Guide — Spectral ruleset (STRICT profile)
+# =============================================================
+# Everything in the normative ruleset.yaml PLUS opt-in "strict" heuristics that
+# are deliberately noisy (plural-resource guesses, abbreviation dictionaries,
+# personal-data term scans, …). Run this profile for a thorough review; run
+# ruleset.yaml for CI gating.
+#
+#   npx spectral lint -r strict.yaml path/to/openapi.yaml
+#
+# Composition (verified to load via bundler and CLI): strict.yaml extends the
+# main ruleset (an extends-of-extends: strict -> ruleset.yaml -> section
+# fragments) plus one strict fragment per section that owns STRICT-only rules.
+# Section agents only ever edit their own rulesets/sNN-strict.yaml; they never
+# touch this file. The strict fragments are pre-listed so the bundle loads today.
+extends:
+  - ./ruleset.yaml
+  - ./rulesets/s04-strict.yaml
+  - ./rulesets/s05-strict.yaml
+  - ./rulesets/s08-strict.yaml
+  - ./rulesets/s09-strict.yaml
+  - ./rulesets/s17-strict.yaml
+rules: {}

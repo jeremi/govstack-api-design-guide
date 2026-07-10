@@ -1,0 +1,29 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Create-POST accepts an Idempotency-Key header.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /orders:
+    post:
+      operationId: createOrder
+      summary: Create an order
+      description: Create an order.
+      tags: [orders]
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created

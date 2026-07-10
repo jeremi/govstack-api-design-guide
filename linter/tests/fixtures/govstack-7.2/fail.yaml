@@ -1,0 +1,20 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Fixture for govstack-7.2 — 201 response missing a Location header.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/things:
+    post:
+      operationId: createThing
+      summary: Create a thing
+      description: Creates a new thing.
+      tags: [things]
+      responses:
+        '201':
+          description: Created
+        '500':
+          description: Internal Server Error

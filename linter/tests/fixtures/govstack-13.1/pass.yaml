@@ -1,0 +1,21 @@
+# 13.1 pass: a root-level security requirement covers every operation.
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+security:
+  - OAuth: []
+components:
+  securitySchemes:
+    OAuth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://example.org/token
+          scopes: {}
+paths:
+  /v1/things:
+    get:
+      responses:
+        '200':
+          description: ok

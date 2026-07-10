@@ -1,0 +1,121 @@
+# Rules for §11 error handling — generated from the guide; see coverage.yaml.
+#
+# Implements guide rules 11.1-11.4 (implemented) and 11.5 (partial-proxy).
+# 11.6 (runtime, localisation stability) and 11.7 (needs the not-yet-existing
+# govstack-openapi-common.yaml) are out of scope per coverage.yaml.
+#
+# Surface for 11.1-11.5 is "Universal" in rules.yaml, but the mechanism below
+# (HTTP status codes, `content` media types) only maps onto the OpenAPI
+# surface: AsyncAPI has no equivalent request/response status-code model, so
+# these rules are implemented for oas3_1 only.
+functionsDir: "../functions"
+functions:
+  - mediaTypeExpected
+  - envelopeShape
+  - valuePattern
+rules:
+  # 11.1 [M] — error responses (4xx/5xx) MUST use application/problem+json.
+  # "Error responses" is read as any response declared under a 4xx or 5xx
+  # status key; a `default` response is not assumed to be an error and is not
+  # checked here.
+  govstack-11.1:
+    description: "4xx/5xx responses must use application/problem+json (guide 11.1, [M])."
+    message: "[11.1][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#111-rfc-9457-problem-details
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,options,head,patch,trace].responses[?(@property.match(/^[45]/))].content"
+    then:
+      function: mediaTypeExpected
+      functionOptions:
+        require: ['application/problem\+json']
+
+  # 11.2 [M+R] — the RFC 9457 fields type/title/status MUST be present on the
+  # problem+json schema. `detail`/`instance` are SHOULD ("when they add
+  # diagnostic value") and the no-PII declaration is a documentation/human
+  # concern (D-bucket); neither is mechanically checked here.
+  govstack-11.2:
+    description: "problem+json schema must declare type, title, status (guide 11.2, [M+R])."
+    message: "[11.2][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#112-standard-problem-fields-present
+    severity: error
+    formats: [oas3_1]
+    given: '$.paths[*][get,put,post,delete,options,head,patch,trace].responses[?(@property.match(/^[45]/))].content["application/problem+json"].schema'
+    then:
+      function: envelopeShape
+      functionOptions:
+        requiredProperties: [type, title, status]
+
+  # 11.3 [M] — GovStack extension fields code/traceId/timestamp MUST be
+  # present on the problem+json schema. `resolved` defaults to true so a
+  # shared Problem schema referenced via $ref is inspected post-resolution.
+  govstack-11.3:
+    description: "problem+json schema must declare code, traceId, timestamp (guide 11.3, [M])."
+    message: "[11.3][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#113-govstack-error-extension-fields
+    severity: error
+    formats: [oas3_1]
+    given: '$.paths[*][get,put,post,delete,options,head,patch,trace].responses[?(@property.match(/^[45]/))].content["application/problem+json"].schema'
+    then:
+      function: envelopeShape
+      functionOptions:
+        requiredProperties: [code, traceId, timestamp]
+
+  # 11.4 [M+R] — field-level validation errors MUST appear in an `errors`
+  # array with pointer/code/message per entry. The guide conditions this on
+  # "where a failure is attributable to specific request fields"; the 400
+  # (Bad Request) status is used as the mechanical stand-in for that
+  # condition, so this only fires on operations that declare a 400 response.
+  govstack-11.4:
+    description: "400 problem+json schema must declare an errors[] array with pointer/code/message (guide 11.4, [M+R])."
+    message: "[11.4][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#114-field-level-errors-array
+    severity: error
+    formats: [oas3_1]
+    given: '$.paths[*][get,put,post,delete,options,head,patch,trace].responses["400"].content["application/problem+json"].schema'
+    then:
+      function: envelopeShape
+      functionOptions:
+        requiredProperties: [errors]
+        properties:
+          errors:
+            type: array
+            items:
+              requiredProperties: [pointer, code, message]
+
+  # 11.5 [M+R] — PROXY (bucket B, MUST -> warn). Error codes MUST be
+  # namespaced reverse-DNS `org.govstack.{bb-code}.{error-name}`, bb-code
+  # matching the §9.11 pattern `^[a-z][a-z0-9-]{1,30}$`, error-name either
+  # lowerCamelCase or (per the guide's numeric-catalogue MAY) a plain integer.
+  # Only checks literal `code` values that appear as a schema `enum` member or
+  # an `example`; a `code` typed as a bare string with no enum/example is
+  # invisible to this check. Does NOT verify: that {bb-code} is actually the
+  # BB's single REGISTERED code (the register does not exist yet, OPEN-10-A),
+  # nor codes declared only via OpenAPI-level `examples` maps, nor codes
+  # nested inside an `allOf` branch (only the schema's own direct
+  # properties.code are inspected).
+  govstack-11.5-enum:
+    description: "problem+json code enum values must match org.govstack.{bb-code}.{error-name} (guide 11.5, [M+R], proxy)."
+    message: "[11.5][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#115-namespaced-stable-error-codes
+    severity: warn
+    formats: [oas3_1]
+    given: '$.paths[*][get,put,post,delete,options,head,patch,trace].responses[?(@property.match(/^[45]/))].content["application/problem+json"].schema.properties.code.enum[*]'
+    then:
+      function: valuePattern
+      functionOptions:
+        name: "code"
+        match: '^org\.govstack\.[a-z][a-z0-9-]{1,30}\.([a-z][a-zA-Z0-9]*|\d+)$'
+
+  govstack-11.5-example:
+    description: "problem+json code example must match org.govstack.{bb-code}.{error-name} (guide 11.5, [M+R], proxy)."
+    message: "[11.5][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#115-namespaced-stable-error-codes
+    severity: warn
+    formats: [oas3_1]
+    given: '$.paths[*][get,put,post,delete,options,head,patch,trace].responses[?(@property.match(/^[45]/))].content["application/problem+json"].schema.properties.code.example'
+    then:
+      function: valuePattern
+      functionOptions:
+        name: "code"
+        match: '^org\.govstack\.[a-z][a-z0-9-]{1,30}\.([a-z][a-zA-Z0-9]*|\d+)$'

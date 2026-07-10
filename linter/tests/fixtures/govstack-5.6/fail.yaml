@@ -1,0 +1,23 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API with a snake_case query parameter.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/events:
+    get:
+      operationId: listEvents
+      summary: List events
+      description: Returns a page of events.
+      tags: [Events]
+      parameters:
+        - name: created_after
+          in: query
+          required: false
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: A page of events.

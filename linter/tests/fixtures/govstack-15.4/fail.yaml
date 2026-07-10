@@ -1,0 +1,20 @@
+# 15.4 fail: the Operations pattern is used (an Operation schema exists and a
+# job returns 202) but no canonical GET /v{N}/operations/{operationId} exists.
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+paths:
+  /v1/jobs:
+    post:
+      responses:
+        '202':
+          description: accepted
+          headers:
+            Location:
+              schema:
+                type: string
+components:
+  schemas:
+    Operation:
+      type: object

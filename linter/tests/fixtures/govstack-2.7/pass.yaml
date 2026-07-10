@@ -1,0 +1,24 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Operation carries full metadata.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+servers:
+  - url: https://{gatewayHost}/sample/v1
+    variables:
+      gatewayHost:
+        default: gateway.example.org
+paths:
+  /v1/things:
+    get:
+      operationId: listThings
+      summary: List things
+      description: Returns the collection of things.
+      tags:
+        - things
+      responses:
+        '200':
+          description: OK

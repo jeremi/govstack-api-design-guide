@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 2.0.0
+  description: Fixture for govstack-18.2-openapi — path major (v1) does not match info.version's major (2).
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/things:
+    get:
+      operationId: listThings
+      summary: List things
+      description: Returns the collection of things.
+      tags: [things]
+      responses:
+        '200':
+          description: OK

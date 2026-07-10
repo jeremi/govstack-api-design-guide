@@ -1,0 +1,148 @@
+# Rules for §3 AsyncAPI document standards — generated from the guide; see coverage.yaml.
+#
+# Implements guide rules 3.1, 3.5, 3.6, 3.7 (implemented) and 3.9 (partial-proxy).
+# Source text: ../../rules.yaml. Severity + formats policy: <SCRATCHPAD>/linter-conventions.md.
+# 3.2/3.3/3.4 are driver-status (file-tree/validator) and 3.8 is needs-context — not here.
+#
+# Custom functions: this fragment declares functionsDir + functions so both the
+# bundler (programmatic) and the CLI resolve them from ../functions.
+functionsDir: "../functions"
+functions:
+  - valuePattern
+  - schemaPropertyNames
+  - s03-asyncOperation
+rules:
+  # 3.1 [M] — the spec MUST declare asyncapi: 3.0.0; earlier versions MUST NOT.
+  # formats [aas2, aas3] so a 2.x document is still told to move to 3.0.0.
+  govstack-3.1:
+    description: "AsyncAPI version must be exactly 3.0.0 (guide 3.1, [M])."
+    message: "[3.1][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#31-asyncapi-300-required
+    severity: error
+    formats: [aas2, aas3]
+    given: $
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [asyncapi]
+          properties:
+            asyncapi:
+              const: "3.0.0"
+
+  # 3.5 [M] — info MUST include title, version, description, contact.
+  # Split per the suffix convention: presence here, SemVer below.
+  # formats [aas2, aas3] so the info block is checked even on a wrong-version doc.
+  govstack-3.5:
+    description: "AsyncAPI info block must include title, version, description, contact (guide 3.5, [M])."
+    message: "[3.5][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#35-complete-asyncapi-info-block
+    severity: error
+    formats: [aas2, aas3]
+    given: $.info
+    then:
+      function: schema
+      functionOptions:
+        allErrors: true
+        schema:
+          type: object
+          required: [title, version, description, contact]
+          properties:
+            title: { type: string, minLength: 1 }
+            description: { type: string, minLength: 1 }
+            contact: { type: object }
+
+  # 3.5 [M] — info.version MUST be SemVer. Shared valuePattern function.
+  govstack-3.5-semver:
+    description: "AsyncAPI info.version must be a SemVer string (guide 3.5, [M])."
+    message: "[3.5][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#35-complete-asyncapi-info-block
+    severity: error
+    formats: [aas2, aas3]
+    given: $.info.version
+    then:
+      function: valuePattern
+      functionOptions:
+        name: info.version
+        match: '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-[0-9A-Za-z-.]+)?(?:\+[0-9A-Za-z-.]+)?$'
+
+  # 3.6 [M+R] — the file MUST declare non-empty servers, channels, operations and
+  # components.messages. The SHOULD (parameterised hosts) and MAY (reserved doc
+  # domains) sentences are advisory and not mechanically verified here.
+  govstack-3.6:
+    description: "servers, channels, operations and components.messages must all be non-empty (guide 3.6, [M+R])."
+    message: "[3.6][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#36-servers-channels-operations-and-messages
+    severity: error
+    formats: [aas3]
+    given: $
+    then:
+      function: schema
+      functionOptions:
+        allErrors: true
+        schema:
+          type: object
+          required: [servers, channels, operations, components]
+          properties:
+            servers: { type: object, minProperties: 1 }
+            channels: { type: object, minProperties: 1 }
+            operations: { type: object, minProperties: 1 }
+            components:
+              type: object
+              required: [messages]
+              properties:
+                messages: { type: object, minProperties: 1 }
+
+  # 3.6 [M+R] — server definitions MUST NOT point at localhost/loopback. The
+  # broader "no personal machines / undocumented placeholders / fake production
+  # brokers" prohibition is not mechanically decidable and is not verified.
+  govstack-3.6-host:
+    description: "AsyncAPI server host must not be localhost/loopback (guide 3.6, [M+R])."
+    message: "[3.6][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#36-servers-channels-operations-and-messages
+    severity: error
+    formats: [aas3]
+    given: $.servers[*].host
+    then:
+      function: valuePattern
+      functionOptions:
+        name: server.host
+        notMatch: 'localhost|127\.0\.0\.1|0\.0\.0\.0|\[?::1\]?'
+
+  # 3.7 [M+R] — every operation MUST declare action(send/receive), summary,
+  # description, >=1 tag, a referenced channel, and >=1 referenced message that
+  # resolves to a message on that channel. resolved:false so the raw $ref
+  # pointers are visible for the channel-membership cross-check. The
+  # CloudEvents-ness of the message (a §17.6 concern) and the MAY about channel
+  # messages re-referencing components.messages are not verified here.
+  govstack-3.7:
+    description: "every AsyncAPI operation must declare action/summary/description/>=1 tag/channel/>=1 channel message (guide 3.7, [M+R])."
+    message: "[3.7][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#37-complete-asyncapi-operation-metadata
+    severity: error
+    formats: [aas3]
+    resolved: false
+    given: $
+    then:
+      function: s03-asyncOperation
+
+  # 3.9 [M] — PROXY (bucket B), notched one step: MUST -> warn.
+  # Verifies: message payload schema property names are camelCase (a concrete
+  # §9.2 check applied to payload fields). Does NOT verify: that payloads parse
+  # as valid JSON Schema (that is 3.4 / the AsyncAPI validator, a driver check),
+  # the full §10 field-format battery, or payload conventions on non-JSON-Schema
+  # payload formats.
+  govstack-3.9:
+    description: "AsyncAPI message payload property names must be camelCase (guide 3.9, [M], proxy for §9/§10)."
+    message: "[3.9][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#39-json-schema-payload-conventions
+    severity: warn
+    formats: [aas3]
+    given:
+      - $.components.messages[*].payload
+      - $.channels[*].messages[*].payload
+    then:
+      function: schemaPropertyNames
+      functionOptions:
+        casing: camel

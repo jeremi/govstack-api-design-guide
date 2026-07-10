@@ -1,0 +1,40 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API with a shallow path.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/policies/{policyId}:
+    get:
+      operationId: getPolicy
+      summary: Get policy
+      description: Returns a single policy.
+      tags: [Policies]
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: A policy.
+  # Guide 5.8/15.5 mandate this shape: three raw segments after /v1/, but only
+  # two non-param levels (operations, cancel). `{param}` must not count, so 5.4
+  # must NOT fire here.
+  /v1/operations/{operationId}/cancel:
+    post:
+      operationId: cancelOperation
+      summary: Cancel an operation
+      description: Requests cancellation of a long-running operation.
+      tags: [Operations]
+      parameters:
+        - name: operationId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: The operation state after cancellation.

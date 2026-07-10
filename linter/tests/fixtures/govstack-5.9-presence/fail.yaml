@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API with no /health endpoint.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/widgets:
+    get:
+      operationId: listWidgets
+      summary: List widgets
+      description: Returns a page of widgets.
+      tags: [Widgets]
+      responses:
+        "200":
+          description: A page of widgets.

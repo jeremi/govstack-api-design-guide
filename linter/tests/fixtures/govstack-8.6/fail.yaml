@@ -1,0 +1,24 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Personal data addresses a citizen record in the URL.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /citizens/{email}:
+    get:
+      operationId: getCitizenByEmail
+      summary: Get a citizen record
+      description: Get a citizen record by email.
+      tags: [citizens]
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK

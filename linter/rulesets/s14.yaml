@@ -1,0 +1,28 @@
+# Rules for §14 idempotency — generated from the guide.
+#
+# Implements 14.1 (partial-proxy). 14.2/14.4/14.5 are runtime and 14.3/14.6 are
+# human review (see coverage.yaml). Source text: ../../rules.yaml.
+functionsDir: "../functions"
+functions:
+  - s14-idempotencyKey
+rules:
+  # 14.1 [M+R] — PROXY (bucket B), MUST notched to warn.
+  # Verifies: a POST that declares a 201 response (a create) accepts an
+  # `Idempotency-Key` request header (path- or operation-level).
+  # Does NOT verify: the other MUST triggers that are not mechanically visible
+  # (moves value, irreversible request, sends a message, creates a subscription,
+  # starts a long-running job), the SHOULD tier for other mutating POSTs, the
+  # MAY tier for read-like POSTs, or the §14.6 naturally-idempotent exemption.
+  govstack-14.1:
+    description: "create-POSTs (201) must accept an Idempotency-Key header (guide 14.1, [M+R], proxy)."
+    message: "[14.1][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/14-idempotency.md#141-idempotency-key-on-non-idempotent-posts
+    severity: warn
+    formats: [oas3_1]
+    given: $.paths[*]
+    then:
+      function: s14-idempotencyKey
+      functionOptions:
+        header: Idempotency-Key
+        status: "201"
+        method: post

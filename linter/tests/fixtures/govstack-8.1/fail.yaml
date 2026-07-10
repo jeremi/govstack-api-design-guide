@@ -1,0 +1,30 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Credentials travel in the wrong place.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: apiKey
+      in: query
+      name: api_key
+paths:
+  /items:
+    get:
+      operationId: listItems
+      summary: List items
+      description: List items.
+      tags: [items]
+      parameters:
+        - name: access_token
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK

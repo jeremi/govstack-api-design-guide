@@ -1,0 +1,20 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Operation is missing metadata.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+servers:
+  - url: https://{gatewayHost}/sample/v1
+    variables:
+      gatewayHost:
+        default: gateway.example.org
+paths:
+  /v1/things:
+    get:
+      operationId: Get_Things
+      responses:
+        '200':
+          description: OK

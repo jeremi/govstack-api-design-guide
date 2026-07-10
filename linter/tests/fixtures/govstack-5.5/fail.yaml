@@ -1,0 +1,23 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API that identifies a resource via a query parameter.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/events:
+    get:
+      operationId: getEvent
+      summary: Get event
+      description: Returns a single event, identified by a query parameter (anti-pattern).
+      tags: [Events]
+      parameters:
+        - name: eventId
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: The event.

@@ -1,0 +1,24 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Accepts Accept-Language but never echoes Content-Language.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /messages:
+    get:
+      operationId: listMessages
+      summary: List messages
+      description: List localised messages.
+      tags: [messages]
+      parameters:
+        - name: Accept-Language
+          in: header
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK

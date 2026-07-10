@@ -1,0 +1,240 @@
+# Rules for §12 pagination, filtering and sorting — generated from the guide;
+# see coverage.yaml.
+#
+# Implements 12.3, 12.4, 12.6, 12.7 (implemented) and 12.1, 12.2, 12.8, 12.9
+# (partial-proxy). 12.5 ("total MAY be omitted") is a permissive MAY and 12.10
+# is an informative out-of-scope statement; neither is in this fragment, per
+# coverage.yaml.
+#
+# Shared heuristic used throughout: a "collection" (list) GET operation is one
+# whose path does NOT end in a `{param}` segment, e.g. `/v1/foos` (collection)
+# vs. `/v1/foos/{id}` (single item). This is itself a proxy for "this endpoint
+# returns a collection" — flagged explicitly wherever it drives a
+# partial-proxy rule; where it drives an "implemented" rule (12.3/12.4/12.6/
+# 12.7), it is used only to scope an otherwise-exact shape check to the
+# endpoints the shape applies to.
+#
+# Operational-endpoint carve-out: the guide 5.9 liveness probes `/health` and
+# `/ready` are NOT collections, so they are exempt from the collection-GET
+# rules. Function-driven rules (12.2/12.3/12.6) exempt them inside
+# `s12-collectionPagination` (exact path-key match); the two inline-schema
+# rules (12.1/12.4) exempt them directly in their `given`.
+functionsDir: "../functions"
+functions:
+  - s12-collectionPagination
+  - s12-sortParam
+  - envelopeShape
+rules:
+  # 12.1 [M+R] — PROXY (bucket B, MUST -> warn). "Collections must paginate."
+  # Identifies list endpoints via the path heuristic above and only checks
+  # that SOME page-size-like query parameter (`pageSize` or `offset`) is
+  # declared. Does NOT verify the response body is actually bounded/paginated
+  # in shape (see 12.3/12.6 for the envelope shape checks) or that every
+  # true collection endpoint matches the path heuristic.
+  govstack-12.1:
+    description: "collection GET endpoints must declare a pagination parameter (guide 12.1, [M+R], proxy)."
+    message: "[12.1][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#121-collections-must-paginate
+    severity: warn
+    formats: [oas3_1]
+    # Inline-schema rule: exempt /health and /ready (guide 5.9 operational
+    # endpoints, not collections) directly in the given.
+    given: '$.paths[?(!@property.match(/\/\{[^}]+\}$/) && @property != "/health" && @property != "/ready")][get]'
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [parameters]
+          properties:
+            parameters:
+              type: array
+              contains:
+                type: object
+                required: [name]
+                properties:
+                  name: { enum: [pageSize, offset] }
+
+  # 12.2 [M+R] — PROXY (bucket B, MUST -> warn). Default pagination MUST be
+  # cursor-based with `pageSize` + `cursor` query parameters. No-op (via
+  # `s12-collectionPagination`, mode cursorParams) on operations that declare
+  # an `offset` parameter, since those opted into the §12.6 alternative. Does
+  # NOT verify the cursor is opaque/server-encoded (a runtime property) or
+  # that clients don't parse it. The /health and /ready operational endpoints
+  # (guide 5.9) are exempted inside `s12-collectionPagination` (exact path-key).
+  govstack-12.2:
+    description: "collection GET endpoints must declare pageSize + cursor query parameters by default (guide 12.2, [M+R], proxy)."
+    message: "[12.2][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#122-cursor-pagination-by-default
+    severity: warn
+    formats: [oas3_1]
+    given: '$.paths[?(!@property.match(/\/\{[^}]+\}$/))][get]'
+    then:
+      function: s12-collectionPagination
+      functionOptions:
+        mode: cursorParams
+
+  # 12.3 [M] — cursor pagination envelope MUST be { items, pageInfo:
+  # { nextCursor, hasMore } } (total is optional per 12.5, not checked here).
+  # No-op on operations that declared an `offset` parameter: those use the
+  # distinct §12.6 flat envelope instead. The /health and /ready operational
+  # endpoints (guide 5.9) are exempted inside `s12-collectionPagination`.
+  govstack-12.3:
+    description: "collection GET 200 response must use the cursor envelope {items, pageInfo{nextCursor, hasMore}} (guide 12.3, [M])."
+    message: "[12.3][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#123-cursor-pagination-envelope
+    severity: error
+    formats: [oas3_1]
+    given: '$.paths[?(!@property.match(/\/\{[^}]+\}$/))][get]'
+    then:
+      function: s12-collectionPagination
+      functionOptions:
+        mode: cursorEnvelope
+
+  # 12.4 [M+R] — pageSize MUST have a documented default and maximum. Fires
+  # both when pageSize is missing entirely and when it is present without
+  # both keywords (both cases mean "not documented").
+  # Inline-schema rule: exempt /health and /ready (guide 5.9 operational
+  # endpoints, not collections) directly in the given, same as 12.1.
+  govstack-12.4:
+    description: "pageSize parameter must declare a default and a maximum (guide 12.4, [M+R])."
+    message: "[12.4][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#124-documented-pagesize-bounds
+    severity: error
+    formats: [oas3_1]
+    given: '$.paths[?(!@property.match(/\/\{[^}]+\}$/) && @property != "/health" && @property != "/ready")][get]'
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          required: [parameters]
+          properties:
+            parameters:
+              type: array
+              contains:
+                type: object
+                required: [name, schema]
+                properties:
+                  name: { const: pageSize }
+                  schema:
+                    type: object
+                    required: [default, maximum]
+
+  # 12.6 [M+R] — offset pagination, when opted into (an `offset` parameter is
+  # declared), MUST use the flat envelope { items, offset, limit, total },
+  # with `total` required (unlike the optional `total` in 12.3). No-op on
+  # operations without an `offset` parameter.
+  govstack-12.6:
+    description: "collection GET 200 response must use the flat envelope {items, offset, limit, total} when offset pagination is used (guide 12.6, [M+R])."
+    message: "[12.6][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#126-offset-pagination-envelope
+    severity: error
+    formats: [oas3_1]
+    given: '$.paths[?(!@property.match(/\/\{[^}]+\}$/))][get]'
+    then:
+      function: s12-collectionPagination
+      functionOptions:
+        mode: offsetEnvelope
+
+  # 12.7 [M] — the sort parameter MUST be named `sort` (not `orderBy`/
+  # `sortBy`), values `field`/`-field`, comma-separated. Split into a naming
+  # check (any operation, not just collection GETs: the wrong name is wrong
+  # wherever it appears) and a shape check (only fires when a `sort`
+  # parameter exists; does not require every collection to support sorting).
+  govstack-12.7-name:
+    description: "sort parameter must be named 'sort', not 'orderBy'/'sortBy' (guide 12.7, [M])."
+    message: "[12.7][M] parameter name must be \"sort\", not \"orderBy\"/\"sortBy\" (guide 12.7)"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#127-sort-parameter-convention
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,options,head,patch,trace]"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          properties:
+            parameters:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    not:
+                      enum: [orderBy, sortBy]
+
+  govstack-12.7-grammar:
+    description: "sort parameter schema must be a string with a field/-field, comma-separated pattern (guide 12.7, [M])."
+    message: "[12.7][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#127-sort-parameter-convention
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,options,head,patch,trace]"
+    then:
+      function: s12-sortParam
+
+  # 12.8 [M+R] — PROXY (bucket B, MUST -> warn). Simple filtering MUST use one
+  # query parameter per field, equality only. Flags the anti-patterns:
+  # operator-style bracket suffixes (`field[gte]`, `field[lt]`, ...) and a
+  # generic catch-all `filter`/`filters` parameter. Does NOT verify that
+  # non-suspicious parameter names are actually equality-only (a parameter
+  # named plainly `status` could still carry operator syntax in its value
+  # grammar; that isn't visible in the schema).
+  govstack-12.8:
+    description: "filter parameters must be one-per-field equality, not operator-style or a generic filter param (guide 12.8, [M+R], proxy)."
+    message: "[12.8][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#128-simple-equality-filtering
+    severity: warn
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,options,head,patch,trace]"
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          properties:
+            parameters:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    not:
+                      pattern: '(\[(gte|lte|gt|lt|ne|neq|in|nin|like|contains|regex)\]$)|(^(filter|filters)$)'
+
+  # 12.9 [M+R] — PROXY (bucket B, MUST -> warn). Complex filtering MUST use
+  # POST /v1/{collection}/search, carrying pageSize/cursor in the request
+  # body and responding with the §12.3 envelope. Identifies the search
+  # endpoint via a `/search`-suffixed path heuristic (proxy for "this is the
+  # §6.6/§12.9 complex-filtering endpoint") and does NOT verify that the path
+  # actually sits under a collection resource, nor the filtering semantics of
+  # the request body itself.
+  govstack-12.9-body:
+    description: "POST .../search request body must carry pageSize and cursor (guide 12.9, [M+R], proxy)."
+    message: "[12.9][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#129-complex-filtering-via-search
+    severity: warn
+    formats: [oas3_1]
+    given: '$.paths[?(@property.match(/\/search$/))].post.requestBody.content["application/json"].schema'
+    then:
+      function: envelopeShape
+      functionOptions:
+        properties:
+          pageSize: {}
+          cursor: {}
+
+  govstack-12.9-response:
+    description: "POST .../search response must use the §12.3 cursor envelope (guide 12.9, [M+R], proxy)."
+    message: "[12.9][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#129-complex-filtering-via-search
+    severity: warn
+    formats: [oas3_1]
+    given: '$.paths[?(@property.match(/\/search$/))].post.responses["200"].content["application/json"].schema'
+    then:
+      function: envelopeShape
+      functionOptions:
+        requiredProperties: [items, pageInfo]
+        properties:
+          items: { type: array }
+          pageInfo: { requiredProperties: [nextCursor, hasMore] }

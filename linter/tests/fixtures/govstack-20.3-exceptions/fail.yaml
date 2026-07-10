@@ -1,0 +1,14 @@
+openapi: 3.0.3
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Fixture for govstack-20.3-exceptions — exceptions entries are bare strings, not objects.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+  x-govstack-api-guide:
+    version: 0.2.0
+    exceptions:
+      - RULE-9.3
+      - RULE-11.2
+paths: {}

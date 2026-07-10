@@ -1,0 +1,32 @@
+# 13.6 pass: the apiKey scheme is applied only to /health; data operations use OAuth.
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+security:
+  - OAuth: []
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    OAuth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://example.org/token
+          scopes: {}
+paths:
+  /health:
+    get:
+      security:
+        - ApiKey: []
+      responses:
+        '200':
+          description: ok
+  /v1/users:
+    get:
+      responses:
+        '200':
+          description: ok

@@ -1,0 +1,18 @@
+# 13.2 pass: an openIdConnect scheme is declared for citizen-facing operations.
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+components:
+  securitySchemes:
+    OIDC:
+      type: openIdConnect
+      openIdConnectUrl: https://example.org/.well-known/openid-configuration
+paths:
+  /v1/things:
+    get:
+      security:
+        - OIDC: []
+      responses:
+        '200':
+          description: ok

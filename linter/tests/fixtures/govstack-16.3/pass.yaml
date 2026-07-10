@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: Payments Events API
+  version: 1.0.0
+  description: Event type is reverse-DNS with no version segment.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+webhooks:
+  paymentCompleted:
+    post:
+      summary: Payment completed event
+      requestBody:
+        content:
+          application/cloudevents+json:
+            schema:
+              type: object
+              required: [specversion, id, source, type, data]
+              properties:
+                specversion:
+                  const: "1.0"
+                id:
+                  type: string
+                source:
+                  type: string
+                type:
+                  type: string
+                  const: "org.govstack.payments.payment.completed"
+                data:
+                  type: object
+      responses:
+        '200':
+          description: Acknowledged

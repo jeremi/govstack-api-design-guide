@@ -1,0 +1,33 @@
+asyncapi: 3.0.0
+info:
+  title: Registry events
+  version: 1.0.0
+channels:
+  personCreated:
+    address: org.govstack.reg.v1.person.created
+    messages:
+      evt:
+        $ref: '#/components/messages/PersonCreated'
+operations:
+  onPersonCreated:
+    action: receive
+    summary: Consume person-created events
+    description: >-
+      Consumes person-created events at least once, with no ordering guarantee,
+      and supports replay from the retained log.
+    channel:
+      $ref: '#/channels/personCreated'
+    messages:
+      - $ref: '#/channels/personCreated/messages/evt'
+    x-govstack-delivery: atLeastOnce
+    x-govstack-ordering:
+      guarantee: none
+    x-govstack-replay: supported
+components:
+  messages:
+    PersonCreated:
+      payload:
+        type: object
+      examples:
+        - name: sample
+          payload: {}

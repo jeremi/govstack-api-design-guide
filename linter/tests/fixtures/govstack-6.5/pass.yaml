@@ -1,0 +1,29 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Widgets API.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+servers:
+  - url: https://{gatewayHost}/sample/v1
+    variables:
+      gatewayHost:
+        default: gateway.example.org
+paths:
+  /v1/widgets/{widgetId}:
+    parameters:
+      - name: widgetId
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      operationId: deleteWidget
+      summary: Delete widget
+      description: Deletes a widget.
+      tags: [widgets]
+      responses:
+        '204':
+          description: Deleted

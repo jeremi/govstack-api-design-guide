@@ -1,0 +1,56 @@
+# Rules for §20 conformance and validation — generated from the guide; see coverage.yaml.
+#
+# Implements guide rule 20.3 (the info.x-govstack-api-guide conformance
+# declaration). Source text: ../../rules.yaml. 20.1 (run the OpenAPI/AsyncAPI
+# schema validator) and 20.2 (meta/self-referential governance of the ruleset
+# itself) are driver/CI and human territory respectively, out of scope here.
+functionsDir: "../functions"
+functions:
+  - extensionShape
+rules:
+  # 20.3 [M] — info.x-govstack-api-guide MUST be an object with a SemVer
+  # `version`. Surface: Universal, so this applies to both OpenAPI and
+  # AsyncAPI canonical files' info block; formats widened like the other
+  # info-level rules so it still fires on a wrong-spec-version doc.
+  govstack-20.3:
+    description: "info.x-govstack-api-guide must declare a SemVer version (guide 20.3, [M])."
+    message: "[20.3][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version
+    severity: error
+    formats: [oas3, aas2, aas3]
+    given: $.info
+    then:
+      function: extensionShape
+      functionOptions:
+        extension: x-govstack-api-guide
+        valueType: object
+        requiredKeys: [version]
+        semverKeys: [version]
+
+  # 20.3 [M] — the optional `exceptions` list, when present, must be an array
+  # of objects, not bare rule-id strings: the guide text requires each entry
+  # carry both a rule ID and a reference to its approved exception record,
+  # which a plain string cannot. `[OPEN-20-A]` leaves the exact per-entry key
+  # names undefined, so only the "array of objects" shape is enforced here,
+  # not specific field names.
+  govstack-20.3-exceptions:
+    description: "x-govstack-api-guide.exceptions entries must be objects referencing an approved exception record (guide 20.3, [M])."
+    message: "[20.3][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version
+    severity: error
+    formats: [oas3, aas2, aas3]
+    given: $.info
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          properties:
+            x-govstack-api-guide:
+              type: object
+              properties:
+                exceptions:
+                  type: array
+                  items:
+                    type: object
+                    minProperties: 1

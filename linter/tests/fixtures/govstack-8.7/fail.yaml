@@ -1,0 +1,20 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Rate-limited endpoint missing rate-limit headers.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /items:
+    get:
+      operationId: listItems
+      summary: List items
+      description: List items.
+      tags: [items]
+      responses:
+        "200":
+          description: OK
+        "429":
+          description: Too Many Requests

@@ -1,0 +1,14 @@
+openapi: 3.1.0
+info:
+  title: Section 9.5 pass
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Person:
+      type: object
+      properties:
+        fullName:
+          type: string
+        firstName:
+          type: string

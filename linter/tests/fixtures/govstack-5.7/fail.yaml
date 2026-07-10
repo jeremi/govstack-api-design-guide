@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API with a verb in a CRUD path.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/event/new:
+    post:
+      operationId: createEvent
+      summary: Create event
+      description: Creates a new event (anti-pattern path).
+      tags: [Events]
+      responses:
+        "201":
+          description: The created event.

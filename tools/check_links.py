@@ -3,7 +3,8 @@
 
 This script is part of the guide's machine layer. It reads every `.md` file
 under the book root (including `guides/`, `appendix/`, `SUMMARY.md` and
-`README.md`) and enforces the book's internal-consistency contract:
+`README.md`, but excluding `linter/`, which is tooling rather than book
+content) and enforces the book's internal-consistency contract:
 
   1. Every relative markdown link resolves to a file that exists.
   2. Every link fragment `#x` matches an explicit anchor id in the target file.
@@ -104,7 +105,14 @@ class Checker:
     def __init__(self, book_root):
         self.book_root = book_root
         self.failures = []
-        self.md_files = sorted(book_root.rglob("*.md"))
+        # linter/ is lint tooling, not book content: its markdown (own READMEs,
+        # node_modules) is not pages. Links from pages into linter/ still get
+        # their existence checked like any other target.
+        self.md_files = sorted(
+            p
+            for p in book_root.rglob("*.md")
+            if p.relative_to(book_root).parts[0] != "linter"
+        )
         # Per-file data keyed by absolute Path.
         self.anchors = {}  # path -> set of anchor ids
         self.links = []  # (path, lineno, target)

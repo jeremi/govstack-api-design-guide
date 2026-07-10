@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API with an unversioned path.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /events:
+    get:
+      operationId: listEvents
+      summary: List events
+      description: Returns a page of events.
+      tags: [Events]
+      responses:
+        "200":
+          description: A page of events.

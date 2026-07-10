@@ -1,0 +1,28 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Introduces a new X- prefixed header.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /items:
+    get:
+      operationId: listItems
+      summary: List items
+      description: List items.
+      tags: [items]
+      parameters:
+        - name: X-Custom-Trace
+          in: header
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer

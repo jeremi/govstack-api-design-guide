@@ -1,0 +1,23 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API with an action expressed as a sub-resource.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/events/{eventId}/cancel:
+    post:
+      operationId: cancelEvent
+      summary: Cancel event
+      description: Cancels a single, identified event.
+      tags: [Events]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: The cancelled event.

@@ -32,6 +32,7 @@ This edition supersedes the circulated v0.1 document. It is the same rulebook, r
 - [Appendix B](appendix/b-open-questions.md) gained a **Blocks v1.0?** column marking the decisions that must precede ratification.
 - A non-normative [Guides](guides/README.md) group: spec editor checklist, validation commands, AI-agent instructions, and maintenance notes.
 - A machine layer: [Rules at a glance](all-rules.md) and `rules.yaml` (both generated from the pages by `tools/build_rules_index.py`), plus `tools/check_links.py` as a consistency guard.
+- A draft of the GovStack Spectral ruleset with lint tooling ([`linter/`](linter/README.md)): 125 Spectral rules across both surfaces plus 8 opt-in strict heuristics, a driver that adds the [§20.1](part-e/20-conformance-and-validation.md#201-every-file-passes-validation) base validators, file-layout checks, and [20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) exception handling, per-rule coverage recorded in `linter/coverage.yaml`, and a composite GitHub Action with a template workflow. The formal v1.0 companion publication remains pending ([Appendix A](appendix/a-companion-documents.md)).
 
 ## v0.1 (DRAFT, 2026-05-31)
 

@@ -1,0 +1,16 @@
+# 3.1 fail: a legacy AsyncAPI 2.x document (detected as aas2) — must be told to
+# move to 3.0.0. asyncapi is not "3.0.0".
+asyncapi: 2.6.0
+info:
+  title: Legacy Events
+  version: 1.0.0
+  description: A legacy 2.x event document that must migrate to AsyncAPI 3.0.0.
+  contact:
+    name: GovStack Identity BB
+    url: https://example.org/contact
+channels:
+  userSignedUp:
+    subscribe:
+      message:
+        payload:
+          type: object

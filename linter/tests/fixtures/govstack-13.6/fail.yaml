@@ -1,0 +1,20 @@
+# 13.6 fail: an apiKey scheme is applied (via root security) to a data
+# operation (GET /v1/users), not just an operational endpoint.
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+security:
+  - ApiKey: []
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+paths:
+  /v1/users:
+    get:
+      responses:
+        '200':
+          description: ok

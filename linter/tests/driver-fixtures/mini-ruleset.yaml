@@ -1,0 +1,22 @@
+# Self-contained ruleset for driver tests ONLY.
+# Two inline rules using built-in Spectral functions (no custom function files), so the
+# driver tests do not depend on the real ruleset being finished. Rule codes carry the
+# `govstack-<id>-<suffix>` shape the driver strips to a guide rule id (e.g. 2.5).
+documentationUrl: https://example.org/govstack-guide
+rules:
+  govstack-2.5-contact:
+    description: "info block must declare a contact"
+    message: "info.contact is required (§2.5)"
+    given: "$.info"
+    severity: error
+    then:
+      field: contact
+      function: truthy
+  govstack-2.5-description:
+    description: "info block must declare a description"
+    message: "info.description is required (§2.5)"
+    given: "$.info"
+    severity: warn
+    then:
+      field: description
+      function: truthy

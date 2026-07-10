@@ -1,0 +1,21 @@
+# 14.1 pass: the create-POST accepts an Idempotency-Key request header.
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+paths:
+  /v1/things:
+    post:
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: created
+          headers:
+            Location:
+              schema:
+                type: string

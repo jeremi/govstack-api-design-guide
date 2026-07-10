@@ -1,0 +1,26 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Fixture for govstack-7.3 — 202 response declares a Location header.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/exports:
+    post:
+      operationId: createExport
+      summary: Start an export job
+      description: Starts an asynchronous export job.
+      tags: [exports]
+      responses:
+        '202':
+          description: Accepted
+          headers:
+            Location:
+              description: URL of the Operation resource tracking this job (§15).
+              schema:
+                type: string
+                format: uri
+        '500':
+          description: Internal Server Error

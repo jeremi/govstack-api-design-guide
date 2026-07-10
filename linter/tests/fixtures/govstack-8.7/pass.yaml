@@ -1,0 +1,43 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Rate-limited endpoint declares rate-limit headers.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /items:
+    get:
+      operationId: listItems
+      summary: List items
+      description: List items.
+      tags: [items]
+      responses:
+        "200":
+          description: OK
+          headers:
+            RateLimit-Limit:
+              schema:
+                type: integer
+            RateLimit-Remaining:
+              schema:
+                type: integer
+            RateLimit-Reset:
+              schema:
+                type: integer
+        "429":
+          description: Too Many Requests
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+            RateLimit-Limit:
+              schema:
+                type: integer
+            RateLimit-Remaining:
+              schema:
+                type: integer
+            RateLimit-Reset:
+              schema:
+                type: integer

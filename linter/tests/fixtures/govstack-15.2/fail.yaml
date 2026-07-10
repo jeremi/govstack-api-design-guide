@@ -1,0 +1,17 @@
+# 15.2 fail: the in-document Operation resource omits required shape properties
+# (result, error, createdAt, updatedAt are missing from `required`).
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Operation:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+        status:
+          type: string

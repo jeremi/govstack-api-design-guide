@@ -1,0 +1,68 @@
+# Rules for §4 documentation and descriptions — generated from the guide; see coverage.yaml
+#
+# Implements guide rules 4.1, 4.2, 4.3. Source text: ../../rules.yaml.
+# Severity policy and formats follow <SCRATCHPAD>/linter-conventions.md.
+# 4.4 is STRICT-ONLY and lives in s04-strict.yaml instead.
+#
+# §4 surface is "Universal": every rule here fires on both OpenAPI and
+# AsyncAPI documents. Given targets combine OpenAPI-shaped and AsyncAPI-shaped
+# JSONPaths / document branches; whichever doesn't apply to the current
+# document format simply selects/finds nothing.
+functionsDir: "../functions"
+functions:
+  - schemaDescriptions
+  - s04-bodyExamplesEnums
+  - s04-noPlaceholderText
+rules:
+  # 4.1 [M] — every schema MUST have a description. Recursive: every subschema
+  # node (not just declared properties) needs one, via schemaDescriptions'
+  # mode "all". Scope: components.schemas plus inline request/response body
+  # schemas (OpenAPI) and message payload schemas (AsyncAPI). Parameter/header
+  # schemas are out of scope (not swept).
+  govstack-4.1:
+    description: "every schema must have a description (guide 4.1, [M])."
+    message: "[4.1][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#41-every-schema-described
+    severity: error
+    formats: [oas3_1, aas3]
+    given:
+      - $.components.schemas[*]
+      - $.paths[*][get,put,post,delete,options,head,patch,trace].requestBody.content[*].schema
+      - $.paths[*][get,put,post,delete,options,head,patch,trace].responses[*].content[*].schema
+      - $.components.messages[*].payload
+    then:
+      function: schemaDescriptions
+      functionOptions: { mode: all }
+
+  # 4.2 [M+R] — PROXY (bucket B), notched one step: MUST -> warn.
+  # Verifies: every request/response body (and AsyncAPI message) declares
+  # >=1 example; every `enum` schema node carries a description.
+  # Does NOT verify: that an enum's description actually explains what each
+  # value means (only that some description is present) - the guide's own
+  # text acknowledges an example alone can be insufficient, but a vacuous
+  # description would still pass here.
+  govstack-4.2:
+    description: "request/response bodies need an example; enums need documented values (guide 4.2, [M+R], proxy)."
+    message: "[4.2][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#42-examples-for-bodies-and-enums
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: $
+    then:
+      function: s04-bodyExamplesEnums
+
+  # 4.3 [M+R] — PROXY (bucket B), notched one step: MUST NOT -> warn.
+  # Verifies: no string anywhere in the document matches TBD / Lorem ipsum /
+  # the literal placeholder list "a, b, c".
+  # Does NOT verify: content copy-pasted from another BB with that BB's name
+  # still present (needs an external list of BB names), or test plans with
+  # literal placeholder steps (needs test-plan-structure context).
+  govstack-4.3:
+    description: "the spec must not contain placeholder text (guide 4.3, [M+R], proxy)."
+    message: "[4.3][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#43-no-placeholder-text
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: $
+    then:
+      function: s04-noPlaceholderText

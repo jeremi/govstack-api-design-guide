@@ -1,0 +1,20 @@
+# 13.3 pass: a mutualTLS scheme is declared for BB-to-BB (service-to-service) calls.
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+components:
+  securitySchemes:
+    OIDC:
+      type: openIdConnect
+      openIdConnectUrl: https://example.org/.well-known/openid-configuration
+    MutualTLS:
+      type: mutualTLS
+paths:
+  /v1/things:
+    get:
+      security:
+        - OIDC: []
+      responses:
+        '200':
+          description: ok

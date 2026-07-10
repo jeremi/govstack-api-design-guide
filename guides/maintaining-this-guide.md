@@ -34,6 +34,17 @@ python3 tools/check_links.py
 
 Validates every internal link and anchor reference in the book, including `SUMMARY.md`. Run this alongside the index check whenever a page's headings or cross-references change.
 
+## Keeping the linter in step
+
+The [GovStack Spectral ruleset](../linter/README.md) enforces this guide mechanically, so a rule edit is not finished until the linter agrees with it. Adding, removing, or substantively rewording a rule usually means updating the matching Spectral rule in `linter/rulesets/`, its fixture pair in `linter/tests/fixtures/`, and the rule's entry in `linter/coverage.yaml` (which records how, or why not, every rule is covered). Two checks make forgetting this loud:
+
+```bash
+cd linter && npm ci && npm test
+COVERAGE_ENFORCE=1 node --test tests/coverage.test.mjs
+```
+
+The second command fails if `rules.yaml` and `coverage.yaml` disagree about the set of rule ids, or if `coverage.yaml` and the shipped rulesets disagree about which Spectral rules exist. A new guide rule that was never triaged for linting is therefore a test failure, not a silent gap. Rule `documentationUrl`s in the ruleset embed each rule's page and anchor, which is one more reason anchors must stay frozen.
+
 ## Adding an open question
 
 Append a row to [Appendix B](../appendix/b-open-questions.md) using an ID of the form `OPEN-{section}-{letter}`, keyed to the current section numbering. Never re-key an existing `OPEN-*` identifier: they are frozen once assigned, as noted on the Appendix B page itself, precisely so that a reference to `OPEN-15-A` in a discussion thread or a companion document keeps meaning the same thing over time.

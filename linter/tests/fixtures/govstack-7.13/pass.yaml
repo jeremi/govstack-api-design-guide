@@ -1,0 +1,26 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Fixture for govstack-7.13 — operation declares a 500 response.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/things/{thingId}:
+    parameters:
+      - name: thingId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getThing
+      summary: Get a thing
+      description: Returns a single thing.
+      tags: [things]
+      responses:
+        '200':
+          description: OK
+        '500':
+          description: Internal Server Error

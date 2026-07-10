@@ -1,0 +1,152 @@
+# Rules for §9 JSON conventions and naming — generated from the guide.
+#
+# Implements guide rules 9.1-9.5, 9.7-9.9, 9.11 (9.6 and 9.10 are STRICT-only,
+# in rulesets/s09-strict.yaml). Source text: ../../rules.yaml. Severity and
+# formats follow <SCRATCHPAD>/linter-conventions.md.
+#
+# Bucket-B proxies (9.1, 9.3, 9.4, 9.7, 9.9, 9.11) run one severity notch below
+# the rule's strength and each carry a comment saying what they do NOT verify.
+functionsDir: "../functions"
+functions:
+  - mediaTypeExpected
+  - schemaPropertyNames
+  - s09-booleanStrings
+  - s09-enumCasing
+  - s09-closedEnum
+  - s09-bbCode
+rules:
+  # 9.1 [M+R] — PROXY (bucket B), MUST -> warn. Every response body should offer
+  # a JSON media type (application/json or a +json family type, e.g.
+  # problem+json). Does NOT verify the "unless binary or a document export"
+  # exception, so a legitimately binary response (application/pdf, image/*) is
+  # flagged; treat as a prompt to confirm the exception applies.
+  govstack-9.1:
+    description: "Response bodies should offer a JSON media type (guide 9.1, [M+R], proxy)."
+    message: "[9.1][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#91-json-as-default-media-type
+    severity: warn
+    formats: [oas3_1]
+    given: $.paths[*][get,put,post,delete,patch,head,options].responses[*].content
+    then:
+      function: mediaTypeExpected
+      functionOptions:
+        requireOneOf: ['json']
+
+  # 9.2 [M] — every declared property name (recursively) MUST be camelCase.
+  govstack-9.2:
+    description: "JSON field names must be camelCase (guide 9.2, [M])."
+    message: "[9.2][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#92-camelcase-field-names
+    severity: error
+    formats: [oas3_1]
+    given: $.components.schemas[*]
+    then:
+      function: schemaPropertyNames
+      functionOptions:
+        casing: camel
+
+  # 9.3 [M] — PROXY (bucket B), MUST -> warn. Flags boolean-looking fields typed
+  # string, and enums of the string literals "true"/"false". Does NOT catch
+  # boolean values typed as integer 0/1, nor boolean-valued strings with a
+  # non-boolean-ish name (indistinguishable from real strings).
+  govstack-9.3:
+    description: "Boolean fields must be real JSON booleans, not strings (guide 9.3, [M], proxy)."
+    message: "[9.3][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#93-real-json-booleans
+    severity: warn
+    formats: [oas3_1]
+    given: $.components.schemas[*]
+    then:
+      function: s09-booleanStrings
+
+  # 9.4 [M] — PROXY (bucket B), MUST -> warn. Flags OpenAPI 3.0-style
+  # `nullable`, which is not a 3.1 keyword; nullability must be expressed as
+  # `type: [..., "null"]`. Restricted to 3.1 docs (formats: oas3_1). Does NOT
+  # verify that every genuinely-nullable field declares the null type.
+  govstack-9.4:
+    description: "Nullability must be explicit via type: [..., null], not 3.0 nullable (guide 9.4, [M], proxy)."
+    message: "[9.4][M] Do not use OpenAPI 3.0 'nullable'; express nullability as type: [..., \"null\"] (§9.4)."
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#94-explicit-nullability
+    severity: warn
+    formats: [oas3_1]
+    given: $..nullable
+    then:
+      function: undefined
+
+  # 9.5 [M] — field names MUST NOT contain spaces or non-ASCII characters.
+  govstack-9.5:
+    description: "Field names must not contain spaces or non-ASCII characters (guide 9.5, [M])."
+    message: "[9.5][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#95-no-spaces-or-non-ascii-names
+    severity: error
+    formats: [oas3_1]
+    given: $.components.schemas[*]
+    then:
+      function: schemaPropertyNames
+      functionOptions:
+        forbidPattern: '\s|[^\x00-\x7F]'
+
+  # 9.7 [M] — PROXY (bucket B), MUST -> warn. Flags string enum members that are
+  # not SCREAMING_SNAKE_CASE. Does NOT flag ISO-style short lowercase codes
+  # (language/locale) or health-status vocab, which are exempted; a few genuine
+  # violations that happen to look ISO-like are therefore missed.
+  govstack-9.7:
+    description: "Enum values must be SCREAMING_SNAKE_CASE (guide 9.7, [M], proxy)."
+    message: "[9.7][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#97-screaming-snake-case-enum-values
+    severity: warn
+    formats: [oas3_1]
+    given: $.components.schemas[*]
+    then:
+      function: s09-enumCasing
+
+  # 9.8 [M] — resource body schemas MUST NOT set additionalProperties: false at
+  # the top level (it blocks forward-compatible field additions). Checks the
+  # top level of request/response body schemas; nested objects may still close.
+  govstack-9.8:
+    description: "Resource body schemas must not set additionalProperties: false at the top level (guide 9.8, [M])."
+    message: "[9.8][M] Resource body schema must not set additionalProperties: false at the top level (§9.8: forward-compatibility)."
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#98-forward-compatible-schemas
+    severity: error
+    formats: [oas3_1]
+    given:
+      - $.paths[*][get,put,post,delete,patch].requestBody.content[*].schema
+      - $.paths[*][get,put,post,delete,patch].responses[*].content[*].schema
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          properties:
+            additionalProperties:
+              not:
+                const: false
+
+  # 9.9 [R] — PROXY (bucket B), SHOULD -> info. Flags closed string enums with
+  # no x-extensible-enum annotation and no UNKNOWN/OTHER fallback member. CANNOT
+  # tell whether a set is "expected to grow", so truly-fixed enums that §9.9
+  # permits are also flagged; reviewer judgement required (hence info).
+  govstack-9.9:
+    description: "Growing-set fields should not be closed enums without an escape hatch (guide 9.9, [R], proxy)."
+    message: "[9.9][R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#99-no-closed-enums-for-growing-sets
+    severity: info
+    formats: [oas3_1]
+    given: $.components.schemas[*]
+    then:
+      function: s09-closedEnum
+
+  # 9.11 [M+R] — PROXY (bucket B), MUST -> warn. IN-DOCUMENT scope only: checks
+  # that BB codes embedded in OAuth scopes / reverse-DNS identifiers match the
+  # regex and are used identically within this document. Does NOT verify
+  # ecosystem-wide uniqueness (needs the cross-repo BB-code register, out of
+  # scope). Runs on OpenAPI and AsyncAPI documents.
+  govstack-9.11:
+    description: "BB codes must match the regex and be used identically in-document (guide 9.11, [M+R], proxy)."
+    message: "[9.11][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: $
+    then:
+      function: s09-bbCode

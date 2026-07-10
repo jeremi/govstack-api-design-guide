@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Fixture for govstack-10.3 (RFC 3339 calendar dates).
+  contact:
+    name: Sample BB Team
+paths:
+  /v1/widgets/{widgetId}:
+    get:
+      operationId: getWidget
+      summary: Get widget
+      description: Get widget
+      tags: [widgets]
+      parameters:
+        - name: widgetId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Widget'
+components:
+  schemas:
+    Widget:
+      type: object
+      properties:
+        birthDate:
+          type: string

@@ -1,0 +1,41 @@
+openapi: 3.1.0
+info:
+  title: Fixture API
+  version: 1.0.0
+  description: Fixture for govstack-12.4.
+  contact: {}
+paths:
+  /v1/foos:
+    get:
+      operationId: listFoos
+      summary: List foos
+      description: List foos.
+      tags: [foos]
+      parameters:
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { type: object }
+  # Guide 12.4 (pageSize bounds) applies to collection endpoints; the
+  # operational liveness probe /health is exempt in the given, so a bare GET
+  # with no pageSize must NOT fire this rule.
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness check
+      description: Unversioned operational liveness probe (guide 5.9).
+      tags: [health]
+      security: []
+      responses:
+        '200':
+          description: OK

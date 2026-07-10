@@ -1,0 +1,15 @@
+openapi: 3.1.0
+info:
+  title: Section 9.3 fail
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        isActive:
+          type: string
+        hasConsent:
+          type: string
+          enum: ["true", "false"]

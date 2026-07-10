@@ -1,0 +1,28 @@
+openapi: 3.1.0
+info:
+  title: Fixture API
+  version: 1.0.0
+  description: Fixture for govstack-12.3.
+  contact: {}
+paths:
+  /v1/foos:
+    get:
+      operationId: listFoos
+      summary: List foos
+      description: List foos.
+      tags: [foos]
+      parameters:
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { type: object }

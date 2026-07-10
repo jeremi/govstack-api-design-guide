@@ -1,0 +1,50 @@
+# STRICT-only rules for §5 — noisy lexical heuristics, opt-in via
+# ../strict.yaml. All at severity `warn` per
+# <SCRATCHPAD>/linter-conventions.md, regardless of the guide rule's own
+# strength. Source text: ../../rules.yaml.
+functionsDir: "../functions"
+functions:
+  - s05-pluralNoun
+  - s05-actionVerbs
+rules:
+  # 5.2 [M+R] MUST — resource paths use plural nouns. Lexical "last word ends
+  # in s" heuristic; see functions/s05-pluralNoun.js for known false
+  # positives (e.g. "status") and false negatives (irregular plurals not
+  # listed).
+  govstack-5.2:
+    description: "Resource path segments should look like plural nouns (guide 5.2, [M+R], strict heuristic)."
+    message: "[5.2][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#52-plural-noun-resources
+    severity: warn
+    formats: [oas3_1]
+    given: $.paths
+    then:
+      function: s05-pluralNoun
+      functionOptions:
+        exceptions: [health, ready]
+
+  # 5.7 [M+R] MUST NOT — verbs in CRUD paths. Lexical dictionary heuristic;
+  # see functions/s05-actionVerbs.js. Shares its detector with 5.8 below (the
+  # guide states the same shape requirement as both a prohibition and a
+  # required positive shape).
+  govstack-5.7:
+    description: "Verbs must not appear in paths for CRUD operations (guide 5.7, [M+R], strict heuristic)."
+    message: "[5.7][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#57-no-verbs-in-crud-paths
+    severity: warn
+    formats: [oas3_1]
+    given: $.paths
+    then:
+      function: s05-actionVerbs
+
+  # 5.8 [R] MUST — non-CRUD actions expressed as /{collection}/{id}/{verb}
+  # sub-resources.
+  govstack-5.8:
+    description: "Non-CRUD actions must be expressed as /{collection}/{id}/{verb} sub-resources (guide 5.8, [R], strict heuristic)."
+    message: "[5.8][R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#58-actions-as-sub-resources
+    severity: warn
+    formats: [oas3_1]
+    given: $.paths
+    then:
+      function: s05-actionVerbs

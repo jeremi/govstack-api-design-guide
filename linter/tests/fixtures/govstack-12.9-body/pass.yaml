@@ -1,0 +1,43 @@
+openapi: 3.1.0
+info:
+  title: Fixture API
+  version: 1.0.0
+  description: Fixture for govstack-12.9-body.
+  contact: {}
+paths:
+  /v1/foos/search:
+    post:
+      operationId: searchFoos
+      summary: Search foos
+      description: Complex filtering over foos.
+      tags: [foos]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filters:
+                  type: object
+                pageSize:
+                  type: integer
+                cursor:
+                  type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, pageInfo]
+                properties:
+                  items:
+                    type: array
+                    items: { type: object }
+                  pageInfo:
+                    type: object
+                    required: [nextCursor, hasMore]
+                    properties:
+                      nextCursor: { type: string, nullable: true }
+                      hasMore: { type: boolean }

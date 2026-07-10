@@ -1,0 +1,1411 @@
+# GovStack API Design Guide — GOLDEN OpenAPI reference spec
+# =========================================================
+# A small, realistic OpenAPI 3.1.0 spec for a fictional GovStack Building Block
+# (bb-code: "registry", a civil-registration registry). It is written to satisfy
+# EVERY check in the default bundled ruleset simultaneously and to double as a
+# copy-able reference for BB spec editors.
+#
+# It deliberately exercises the guide's shapes: /v1 kebab-case paths, camelCase
+# params/properties, described schemas (§4.1) with examples (§4.2), the §5.9
+# health endpoint family, RFC 9457 problem+json error envelopes with the
+# GovStack extension fields and field-level errors[] (§11), cursor pagination
+# (§12), a creating POST with Idempotency-Key + Location (§8.3/§14.1), X-Request-Id
+# correlation (§8.4), ETag/If-Match optimistic concurrency (§7.16/§7.17), merge-
+# patch PATCH (§6.4), async long-running Operations (§15), CloudEvents webhooks +
+# subscription control plane (§16), OAuth2/OIDC/mTLS security with namespaced
+# scopes (§13), and the §20.3 conformance declaration.
+#
+# This spec lints to ZERO findings under the default ruleset. The ruleset
+# exempts the operational /health (and /ready) endpoint from the resource-
+# oriented rules that do not apply to a liveness probe (§5.1 version prefix,
+# §12.x pagination, §7.16 ETag), scopes the §5.9 health+json media type and
+# status enum to the SUCCESS (200) response so the §11.1 problem+json error
+# response is satisfiable, and counts only non-param segments toward §5.4 max
+# nesting depth so the §15.5/§16.11 mandated action sub-resource paths
+# (/v1/operations/{operationId}/cancel, .../subscriptions/{id}/rotate-secret)
+# stay within two levels.
+openapi: 3.1.0
+info:
+  title: GovStack Registry Building Block API
+  version: 1.0.0
+  description: >-
+    Synchronous REST surface of the fictional GovStack Registry Building Block:
+    manage registrants, run long-running bulk imports as asynchronous
+    Operations, and manage webhook subscriptions for registrant lifecycle
+    events. This document is a conformance reference for the GovStack Cross-BB
+    API Design Guide.
+  contact:
+    name: GovStack Registry BB Maintainers
+    url: https://example.gov/registry/support
+    email: registry-api@example.gov
+  license:
+    name: CC-BY-4.0
+    url: https://creativecommons.org/licenses/by/4.0/
+  x-govstack-api-guide:
+    version: 0.2.0
+servers:
+  - url: https://api.example.gov/registry
+    description: Production gateway for the Registry Building Block.
+  - url: https://sandbox.api.example.gov/registry
+    description: Sandbox environment for integration testing.
+security:
+  - registryOAuth:
+      - bb:registry:registrant:read
+tags:
+  - name: Registrants
+    description: Create, read, update and delete registrant records.
+  - name: Operations
+    description: Poll and cancel long-running asynchronous Operations.
+  - name: Subscriptions
+    description: Manage webhook subscriptions for registrant lifecycle events.
+  - name: Health
+    description: Operational liveness endpoint.
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness check
+      description: >-
+        Unversioned operational liveness endpoint per guide §5.9. Reports overall
+        service health using the application/health+json media type. Unauthenticated
+        and free of citizen data and system-internal detail.
+      tags: [Health]
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+      responses:
+        '200':
+          description: The service is alive; body reports the aggregate status.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/health+json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+        # §7.13 requires a documented 500. Per §11.1 every 4xx/5xx MUST be
+        # application/problem+json, so the /health error response uses the
+        # standard problem envelope (Cache-Control: no-store included). The
+        # §5.9 health+json media type and pass|fail|warn status enum apply to
+        # the SUCCESS (200) payload above, not to error responses.
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/registrants:
+    get:
+      operationId: listRegistrants
+      summary: List registrants
+      description: >-
+        Returns a cursor-paginated page of registrant records, most recently
+        updated first. Supports simple equality filtering and sorting.
+      tags: [Registrants]
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/FilterRegistrationStatus'
+        - $ref: '#/components/parameters/FilterCountryCode'
+      responses:
+        '200':
+          description: A page of registrants.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrantPage'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      operationId: createRegistrant
+      summary: Create a registrant
+      description: >-
+        Registers a new registrant and returns the created record. Non-idempotent
+        create: clients must supply an Idempotency-Key so retries are safe.
+      tags: [Registrants]
+      security:
+        - registryOAuth:
+            - bb:registry:registrant:write
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        description: Attributes for the registrant to create.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrantCreate'
+      responses:
+        '201':
+          description: The registrant was created.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            Location:
+              $ref: '#/components/headers/Location'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registrant'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/registrants/{registrantId}:
+    parameters:
+      - $ref: '#/components/parameters/RegistrantId'
+    get:
+      operationId: getRegistrant
+      summary: Fetch a registrant
+      description: Returns a single registrant record by its opaque identifier.
+      tags: [Registrants]
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+      responses:
+        '200':
+          description: The registrant record.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registrant'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    put:
+      operationId: replaceRegistrant
+      summary: Replace a registrant
+      description: >-
+        Fully replaces a registrant record. Uses optimistic concurrency: the
+        caller must echo the current ETag via If-Match.
+      tags: [Registrants]
+      security:
+        - registryOAuth:
+            - bb:registry:registrant:write
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        description: The full replacement representation of the registrant.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrantCreate'
+      responses:
+        '200':
+          description: The registrant was replaced.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registrant'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    patch:
+      operationId: updateRegistrant
+      summary: Partially update a registrant
+      description: >-
+        Applies a JSON Merge Patch (RFC 7396) to a registrant record. Uses
+        optimistic concurrency via If-Match.
+      tags: [Registrants]
+      security:
+        - registryOAuth:
+            - bb:registry:registrant:write
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        description: The merge-patch document describing the fields to change.
+        content:
+          application/merge-patch+json:
+            schema:
+              $ref: '#/components/schemas/RegistrantPatch'
+      responses:
+        '200':
+          description: The registrant was updated.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Registrant'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    delete:
+      operationId: deleteRegistrant
+      summary: Delete a registrant
+      description: Permanently removes a registrant record.
+      tags: [Registrants]
+      security:
+        - registryOAuth:
+            - bb:registry:registrant:write
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+      responses:
+        '204':
+          description: The registrant was deleted; no body is returned.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/registrants/search:
+    post:
+      operationId: searchRegistrants
+      summary: Search registrants
+      description: >-
+        Complex, read-only registrant query. Returns 200 (never 201) and uses the
+        cursor pagination envelope; filter criteria and pagination travel in the
+        request body per guide §6.6/§12.9.
+      tags: [Registrants]
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+      requestBody:
+        required: true
+        description: The search filter plus cursor pagination controls.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrantSearchRequest'
+      responses:
+        '200':
+          description: A page of matching registrants.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegistrantPage'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/bulk-imports:
+    post:
+      operationId: startBulkImport
+      summary: Start a bulk import
+      description: >-
+        Starts a long-running bulk import of registrants from an external source.
+        The work cannot complete synchronously, so the endpoint returns 202 with a
+        Location pointing at the Operation resource to poll.
+      tags: [Operations]
+      security:
+        - registryOAuth:
+            - bb:registry:registrant:write
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        description: Location of the source data to import.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkImportRequest'
+      responses:
+        '202':
+          description: The import was accepted; poll the Operation for progress.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            Location:
+              $ref: '#/components/headers/Location'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/operations/{operationId}:
+    parameters:
+      - $ref: '#/components/parameters/OperationId'
+    get:
+      operationId: getOperation
+      summary: Poll an Operation
+      description: >-
+        Returns the current state of a long-running Operation so a client can poll
+        for completion, per guide §15.4.
+      tags: [Operations]
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+      responses:
+        '200':
+          description: The current Operation state.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/operations/{operationId}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/OperationId'
+    post:
+      operationId: cancelOperation
+      summary: Cancel an Operation
+      description: >-
+        Requests cancellation of a long-running Operation, per guide §15.5. Returns
+        the Operation with its updated status.
+      tags: [Operations]
+      security:
+        - registryOAuth:
+            - bb:registry:registrant:write
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+      responses:
+        '200':
+          description: Cancellation was requested; the Operation state is returned.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Operation'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/subscriptions:
+    get:
+      operationId: listSubscriptions
+      summary: List subscriptions
+      description: Returns a cursor-paginated page of webhook subscriptions.
+      tags: [Subscriptions]
+      security:
+        - registryOAuth:
+            - bb:registry:subscription:manage
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: A page of subscriptions.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            ETag:
+              $ref: '#/components/headers/ETag'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionPage'
+        '304':
+          $ref: '#/components/responses/NotModified'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+    post:
+      operationId: createSubscription
+      summary: Create a subscription
+      description: >-
+        Registers a webhook subscription for registrant lifecycle events. Returns
+        the created subscription including its initial signing secret. Idempotent
+        via Idempotency-Key.
+      tags: [Subscriptions]
+      security:
+        - registryOAuth:
+            - bb:registry:subscription:manage
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        description: The subscription to create.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreate'
+      responses:
+        '201':
+          description: The subscription was created.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+            Location:
+              $ref: '#/components/headers/Location'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/subscriptions/{subscriptionId}:
+    parameters:
+      - $ref: '#/components/parameters/SubscriptionId'
+    delete:
+      operationId: deleteSubscription
+      summary: Delete a subscription
+      description: Cancels and removes a webhook subscription.
+      tags: [Subscriptions]
+      security:
+        - registryOAuth:
+            - bb:registry:subscription:manage
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+      responses:
+        '204':
+          description: The subscription was deleted; no body is returned.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+  /v1/subscriptions/{subscriptionId}/rotate-secret:
+    parameters:
+      - $ref: '#/components/parameters/SubscriptionId'
+    post:
+      operationId: rotateSubscriptionSecret
+      summary: Rotate a subscription signing secret
+      description: >-
+        Rotates the HMAC signing secret used to compute the GovStack-Signature on
+        deliveries for this subscription, per guide §16.11.
+      tags: [Subscriptions]
+      security:
+        - registryOAuth:
+            - bb:registry:subscription:manage
+      parameters:
+        - $ref: '#/components/parameters/XRequestId'
+      responses:
+        '200':
+          description: The secret was rotated; the new secret is returned once.
+          headers:
+            X-Request-Id:
+              $ref: '#/components/headers/XRequestId'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SubscriptionSecret'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/ServerError'
+webhooks:
+  registrantRegistered:
+    post:
+      operationId: onRegistrantRegistered
+      summary: Registrant registered event
+      description: >-
+        Delivered to a subscriber's callback URL when a registrant is registered.
+        The body is a structured CloudEvents 1.0 envelope; the delivery carries a
+        GovStack-Signature header the receiver verifies against the subscription
+        secret.
+      tags: [Subscriptions]
+      parameters:
+        - $ref: '#/components/parameters/GovStackSignature'
+      requestBody:
+        required: true
+        description: A CloudEvents 1.0 envelope wrapping the registrant event.
+        content:
+          application/cloudevents+json:
+            schema:
+              $ref: '#/components/schemas/RegistrantRegisteredEvent'
+      responses:
+        '200':
+          description: The subscriber accepted the event.
+        '410':
+          description: >-
+            The subscriber endpoint is gone; the publisher may disable the
+            subscription.
+components:
+  securitySchemes:
+    registryOAuth:
+      type: oauth2
+      description: >-
+        OAuth 2.0 for citizen-facing and inter-BB access. The authorizationCode
+        flow serves user-facing clients; the clientCredentials flow serves
+        service-to-service (BB-to-BB) calls.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://id.example.gov/oauth2/authorize
+          tokenUrl: https://id.example.gov/oauth2/token
+          refreshUrl: https://id.example.gov/oauth2/token
+          scopes:
+            bb:registry:registrant:read: Read registrant records.
+            bb:registry:registrant:write: Create, update and delete registrant records.
+            bb:registry:subscription:manage: Manage webhook subscriptions.
+        clientCredentials:
+          tokenUrl: https://id.example.gov/oauth2/token
+          scopes:
+            bb:registry:registrant:read: Read registrant records.
+            bb:registry:registrant:write: Create, update and delete registrant records.
+            bb:registry:subscription:manage: Manage webhook subscriptions.
+    registryOidc:
+      type: openIdConnect
+      description: OpenID Connect discovery for citizen authentication.
+      openIdConnectUrl: https://id.example.gov/.well-known/openid-configuration
+    registryMtls:
+      type: mutualTLS
+      description: Mutual TLS for high-assurance service-to-service calls.
+  parameters:
+    XRequestId:
+      name: X-Request-Id
+      in: header
+      required: false
+      description: >-
+        Client-supplied correlation identifier (§8.4). Echoed on the response; if
+        omitted the server generates one.
+      schema:
+        type: string
+        format: uuid
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: >-
+        Unique key making a non-idempotent create safe to retry (§8.3/§14.1). The
+        server returns the original result for a repeated key.
+      schema:
+        type: string
+        maxLength: 255
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: >-
+        ETag of the version the caller intends to modify, for optimistic
+        concurrency (§7.17). A mismatch yields 412.
+      schema:
+        type: string
+    RegistrantId:
+      name: registrantId
+      in: path
+      required: true
+      description: Opaque, server-generated identifier of a registrant.
+      schema:
+        type: string
+        format: uuid
+    OperationId:
+      name: operationId
+      in: path
+      required: true
+      description: Opaque identifier of a long-running Operation.
+      schema:
+        type: string
+        format: uuid
+    SubscriptionId:
+      name: subscriptionId
+      in: path
+      required: true
+      description: Opaque identifier of a webhook subscription.
+      schema:
+        type: string
+        format: uuid
+    GovStackSignature:
+      name: GovStack-Signature
+      in: header
+      required: true
+      description: >-
+        Detached HMAC signature of the event body, for the receiver to verify
+        authenticity against the subscription secret (§16.6).
+      schema:
+        type: string
+    PageSize:
+      name: pageSize
+      in: query
+      required: false
+      description: Maximum number of items to return in one page.
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+        maximum: 100
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: >-
+        Opaque pagination cursor returned as pageInfo.nextCursor by a previous
+        call. Omit to fetch the first page.
+      schema:
+        type: string
+    Sort:
+      name: sort
+      in: query
+      required: false
+      description: >-
+        Comma-separated sort keys; prefix a key with "-" for descending order
+        (e.g. "-updatedAt,familyName").
+      schema:
+        type: string
+        pattern: '^-?[a-zA-Z][a-zA-Z0-9]*(,-?[a-zA-Z][a-zA-Z0-9]*)*$'
+    FilterRegistrationStatus:
+      name: registrationStatus
+      in: query
+      required: false
+      description: Equality filter on the registrant's registration status.
+      schema:
+        type: string
+        pattern: '^[A-Z][A-Z0-9_]*$'
+    FilterCountryCode:
+      name: countryCode
+      in: query
+      required: false
+      description: Equality filter on the registrant's ISO 3166-1 alpha-2 country code.
+      schema:
+        type: string
+        pattern: '^[A-Z]{2}$'
+  headers:
+    XRequestId:
+      description: Correlation identifier echoed from the request or generated by the server.
+      schema:
+        type: string
+        format: uuid
+    Location:
+      description: Absolute URL of the created or referenced resource.
+      schema:
+        type: string
+        format: uri-reference
+    ETag:
+      description: Entity tag of the returned representation, for conditional requests.
+      schema:
+        type: string
+    CacheControl:
+      description: Caching directives; error and Operation-status bodies use no-store.
+      schema:
+        type: string
+    WwwAuthenticate:
+      description: Authentication challenge describing how to authenticate (RFC 9110).
+      schema:
+        type: string
+  responses:
+    NotModified:
+      description: The representation is unchanged from the caller's cached ETag.
+      headers:
+        ETag:
+          $ref: '#/components/headers/ETag'
+    BadRequest:
+      description: The request was malformed or failed field-level validation.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ValidationProblem'
+    Unauthorized:
+      description: Authentication is required or the supplied credentials are invalid.
+      headers:
+        WWW-Authenticate:
+          $ref: '#/components/headers/WwwAuthenticate'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: The requested resource does not exist.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: The request conflicts with the current state of the resource.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    PreconditionFailed:
+      description: The If-Match precondition did not hold; the resource was modified.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    UnsupportedMediaType:
+      description: The request media type is not supported by this endpoint.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    ServerError:
+      description: An unexpected error occurred while processing the request.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    Problem:
+      type: object
+      description: >-
+        RFC 9457 problem details envelope with GovStack extension fields. Used for
+        every 4xx and 5xx response.
+      required: [type, title, status, code, traceId, timestamp]
+      properties:
+        type:
+          type: string
+          format: uri
+          description: URI reference identifying the problem type.
+        title:
+          type: string
+          description: Short, human-readable summary of the problem type.
+        status:
+          type: integer
+          description: HTTP status code duplicated in the body for convenience.
+        detail:
+          type: string
+          description: Human-readable explanation specific to this occurrence.
+        instance:
+          type: string
+          format: uri-reference
+          description: URI reference identifying this specific occurrence.
+        code:
+          type: string
+          description: >-
+            Stable, namespaced GovStack error code (§11.5), reverse-DNS
+            org.govstack.{bb-code}.{errorName}.
+          example: org.govstack.registry.requestFailed
+        traceId:
+          type: string
+          description: Distributed-trace identifier correlating this error to server logs.
+        timestamp:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp at which the error was produced.
+      examples:
+        - type: https://docs.example.gov/registry/problems/request-failed
+          title: Request failed
+          status: 500
+          detail: The request could not be processed.
+          instance: /v1/registrants/6f9619ff-8b86-d011-b42d-00cf4fc964ff
+          code: org.govstack.registry.requestFailed
+          traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
+          timestamp: '2026-07-10T12:34:56Z'
+    ValidationProblem:
+      description: >-
+        Problem details for field-level validation failures (§11.4): the standard
+        problem envelope plus an errors array pinpointing each offending field.
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          description: The field-level errors extension of the problem envelope.
+          required: [errors]
+          properties:
+            errors:
+              type: array
+              description: One entry per field that failed validation.
+              items:
+                $ref: '#/components/schemas/FieldError'
+      examples:
+        - type: https://docs.example.gov/registry/problems/validation
+          title: Validation failed
+          status: 400
+          detail: One or more fields are invalid.
+          code: org.govstack.registry.validationFailed
+          traceId: 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d
+          timestamp: '2026-07-10T12:34:56Z'
+          errors:
+            - pointer: /emailAddress
+              code: org.govstack.registry.invalidEmail
+              message: emailAddress must be a valid email address.
+    FieldError:
+      type: object
+      description: A single field-level validation error.
+      required: [pointer, code, message]
+      properties:
+        pointer:
+          type: string
+          description: JSON Pointer to the offending field in the request body.
+        code:
+          type: string
+          description: Stable, namespaced code identifying the validation failure.
+        message:
+          type: string
+          description: Human-readable description of what is wrong with the field.
+    HealthStatus:
+      type: object
+      description: application/health+json body reporting aggregate service health.
+      required: [status]
+      properties:
+        status:
+          type: string
+          description: >-
+            Aggregate health indicator: "pass" (healthy), "warn" (healthy but with
+            concerns) or "fail" (unhealthy).
+          enum: [pass, warn, fail]
+          x-extensible-enum: true
+        version:
+          type: string
+          description: Version of the service reporting health.
+        releaseId:
+          type: string
+          description: Deployed release identifier of the service.
+      examples:
+        - status: pass
+          version: '1.0.0'
+          releaseId: '2026.07.10'
+    Money:
+      type: object
+      description: >-
+        A monetary amount as a decimal string plus an ISO 4217 currency code
+        (§10.4); never a binary float.
+      required: [amount, currency]
+      properties:
+        amount:
+          type: string
+          description: Decimal amount as a string, e.g. "12.50".
+          pattern: '^-?[0-9]+(\.[0-9]+)?$'
+        currency:
+          type: string
+          description: ISO 4217 alphabetic currency code.
+          pattern: '^[A-Z]{3}$'
+    Registrant:
+      type: object
+      description: A registrant record held by the Registry Building Block.
+      required:
+        - registrantId
+        - givenName
+        - familyName
+        - registrationStatus
+        - createdAt
+        - updatedAt
+      properties:
+        registrantId:
+          type: string
+          format: uuid
+          description: Opaque, server-generated unique identifier of the registrant.
+        givenName:
+          type: string
+          description: The registrant's given (first) name.
+        familyName:
+          type: string
+          description: The registrant's family (last) name.
+        emailAddress:
+          type: string
+          format: email
+          description: The registrant's contact email address (RFC 5322).
+        phoneNumber:
+          type: string
+          description: The registrant's phone number in E.164 form.
+          pattern: '^\+[1-9]\d{1,14}$'
+        birthDate:
+          type: string
+          format: date
+          description: The registrant's date of birth (RFC 3339 full-date).
+        countryCode:
+          type: string
+          description: ISO 3166-1 alpha-2 country of residence.
+          pattern: '^[A-Z]{2}$'
+        preferredLanguage:
+          type: string
+          description: Preferred communication language as a BCP 47 tag.
+          pattern: '^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$'
+        registrationStatus:
+          type: string
+          description: >-
+            Lifecycle status of the registration: ACTIVE, SUSPENDED or
+            DEREGISTERED.
+          enum: [ACTIVE, SUSPENDED, DEREGISTERED]
+          x-extensible-enum: true
+        registrationFee:
+          $ref: '#/components/schemas/Money'
+        signature:
+          type: string
+          contentEncoding: base64
+          maxLength: 100000
+          description: Base64-encoded captured signature image, if provided (§10.7).
+        createdAt:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp when the registrant was created.
+        updatedAt:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp when the registrant was last modified.
+      examples:
+        - registrantId: 6f9619ff-8b86-d011-b42d-00cf4fc964ff
+          givenName: Amina
+          familyName: Diallo
+          emailAddress: amina.diallo@example.com
+          phoneNumber: '+221771234567'
+          birthDate: '1990-04-12'
+          countryCode: SN
+          preferredLanguage: fr
+          registrationStatus: ACTIVE
+          registrationFee:
+            amount: '12.50'
+            currency: XOF
+          createdAt: '2026-01-15T09:00:00Z'
+          updatedAt: '2026-07-01T14:30:00Z'
+    RegistrantCreate:
+      type: object
+      description: Writable attributes accepted when creating or replacing a registrant.
+      required: [givenName, familyName]
+      properties:
+        givenName:
+          type: string
+          description: The registrant's given (first) name.
+        familyName:
+          type: string
+          description: The registrant's family (last) name.
+        emailAddress:
+          type: string
+          format: email
+          description: The registrant's contact email address (RFC 5322).
+        phoneNumber:
+          type: string
+          description: The registrant's phone number in E.164 form.
+          pattern: '^\+[1-9]\d{1,14}$'
+        birthDate:
+          type: string
+          format: date
+          description: The registrant's date of birth (RFC 3339 full-date).
+        countryCode:
+          type: string
+          description: ISO 3166-1 alpha-2 country of residence.
+          pattern: '^[A-Z]{2}$'
+        preferredLanguage:
+          type: string
+          description: Preferred communication language as a BCP 47 tag.
+          pattern: '^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$'
+        registrationFee:
+          $ref: '#/components/schemas/Money'
+      examples:
+        - givenName: Amina
+          familyName: Diallo
+          emailAddress: amina.diallo@example.com
+          phoneNumber: '+221771234567'
+          birthDate: '1990-04-12'
+          countryCode: SN
+          preferredLanguage: fr
+    RegistrantPatch:
+      type: object
+      description: >-
+        JSON Merge Patch body for a registrant (§6.4). Present fields are replaced;
+        an explicit null clears a field.
+      properties:
+        emailAddress:
+          type: string
+          format: email
+          description: New contact email address.
+        phoneNumber:
+          type: string
+          description: New phone number in E.164 form.
+          pattern: '^\+[1-9]\d{1,14}$'
+        preferredLanguage:
+          type: string
+          description: New preferred language as a BCP 47 tag.
+          pattern: '^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|[0-9]{3}))?$'
+        registrationStatus:
+          type: string
+          description: New registration status.
+          enum: [ACTIVE, SUSPENDED, DEREGISTERED]
+          x-extensible-enum: true
+      examples:
+        - emailAddress: amina.new@example.com
+          registrationStatus: SUSPENDED
+    RegistrantSearchRequest:
+      type: object
+      description: Complex search filter plus cursor pagination controls (§12.9).
+      properties:
+        givenName:
+          type: string
+          description: Match registrants whose given name equals this value.
+        familyName:
+          type: string
+          description: Match registrants whose family name equals this value.
+        countryCode:
+          type: string
+          description: Match registrants in this ISO 3166-1 alpha-2 country.
+          pattern: '^[A-Z]{2}$'
+        registrationStatus:
+          type: string
+          description: Match registrants with this registration status.
+          enum: [ACTIVE, SUSPENDED, DEREGISTERED]
+          x-extensible-enum: true
+        pageSize:
+          type: integer
+          description: Maximum number of items to return in one page.
+          minimum: 1
+          default: 20
+          maximum: 100
+        cursor:
+          type: string
+          description: Opaque pagination cursor from a previous page.
+      examples:
+        - countryCode: SN
+          registrationStatus: ACTIVE
+          pageSize: 20
+    PageInfo:
+      type: object
+      description: Cursor pagination metadata (§12.3).
+      required: [nextCursor, hasMore]
+      properties:
+        nextCursor:
+          type: [string, 'null']
+          description: >-
+            Opaque cursor to pass as the cursor parameter to fetch the next page;
+            null on the last page.
+        hasMore:
+          type: boolean
+          description: Whether more items exist beyond this page.
+      examples:
+        - nextCursor: b3BhcXVlLWN1cnNvci0y
+          hasMore: true
+    RegistrantPage:
+      type: object
+      description: A cursor-paginated page of registrant records.
+      required: [items, pageInfo]
+      properties:
+        items:
+          type: array
+          description: The registrant records in this page.
+          items:
+            $ref: '#/components/schemas/Registrant'
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+      examples:
+        - items:
+            - registrantId: 6f9619ff-8b86-d011-b42d-00cf4fc964ff
+              givenName: Amina
+              familyName: Diallo
+              registrationStatus: ACTIVE
+              createdAt: '2026-01-15T09:00:00Z'
+              updatedAt: '2026-07-01T14:30:00Z'
+          pageInfo:
+            nextCursor: b3BhcXVlLWN1cnNvci0y
+            hasMore: true
+    SubscriptionPage:
+      type: object
+      description: A cursor-paginated page of webhook subscriptions.
+      required: [items, pageInfo]
+      properties:
+        items:
+          type: array
+          description: The subscriptions in this page.
+          items:
+            $ref: '#/components/schemas/Subscription'
+        pageInfo:
+          $ref: '#/components/schemas/PageInfo'
+      examples:
+        - items:
+            - subscriptionId: 9d1f3b2a-6c4e-4a1b-8f0d-2e5c7a9b1d33
+              callbackUrl: https://partner.example.org/hooks/registry
+              eventTypes:
+                - org.govstack.registry.registrant.registered
+              status: ACTIVE
+              createdAt: '2026-06-01T08:00:00Z'
+              updatedAt: '2026-06-01T08:00:00Z'
+          pageInfo:
+            nextCursor: null
+            hasMore: false
+    BulkImportRequest:
+      type: object
+      description: Instructions for a long-running bulk import.
+      required: [sourceUrl]
+      properties:
+        sourceUrl:
+          type: string
+          format: uri
+          description: URL of the source dataset to import.
+        dryRun:
+          type: boolean
+          description: When true, validate the source without persisting records.
+      examples:
+        - sourceUrl: https://data.example.gov/registry/import-2026-07.csv
+          dryRun: false
+    Operation:
+      type: object
+      description: >-
+        A long-running asynchronous Operation resource (§15.2). Clients poll it
+        until status is terminal.
+      required: [id, status, result, error, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Opaque identifier of the Operation.
+        status:
+          type: string
+          description: >-
+            Lifecycle status of the Operation: PENDING, RUNNING, SUCCEEDED, FAILED
+            or CANCELLED.
+          enum: [PENDING, RUNNING, SUCCEEDED, FAILED, CANCELLED]
+          x-extensible-enum: true
+        progress:
+          type: integer
+          description: Best-effort completion percentage from 0 to 100.
+          minimum: 0
+          maximum: 100
+        result:
+          type: [object, 'null']
+          description: >-
+            Operation-specific result payload once status is SUCCEEDED; null
+            otherwise.
+        error:
+          type: [object, 'null']
+          description: >-
+            Problem details once status is FAILED; null otherwise.
+        createdAt:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp when the Operation was created.
+        updatedAt:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp when the Operation last changed state.
+      examples:
+        - id: 3a7c1e94-2b6d-4f0a-9c1e-8d5f6a7b0c11
+          status: RUNNING
+          progress: 42
+          result: null
+          error: null
+          createdAt: '2026-07-10T12:00:00Z'
+          updatedAt: '2026-07-10T12:03:00Z'
+    Subscription:
+      type: object
+      description: A webhook subscription for registrant lifecycle events.
+      required: [subscriptionId, callbackUrl, eventTypes, status, createdAt, updatedAt]
+      properties:
+        subscriptionId:
+          type: string
+          format: uuid
+          description: Opaque identifier of the subscription.
+        callbackUrl:
+          type: string
+          format: uri
+          description: HTTPS URL the events are delivered to.
+        eventTypes:
+          type: array
+          description: Reverse-DNS event types this subscription receives.
+          items:
+            type: string
+            description: A single reverse-DNS event type.
+        status:
+          type: string
+          description: Whether the subscription is ACTIVE or PAUSED.
+          enum: [ACTIVE, PAUSED]
+          x-extensible-enum: true
+        secret:
+          type: string
+          description: >-
+            Current signing secret; returned only at creation and rotation, then
+            masked.
+        createdAt:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp when the subscription was created.
+        updatedAt:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp when the subscription was last modified.
+      examples:
+        - subscriptionId: 9d1f3b2a-6c4e-4a1b-8f0d-2e5c7a9b1d33
+          callbackUrl: https://partner.example.org/hooks/registry
+          eventTypes:
+            - org.govstack.registry.registrant.registered
+          status: ACTIVE
+          createdAt: '2026-06-01T08:00:00Z'
+          updatedAt: '2026-06-01T08:00:00Z'
+    SubscriptionCreate:
+      type: object
+      description: Attributes accepted when creating a subscription.
+      required: [callbackUrl, eventTypes]
+      properties:
+        callbackUrl:
+          type: string
+          format: uri
+          description: HTTPS URL the events will be delivered to.
+        eventTypes:
+          type: array
+          description: Reverse-DNS event types to subscribe to.
+          items:
+            type: string
+            description: A single reverse-DNS event type.
+      examples:
+        - callbackUrl: https://partner.example.org/hooks/registry
+          eventTypes:
+            - org.govstack.registry.registrant.registered
+    SubscriptionSecret:
+      type: object
+      description: A freshly rotated subscription signing secret.
+      required: [secret, rotatedAt]
+      properties:
+        secret:
+          type: string
+          description: The new signing secret; shown once and not retrievable later.
+        rotatedAt:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp when the secret was rotated.
+      examples:
+        - secret: whsec_9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c
+          rotatedAt: '2026-07-10T12:34:56Z'
+    RegistrantRegisteredEvent:
+      type: object
+      description: >-
+        CloudEvents 1.0 envelope delivered when a registrant is registered (§16.2).
+        GovStack domain data lives under data.
+      required: [specversion, id, source, type, time, datacontenttype, data]
+      properties:
+        specversion:
+          type: string
+          description: CloudEvents specification version; always "1.0".
+          const: '1.0'
+        id:
+          type: string
+          description: Unique identifier of this event occurrence.
+        source:
+          type: string
+          description: >-
+            Stable logical identifier of the publishing context; never a
+            deployment host, pod, broker or environment (§16.4).
+          const: /govstack/registry
+        type:
+          type: string
+          description: >-
+            Reverse-DNS event type, org.govstack.{bb-code}.{resource}.{action},
+            carrying no version segment (§16.3).
+          const: org.govstack.registry.registrant.registered
+        time:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp at which the event occurred.
+        datacontenttype:
+          type: string
+          description: Media type of the data member.
+          const: application/json
+        subject:
+          type: string
+          description: Identifier of the registrant the event concerns.
+        data:
+          $ref: '#/components/schemas/RegistrantEventData'
+      examples:
+        - specversion: '1.0'
+          id: 0b8c1d2e-3f4a-5b6c-7d8e-9f0a1b2c3d4e
+          source: /govstack/registry
+          type: org.govstack.registry.registrant.registered
+          time: '2026-07-10T12:34:56Z'
+          datacontenttype: application/json
+          subject: 6f9619ff-8b86-d011-b42d-00cf4fc964ff
+          data:
+            registrantId: 6f9619ff-8b86-d011-b42d-00cf4fc964ff
+            registrationStatus: ACTIVE
+            occurredAt: '2026-07-10T12:34:56Z'
+    RegistrantEventData:
+      type: object
+      description: GovStack domain payload for a registrant-registered event.
+      required: [registrantId, registrationStatus, occurredAt]
+      properties:
+        registrantId:
+          type: string
+          format: uuid
+          description: Identifier of the registrant that was registered.
+        registrationStatus:
+          type: string
+          description: Registration status at the time of the event.
+          enum: [ACTIVE, SUSPENDED, DEREGISTERED]
+          x-extensible-enum: true
+        occurredAt:
+          type: string
+          format: date-time
+          description: RFC 3339 timestamp when the registration occurred.

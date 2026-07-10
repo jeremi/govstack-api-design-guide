@@ -1,0 +1,40 @@
+openapi: 3.1.0
+info:
+  title: Fixture API
+  version: 1.0.0
+  description: Fixture for govstack-11.5-example.
+  contact: {}
+paths:
+  /v1/foos/{id}:
+    get:
+      operationId: getFoo
+      summary: Get a foo
+      description: Get a foo by id.
+      tags: [foos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object }
+        '404':
+          description: Not found
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                required: [type, title, status, code, traceId, timestamp]
+                properties:
+                  type: { type: string }
+                  title: { type: string }
+                  status: { type: integer }
+                  code:
+                    type: string
+                    example: org.govstack.identity.personNotFound
+                  traceId: { type: string }
+                  timestamp: { type: string, format: date-time }

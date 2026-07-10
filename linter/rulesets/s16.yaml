@@ -1,0 +1,139 @@
+# Rules for §16 CloudEvents and webhooks (OpenAPI/webhooks surface).
+#
+# Implements guide rules 16.1, 16.2, 16.3, 16.4, 16.6, 16.11. Source text:
+# ../../rules.yaml. Severity policy and formats follow
+# <SCRATCHPAD>/linter-conventions.md.
+#
+# Scope note: §16 spans both the OpenAPI/webhooks and the AsyncAPI surfaces.
+# These rules target the OpenAPI document (formats: [oas3_1]); the AsyncAPI
+# clauses of 16.1 (brokered transports use AsyncAPI 3.0) and 16.6 (signature in
+# the message-metadata channel) are not enforced here — see the report Flags.
+functionsDir: "../functions"
+functions:
+  - envelopeShape
+  - s16-eventField
+  - s16-signatureHeader
+  - s16-subscriptionEndpoints
+rules:
+  # 16.1 [M+R] — PROXY (bucket B), notched MUST -> warn.
+  # Verifies: HTTP push events are NOT modelled with operation `callbacks`; the
+  # GovStack push mechanism is OpenAPI 3.1 top-level `webhooks`.
+  # Does NOT verify: that a BB with events documents them at all (an absent
+  # event surface is not detectable), nor the AsyncAPI-3.0 clause for brokered
+  # transports (MQTT/AMQP/Kafka/WebSockets/SSE).
+  govstack-16.1:
+    description: "HTTP push events must use top-level webhooks, not operation callbacks (guide 16.1, [M+R], proxy)."
+    message: "[16.1][M+R] HTTP push events MUST use OpenAPI 3.1 top-level `webhooks`; operation `callbacks` are not the GovStack push mechanism."
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#161-event-surfaces-documented
+    severity: warn
+    formats: [oas3_1]
+    given: $.paths[*][get,put,post,delete,patch].callbacks
+    then:
+      function: undefined
+
+  # 16.2 [M] — the CloudEvents envelope MUST declare specversion (const "1.0"),
+  # id, source, type and data (GovStack domain payload lives under `data`).
+  govstack-16.2:
+    description: "webhook event payload must be a CloudEvents v1.0 envelope: specversion(const \"1.0\")/id/source/type/data (guide 16.2, [M])."
+    message: "[16.2][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#162-cloudevents-envelope-required
+    severity: error
+    formats: [oas3_1]
+    given: $.webhooks[*][post,put,patch].requestBody.content[*].schema
+    then:
+      function: envelopeShape
+      functionOptions:
+        requiredProperties: [specversion, id, source, type, data]
+        properties:
+          specversion: { const: "1.0" }
+
+  # 16.2 [M] SHOULD sentence — split per the mixed-strength convention: `time`
+  # and `datacontenttype` SHOULD be included (SHOULD -> warn).
+  govstack-16.2-recommended:
+    description: "CloudEvents envelope should include time and datacontenttype (guide 16.2, [M], SHOULD)."
+    message: "[16.2][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#162-cloudevents-envelope-required
+    severity: warn
+    formats: [oas3_1]
+    given: $.webhooks[*][post,put,patch].requestBody.content[*].schema
+    then:
+      function: envelopeShape
+      functionOptions:
+        properties:
+          time: {}
+          datacontenttype: {}
+
+  # 16.3 [M] — the pinned event `type` value MUST follow reverse-DNS
+  # org.govstack.{bb-code}.{resource}.{action} and MUST NOT carry a version
+  # segment. Only pinned const/enum values are checked (a free-form `type` is a
+  # 16.2 presence concern, not verifiable here).
+  govstack-16.3:
+    description: "event type must be reverse-DNS org.govstack.{bb-code}.{resource}.{action} with no version (guide 16.3, [M])."
+    message: "[16.3][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types
+    severity: error
+    formats: [oas3_1]
+    given: $.webhooks[*][post,put,patch].requestBody.content[*].schema
+    then:
+      function: s16-eventField
+      functionOptions:
+        property: type
+        name: event type
+        expected: "reverse-DNS org.govstack.{bb-code}.{resource}.{action} with no major-version segment"
+        match: '^org\.govstack\.[a-z][a-z0-9-]{1,30}(?:\.[a-z][a-zA-Z0-9]*){2,}$'
+        forbidSegments: '^v[0-9]+$'
+
+  # 16.4 [M+R] — PROXY (bucket B), notched MUST/MUST NOT -> warn.
+  # Verifies: the pinned CloudEvents `source` value contains no deployment-host /
+  # environment / pod / broker / queue token (localhost, IPs, ports, .internal,
+  # .svc, .cluster.local, dev/test/staging/prod/... segments).
+  # Does NOT verify: that the source positively identifies the publishing BB in
+  # a "stable" way — only known-unstable tokens are flagged.
+  govstack-16.4:
+    description: "CloudEvents source must be stable, not a deployment host/env/pod/broker/queue (guide 16.4, [M+R], proxy)."
+    message: "[16.4][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#164-stable-cloudevents-source
+    severity: warn
+    formats: [oas3_1]
+    given: $.webhooks[*][post,put,patch].requestBody.content[*].schema
+    then:
+      function: s16-eventField
+      functionOptions:
+        property: source
+        name: event source
+        sources: [const, enum, default, example, examples]
+        flags: i
+        expected: "it must not identify a specific deployment host, pod, broker, queue, or environment"
+        forbidPattern: '(?:^|[^a-z0-9])(?:dev|test|staging|stage|qa|uat|prod|production|preprod|sandbox|pod|broker|queue)(?:[^a-z0-9]|$)|localhost|\.svc(?:[./]|$)|\.cluster\.local|\.internal(?:[:/]|$)|(?:\d{1,3}\.){3}\d{1,3}|:\d{2,5}(?:/|$)'
+
+  # 16.6 [M+R] — on the OpenAPI/webhooks surface the signature MUST travel in an
+  # HTTP header named `GovStack-Signature`. Every webhook delivery must declare
+  # that header parameter (path-item or operation level). The AsyncAPI clause of
+  # 16.6 (signature in the message-metadata channel) is out of scope here.
+  govstack-16.6:
+    description: "every webhook must declare the GovStack-Signature header parameter (guide 16.6, [M+R])."
+    message: "[16.6][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#166-govstack-signature-header
+    severity: error
+    formats: [oas3_1]
+    given: $.webhooks[*]
+    then:
+      function: s16-signatureHeader
+      functionOptions:
+        field: GovStack-Signature
+
+  # 16.11 [M+R] — PROXY (bucket B), notched MUST -> warn.
+  # Verifies: when a subscription surface exists (paths named /subscriptions),
+  # it exposes create/list/rotate-secret/delete interfaces.
+  # Does NOT verify: that a BB which should offer subscriptions actually does
+  # (an absent subscription surface is not flagged), nor the AsyncAPI
+  # message-command control plane the guide also permits.
+  govstack-16.11:
+    description: "subscription management must expose create/list/rotate-secret/delete (guide 16.11, [M+R], proxy)."
+    message: "[16.11][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#1611-subscription-management-interfaces
+    severity: warn
+    formats: [oas3_1]
+    given: $.paths
+    then:
+      function: s16-subscriptionEndpoints

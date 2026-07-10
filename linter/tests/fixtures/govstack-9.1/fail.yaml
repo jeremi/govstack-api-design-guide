@@ -1,0 +1,15 @@
+openapi: 3.1.0
+info:
+  title: Section 9.1 fail
+  version: 1.0.0
+paths:
+  /things:
+    get:
+      operationId: listThings
+      responses:
+        '200':
+          description: A list of things, offered only as XML.
+          content:
+            application/xml:
+              schema:
+                type: object

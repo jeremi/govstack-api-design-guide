@@ -1,0 +1,48 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Widgets API.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+servers:
+  - url: https://{gatewayHost}/sample/v1
+    variables:
+      gatewayHost:
+        default: gateway.example.org
+paths:
+  /v1/widgets:
+    post:
+      operationId: createWidget
+      summary: Create widget
+      description: Creates a widget.
+      tags: [widgets]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              description: A widget to create.
+              properties:
+                status:
+                  type: string
+                  description: "Widget status: active (in use) or retired (decommissioned)."
+                  enum: [active, retired]
+            example:
+              status: active
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                description: The created widget.
+                properties:
+                  status:
+                    type: string
+                    description: "Widget status: active (in use) or retired (decommissioned)."
+                    enum: [active, retired]
+              example:
+                status: active

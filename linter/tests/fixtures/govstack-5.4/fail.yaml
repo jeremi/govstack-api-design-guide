@@ -1,0 +1,27 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API with a deeply nested path.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/policies/{policyId}/documents/{documentId}/pages:
+    get:
+      operationId: listPolicyDocumentPages
+      summary: List policy document pages
+      description: Returns the pages of a policy document.
+      tags: [Policies]
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: documentId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: A page listing.

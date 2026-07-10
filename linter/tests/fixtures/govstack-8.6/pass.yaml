@@ -1,0 +1,24 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Citizen records are addressed by an opaque server-generated ID.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /citizens/{citizenId}:
+    get:
+      operationId: getCitizen
+      summary: Get a citizen record
+      description: Get a citizen record by opaque ID.
+      tags: [citizens]
+      parameters:
+        - name: citizenId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK

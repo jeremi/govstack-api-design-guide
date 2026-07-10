@@ -1,0 +1,42 @@
+# GovStack API Design Guide — Spectral ruleset (entry point)
+# ============================================================
+# This ruleset mechanically enforces the GovStack Cross-BB API Design Guide.
+#   Guide version implemented: 0.2.0
+#   Rule catalogue (source of truth): ../rules.yaml
+#   Coverage contract (rule -> status -> spectral rules): ./coverage.yaml
+#
+# It is composed of one fragment per guide section (rulesets/sNN.yaml). Each
+# fragment is a standalone Spectral ruleset that declares its own
+# `functionsDir: "../functions"` and `functions:` list; this has been verified
+# to resolve through the `extends` chain both via the ruleset bundler
+# (programmatic, used by the tests) and via the Spectral CLI.
+#
+# How to run:
+#   npx spectral lint -r ruleset.yaml path/to/openapi.yaml      # normative rules
+#   npx spectral lint -r strict.yaml  path/to/openapi.yaml      # + opt-in strict heuristics
+#   npm test                                                    # fixtures + unit + harness
+#
+# Fragment status: s02 is implemented (proof-of-concept). s03–s20 are valid
+# empty skeletons, populated by the per-section work. ALL fragments are listed
+# below already so the bundle loads today and section agents never edit this
+# file.
+extends:
+  - ./rulesets/s02.yaml
+  - ./rulesets/s03.yaml
+  - ./rulesets/s04.yaml
+  - ./rulesets/s05.yaml
+  - ./rulesets/s06.yaml
+  - ./rulesets/s07.yaml
+  - ./rulesets/s08.yaml
+  - ./rulesets/s09.yaml
+  - ./rulesets/s10.yaml
+  - ./rulesets/s11.yaml
+  - ./rulesets/s12.yaml
+  - ./rulesets/s13.yaml
+  - ./rulesets/s14.yaml
+  - ./rulesets/s15.yaml
+  - ./rulesets/s16.yaml
+  - ./rulesets/s17.yaml
+  - ./rulesets/s18.yaml
+  - ./rulesets/s19.yaml
+  - ./rulesets/s20.yaml

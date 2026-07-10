@@ -1,0 +1,201 @@
+# Rules for §7 HTTP methods and status codes — generated from the guide; see
+# coverage.yaml.
+#
+# Implements guide rules 7.2, 7.3, 7.6, 7.13, 7.18, 7.19, 7.20 (mechanical
+# checks) and 7.14, 7.16, 7.17 as partial-proxy (bucket B: severity notched
+# one step below the rule's strongest normative keyword; each carries a
+# comment on what it does NOT verify). Source text: ../../rules.yaml.
+# Severity/formats policy: <SCRATCHPAD>/linter-conventions.md.
+functionsDir: "../functions"
+functions:
+  - responseHeaderRequired
+  - operationResponses
+  - s07-noStoreOnProblemJson
+rules:
+  # 7.2 [M] — every 201 response MUST include a Location header pointing at
+  # the created resource. Presence-only: does not verify the header's value
+  # actually resolves to the created resource.
+  govstack-7.2:
+    description: "every 201 response must declare a Location header (guide 7.2, [M])."
+    message: "[7.2][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#72-201-created-with-location
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,patch].responses"
+    then:
+      function: responseHeaderRequired
+      functionOptions:
+        status: "201"
+        headers: [Location]
+
+  # 7.3 [M+R] — every 202 response MUST include Location pointing to an
+  # Operation resource (§15). Presence-only: does not verify the URL actually
+  # resolves to an Operation resource shape (govstack-15.x owns that).
+  govstack-7.3:
+    description: "every 202 response must declare a Location header (guide 7.3, [M+R])."
+    message: "[7.3][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#73-202-accepted-for-async-operations
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,patch].responses"
+    then:
+      function: responseHeaderRequired
+      functionOptions:
+        status: "202"
+        headers: [Location]
+
+  # 7.6 [M+R] — every 401 response MUST include WWW-Authenticate (RFC 9110).
+  # Implements the MUST clause only; the SHOULD clause (RFC 6750 challenge
+  # with error=invalid_token for OAuth2 bearer schemes, §13.2) constrains the
+  # header's runtime *value*, not anything declared in the spec document.
+  govstack-7.6:
+    description: "every 401 response must declare a WWW-Authenticate header (guide 7.6, [M+R])."
+    message: "[7.6][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#76-401-with-www-authenticate
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,patch].responses"
+    then:
+      function: responseHeaderRequired
+      functionOptions:
+        status: "401"
+        headers: [WWW-Authenticate]
+
+  # 7.13 [M] — specs MUST document a 500 response at minimum (502/503/504 are
+  # descriptive extras, not separately mandated).
+  govstack-7.13:
+    description: "every operation must declare a 500 response (guide 7.13, [M])."
+    message: "[7.13][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#713-server-errors-documented
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,patch]"
+    then:
+      function: operationResponses
+      functionOptions:
+        require: ["500"]
+
+  # 7.14 [M] — PROXY (bucket B), notched one step: MUST -> warn.
+  # Verifies: operation declares >=2 response codes AND >=1 non-2xx response,
+  # as evidence it does not declare "only 200". Does NOT verify that the
+  # declared codes are the actual set the operation can return, or that every
+  # relevant status is covered — "MUST declare the status codes it can
+  # return" is a claim about runtime behaviour a static document can't fully
+  # settle.
+  govstack-7.14:
+    description: "every operation must declare more than one status code, including a non-2xx (guide 7.14, [M], proxy)."
+    message: "[7.14][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#714-all-status-codes-declared
+    severity: warn
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,patch]"
+    then:
+      function: operationResponses
+      functionOptions:
+        minCount: 2
+        minNonSuccess: 1
+
+  # 7.16 [M+R] — PROXY (bucket B), notched one step: SHOULD -> info.
+  # Verifies: every GET operation's 200 response declares an ETag header AND
+  # the operation also declares a 304 response. Does NOT distinguish
+  # single-resource GETs from collection-listing GETs (applies to every GET
+  # operation's 200 response), does not verify the ETag is actually derived
+  # from resource state, and does not verify client If-None-Match support
+  # (client-side behaviour, invisible to a server spec).
+  # The given excludes the guide 5.9 operational endpoints /health and /ready:
+  # 7.16 applies to "endpoints that return resources", and caching a liveness
+  # probe is an anti-pattern (no ETag/304 to advertise).
+  govstack-7.16:
+    description: "GET operations should declare an ETag header on 200 and a 304 response (guide 7.16, [M+R], proxy)."
+    message: "[7.16][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#716-etag-and-if-none-match
+    severity: info
+    formats: [oas3_1]
+    given: "$.paths[?(@property != '/health' && @property != '/ready')].get.responses"
+    then:
+      function: responseHeaderRequired
+      functionOptions:
+        status: "200"
+        headers: [ETag]
+        alsoRequireStatus: "304"
+
+  # 7.17 [M+R] — PROXY (bucket B), notched one step: SHOULD -> info.
+  # Verifies: PUT/PATCH operations declare an If-Match header parameter (at
+  # the operation level — a parameter shared via the enclosing path item is
+  # not seen here) AND a 412 response. Does NOT verify the server actually
+  # implements optimistic concurrency, nor that 409 is reserved for
+  # non-precondition conflicts (7.9's territory).
+  govstack-7.17:
+    description: "PUT/PATCH operations should declare an If-Match header parameter and a 412 response (guide 7.17, [M+R], proxy)."
+    message: "[7.17][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#717-optimistic-concurrency-with-if-match
+    severity: info
+    formats: [oas3_1]
+    given: "$.paths[*][put,patch]"
+    then:
+      function: schema
+      functionOptions:
+        allErrors: true
+        schema:
+          type: object
+          required: [parameters, responses]
+          properties:
+            parameters:
+              type: array
+              contains:
+                type: object
+                properties:
+                  name: { const: If-Match }
+                  in: { const: header }
+            responses:
+              type: object
+              required: ["412"]
+
+  # 7.18 [M] — every 405 response MUST include Allow listing the supported
+  # methods (RFC 9110). Presence-only: does not verify the Allow header's
+  # value actually lists the correct methods.
+  govstack-7.18:
+    description: "every 405 response must declare an Allow header (guide 7.18, [M])."
+    message: "[7.18][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#718-405-with-allow-header
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,patch].responses"
+    then:
+      function: responseHeaderRequired
+      functionOptions:
+        status: "405"
+        headers: [Allow]
+
+  # 7.19 [M+R] — PATCH endpoints MUST return 415 for an unsupported patch
+  # media type (§6.4). The accompanying MAY clause (406 for Accept-header
+  # negotiation failures) is permissive and not tied to any specific
+  # operation type, so it is not checked.
+  govstack-7.19:
+    description: "every PATCH operation must declare a 415 response (guide 7.19, [M+R])."
+    message: "[7.19][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#719-415-for-unsupported-media-types
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths[*].patch"
+    then:
+      function: operationResponses
+      functionOptions:
+        require: ["415"]
+
+  # 7.20 [M] — SHOULD Cache-Control: no-store on error/Operation-status
+  # responses. Implements the mechanically clear half: any response whose
+  # content includes application/problem+json MUST declare a Cache-Control
+  # header (presence-only, not value). Does NOT independently identify
+  # "Operation-status responses" (§15) — those have no content-type
+  # signature to key off and require the Operation resource shape, which
+  # this section does not own.
+  govstack-7.20:
+    description: "problem+json responses should declare a Cache-Control header (guide 7.20, [M])."
+    message: "[7.20][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#720-no-store-on-error-responses
+    severity: warn
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,patch].responses[*]"
+    then:
+      function: s07-noStoreOnProblemJson

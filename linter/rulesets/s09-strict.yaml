@@ -1,0 +1,37 @@
+# STRICT-only rules for §9 — ships only via ../strict.yaml (opt-in).
+#
+# Holds the deliberately-noisy §9 heuristics (9.6 abbreviation dictionary, 9.10
+# GovStack extension-prefix guess). Both run at severity warn. Source text:
+# ../../rules.yaml.
+functionsDir: "../functions"
+functions:
+  - s09-abbreviations
+  - s09-extensionPrefix
+rules:
+  # 9.6 [R] — STRICT proxy. Flags property-name words found in an abbreviation
+  # dictionary (qty -> quantity, addr -> address, …). Noisy by design and
+  # dictionary-bounded: misses abbreviations not in the list, may flag words
+  # that legitimately look like an abbreviation.
+  govstack-9.6:
+    description: "Abbreviations should not be used in field names (guide 9.6, [R], strict proxy)."
+    message: "[9.6][R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#96-avoid-abbreviations
+    severity: warn
+    formats: [oas3_1]
+    given: $.components.schemas[*]
+    then:
+      function: s09-abbreviations
+
+  # 9.10 [M+R] — STRICT proxy. Flags x-* extensions that look GovStack-defined
+  # but are not prefixed exactly x-govstack- (a known concept like x-delivery,
+  # or any key mentioning govstack). Weak: cannot know the full GovStack
+  # extension set, cannot tell third-party x- extensions apart.
+  govstack-9.10:
+    description: "GovStack-defined extensions must use the x-govstack- prefix (guide 9.10, [M+R], strict proxy)."
+    message: "[9.10][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#910-govstack-extension-prefix
+    severity: warn
+    formats: [oas3_1, aas3]
+    given: $
+    then:
+      function: s09-extensionPrefix

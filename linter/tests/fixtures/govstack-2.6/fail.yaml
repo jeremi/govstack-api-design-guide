@@ -1,0 +1,11 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Servers block points at localhost.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+servers:
+  - url: http://localhost:8080/sample/v1
+paths: {}

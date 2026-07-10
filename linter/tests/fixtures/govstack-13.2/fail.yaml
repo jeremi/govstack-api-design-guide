@@ -1,0 +1,19 @@
+# 13.2 fail: no openIdConnect or oauth2 scheme is declared (only an apiKey).
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+components:
+  securitySchemes:
+    ApiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+paths:
+  /health:
+    get:
+      security:
+        - ApiKey: []
+      responses:
+        '200':
+          description: ok

@@ -1,0 +1,14 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API on the correct OpenAPI version.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+servers:
+  - url: https://{gatewayHost}/sample/v1
+    variables:
+      gatewayHost:
+        default: gateway.example.org
+paths: {}

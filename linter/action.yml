@@ -1,0 +1,89 @@
+# GovStack API spec lint — composite action
+#
+# Lints a Building Block's OpenAPI/AsyncAPI spec against the GovStack Cross-BB
+# API Design Guide Spectral ruleset using the Node driver in this directory
+# (cli.mjs). See ../guides/validating-your-spec.md for the ruleset itself.
+#
+# This action assumes the calling workflow has ALREADY checked out the
+# repository (e.g. via actions/checkout) before this action runs — it does
+# not check out anything itself.
+name: "GovStack API spec lint"
+description: "Lints a BB's OpenAPI/AsyncAPI spec against the GovStack Cross-BB API Design Guide ruleset."
+
+inputs:
+  openapi-path:
+    description: "Path (relative to the repo root) to the OpenAPI spec to lint."
+    required: false
+    default: "api/openapi.yaml"
+  asyncapi-path:
+    description: "Path (relative to the repo root) to the AsyncAPI spec to lint."
+    required: false
+    default: "api/asyncapi.yaml"
+  fail-on:
+    description: "Minimum severity that fails the check: error, warn, info, or never."
+    required: false
+    default: "error"
+  strict:
+    description: "Set to 'true' to also lint against the guide's strict ruleset."
+    required: false
+    default: "false"
+  node-version:
+    description: "Node.js version to set up for running the linter."
+    required: false
+    default: "22"
+  install-validators:
+    description: >-
+      Set to 'true' to install openapi-spec-validator (Python) and
+      @asyncapi/cli (npm) so the driver can additionally run schema
+      validation. Set to 'false' to skip installing them; the driver is then
+      called with --skip-validators.
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    # openapi-spec-validator is a Python tool the driver shells out to when
+    # present; it's optional, so only install it when asked.
+    - name: Set up Python (for openapi-spec-validator)
+      if: inputs.install-validators == 'true'
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+
+    - name: Install openapi-spec-validator
+      if: inputs.install-validators == 'true'
+      shell: bash
+      run: pip install openapi-spec-validator
+
+    - name: Install @asyncapi/cli
+      if: inputs.install-validators == 'true'
+      shell: bash
+      run: npm i -g @asyncapi/cli
+
+    - name: Install linter dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: npm ci
+
+    - name: Run GovStack API spec lint
+      shell: bash
+      run: |
+        args=(
+          --repo-root "$GITHUB_WORKSPACE"
+          --openapi "${{ inputs.openapi-path }}"
+          --asyncapi "${{ inputs.asyncapi-path }}"
+          --fail-on "${{ inputs.fail-on }}"
+        )
+        if [[ "${{ inputs.strict }}" == "true" ]]; then
+          args+=(--strict)
+        fi
+        if [[ "${{ inputs.install-validators }}" == "false" ]]; then
+          args+=(--skip-validators)
+        fi
+        node "${{ github.action_path }}/cli.mjs" "${args[@]}"

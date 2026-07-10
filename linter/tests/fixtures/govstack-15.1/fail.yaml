@@ -1,0 +1,11 @@
+# 15.1 fail: a 202 Accepted response does not declare a Location header.
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+paths:
+  /v1/jobs:
+    post:
+      responses:
+        '202':
+          description: accepted

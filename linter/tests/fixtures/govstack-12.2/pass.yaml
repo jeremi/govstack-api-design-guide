@@ -1,0 +1,50 @@
+openapi: 3.1.0
+info:
+  title: Fixture API
+  version: 1.0.0
+  description: Fixture for govstack-12.2.
+  contact: {}
+paths:
+  /v1/foos:
+    get:
+      operationId: listFoos
+      summary: List foos
+      description: List foos.
+      tags: [foos]
+      parameters:
+        - name: pageSize
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: cursor
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, pageInfo]
+                properties:
+                  items:
+                    type: array
+                    items: { type: object }
+                  pageInfo:
+                    type: object
+                    required: [nextCursor, hasMore]
+                    properties:
+                      nextCursor: { type: string, nullable: true }
+                      hasMore: { type: boolean }
+  # Guide 12.2 covers collection endpoints; the operational liveness probe
+  # /health is exempt (s12-collectionPagination), so a bare GET must NOT fire.
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness check
+      description: Unversioned operational liveness probe (guide 5.9).
+      tags: [health]
+      security: []
+      responses:
+        '200':
+          description: OK

@@ -1,0 +1,30 @@
+asyncapi: 3.0.0
+info:
+  title: Registry events
+  version: 1.0.0
+channels:
+  personCreated:
+    address: org.govstack.reg.v1.person.created
+    messages:
+      evt:
+        $ref: '#/components/messages/PersonCreated'
+operations:
+  onPersonCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/personCreated'
+    messages:
+      - $ref: '#/channels/personCreated/messages/evt'
+components:
+  messages:
+    PersonCreated:
+      # 17.6: payload is a bare domain object, not a structured CloudEvent.
+      payload:
+        type: object
+        properties:
+          personId:
+            type: string
+      examples:
+        - name: sample
+          payload:
+            personId: p-1

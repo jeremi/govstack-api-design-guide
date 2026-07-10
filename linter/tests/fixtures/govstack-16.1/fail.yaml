@@ -1,0 +1,31 @@
+openapi: 3.1.0
+info:
+  title: Orders API
+  version: 1.0.0
+  description: HTTP push modelled with operation callbacks (should use webhooks).
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/orders:
+    post:
+      operationId: createOrder
+      summary: Create an order
+      description: Creates an order and pushes status changes to a callback URL.
+      tags: [orders]
+      responses:
+        '201':
+          description: Created
+      callbacks:
+        orderStatus:
+          '{$request.body#/callbackUrl}':
+            post:
+              summary: Order status changed
+              requestBody:
+                content:
+                  application/json:
+                    schema:
+                      type: object
+              responses:
+                '200':
+                  description: Acknowledged

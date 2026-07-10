@@ -1,0 +1,35 @@
+asyncapi: 3.0.0
+info:
+  title: Registry events
+  version: 1.0.0
+servers:
+  production:
+    host: broker.example.com
+    protocol: kafka
+    security:
+      - $ref: '#/components/securitySchemes/userToken'
+channels:
+  personCreated:
+    address: org.govstack.reg.v1.person.created
+    messages:
+      evt:
+        $ref: '#/components/messages/PersonCreated'
+operations:
+  onPersonCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/personCreated'
+    messages:
+      - $ref: '#/channels/personCreated/messages/evt'
+components:
+  securitySchemes:
+    userToken:
+      type: http
+      scheme: bearer
+  messages:
+    PersonCreated:
+      payload:
+        type: object
+      examples:
+        - name: sample
+          payload: {}

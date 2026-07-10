@@ -24,6 +24,9 @@ This repository's API specifications must conform to the GovStack Cross-BB API D
 Before writing or reviewing OpenAPI/AsyncAPI content:
 - Read api-design-guide/rules.yaml and treat every MUST rule as blocking.
 - Cite rule IDs (for example 9.2, 11.1) when flagging or fixing violations.
+- Lint the spec: `cd api-design-guide/linter && npm ci && node cli.mjs --repo-root ../..`
+  Every finding is prefixed with the guide rule id it enforces. Fix findings in the
+  spec; never edit the ruleset to silence them.
 - Run the validators in api-design-guide/guides/validating-your-spec.md before declaring spec work done.
 - Consult api-design-guide/guides/spec-editor-checklist.md for the review pass.
 

@@ -1,0 +1,41 @@
+openapi: 3.1.0
+info:
+  title: Subscriptions API
+  version: 1.0.0
+  description: Subscription surface is missing a rotate-secret interface.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/subscriptions:
+    post:
+      operationId: createSubscription
+      summary: Create a subscription
+      description: Registers a webhook subscription.
+      tags: [subscriptions]
+      responses:
+        '201':
+          description: Created
+    get:
+      operationId: listSubscriptions
+      summary: List subscriptions
+      description: Lists webhook subscriptions.
+      tags: [subscriptions]
+      responses:
+        '200':
+          description: OK
+  /v1/subscriptions/{subscriptionId}:
+    delete:
+      operationId: deleteSubscription
+      summary: Delete a subscription
+      description: Removes a webhook subscription.
+      tags: [subscriptions]
+      parameters:
+        - name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content

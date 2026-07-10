@@ -1,0 +1,30 @@
+# 15.2 pass: the Operation resource declares the full shared shape
+# ({ id, status, result, error, createdAt, updatedAt }; progress optional).
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Operation:
+      type: object
+      required: [id, status, result, error, createdAt, updatedAt]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, RUNNING, SUCCEEDED, FAILED, CANCELLED]
+        result:
+          type: object
+        error:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        progress:
+          type: integer

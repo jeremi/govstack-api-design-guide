@@ -1,0 +1,29 @@
+asyncapi: 3.0.0
+info:
+  title: Registry events
+  version: 1.0.0
+channels:
+  personCreated:
+    address: org.govstack.reg.v1.person.created
+    messages:
+      evt:
+        $ref: '#/components/messages/PersonCreated'
+operations:
+  onPersonCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/personCreated'
+    messages:
+      - $ref: '#/channels/personCreated/messages/evt'
+    x-govstack-redelivery: supported
+    x-govstack-dead-letter: supported
+    x-govstack-retention: notApplicable
+    x-govstack-replay: unsupported
+components:
+  messages:
+    PersonCreated:
+      payload:
+        type: object
+      examples:
+        - name: sample
+          payload: {}

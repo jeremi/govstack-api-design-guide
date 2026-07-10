@@ -1,0 +1,28 @@
+# STRICT-only rules for §17 — ships only via ../strict.yaml (opt-in), at warn.
+#
+# Source text: ../../rules.yaml (§17.3). See <SCRATCHPAD>/linter-conventions.md.
+functionsDir: "../functions"
+functions:
+  - valuePattern
+rules:
+  # 17.3 [R] STRICT-ONLY (warn). Heuristic scan of channel addresses and channel
+  # parameter names for personal-data / identifier tokens. This is a keyword
+  # proxy: it cannot prove a token carries personal data, and deliberately omits
+  # broad words (bare "name"/"address") except as bounded segments to limit
+  # false positives. Topic/queue/routing-key names not expressed in the AsyncAPI
+  # document are out of reach.
+  govstack-17.3:
+    description: "Channel addresses/parameter names must not contain personal-data tokens (guide 17.3, [R], strict)."
+    message: "[17.3][R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#173-no-personal-data-in-channels
+    severity: warn
+    formats: [aas3]
+    given:
+      - $.channels[*].address
+      - $.channels[*].parameters.*~
+    then:
+      function: valuePattern
+      functionOptions:
+        name: channel address/parameter
+        flags: i
+        forbidPattern: 'phone|msisdn|email|e-mail|passport|national-?id|first-?name|last-?name|sur-?name|given-?name|full-?name|maiden-?name|date-?of-?birth|birth-?date|(^|[.\-_])(ssn|dob|name)([.\-_]|$)'

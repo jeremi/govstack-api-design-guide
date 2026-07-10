@@ -1,0 +1,26 @@
+# STRICT-only rules for §8 — implements guide rule 8.6.
+#
+# Ships only via ../strict.yaml (opt-in). See ../coverage.yaml and the
+# fragment format in <SCRATCHPAD>/linter-conventions.md.
+functionsDir: "../functions"
+functions:
+  - s08-personalDataInUrl
+rules:
+  # 8.6 [R] — STRICT-ONLY heuristic, severity warn (per convention, always
+  # warn regardless of the guide's own MUST/MUST NOT strength).
+  # Verifies: path/query/header parameters whose NAME matches a dictionary
+  # of personal-data term fragments (email, phone, nationalId, dateOfBirth,
+  # ...). Deliberately noisy: flags plausible names, not a definitive
+  # determination, hence STRICT-ONLY rather than shipped in the main ruleset.
+  # Does NOT verify: header/query VALUES (only names are visible
+  # statically), synonyms outside the dictionary, or whether an ID is
+  # actually opaque/server-generated.
+  govstack-8.6:
+    description: "path/query/header parameter names must not look like personal data (guide 8.6, [R], strict heuristic)."
+    message: "[8.6][R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#86-no-personal-data-in-addressable-locations
+    severity: warn
+    formats: [oas3_1]
+    given: $
+    then:
+      function: s08-personalDataInUrl

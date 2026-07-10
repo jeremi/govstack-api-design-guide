@@ -1,0 +1,113 @@
+# Rules for §8 HTTP headers — implements guide rules 8.1-8.5, 8.7.
+#
+# 8.6 is STRICT-ONLY; see ./s08-strict.yaml. Source text: ../../rules.yaml.
+# Severity policy and formats follow <SCRATCHPAD>/linter-conventions.md.
+#
+# Custom functions: none of the shared library functions (functions/README.md)
+# combine "operation parameters" with "responses" or scan header names across
+# the whole document, so this fragment adds section-local functions for those
+# cross-cutting checks. Each is documented inline in its file.
+functionsDir: "../functions"
+functions:
+  - s08-credentialsInUrl
+  - s08-headerEcho
+  - s08-idempotencyKeyRequired
+  - s08-requestIdCorrelation
+  - s08-noXHeaders
+  - s08-rateLimitHeaders
+rules:
+  # 8.1 [M+R] — PROXY (bucket B), notched one step: MUST -> warn.
+  # Verifies: no apiKey security scheme is placed in query/cookie, and no
+  # path/query parameter has a credential-looking name (token, apiKey,
+  # secret, password, credential, ...).
+  # Does NOT verify: that credentials actually travel via the Authorization
+  # header at runtime, arbitrary/synonym parameter names, URL fragments (not
+  # representable in OpenAPI), or header VALUES that might embed a credential.
+  govstack-8.1:
+    description: "credentials must not travel in query/path parameters or an apiKey query/cookie scheme (guide 8.1, [M+R], proxy)."
+    message: "[8.1][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#81-credentials-in-authorization-header
+    severity: warn
+    formats: [oas3_1]
+    given: $
+    then:
+      function: s08-credentialsInUrl
+
+  # 8.2 [M+R] — PROXY (bucket B), notched one step: MUST -> warn.
+  # Verifies: IF an operation declares an Accept-Language header parameter
+  # (a "localisation request"), its 2xx responses declare Content-Language.
+  # Does NOT verify: requests that omit Accept-Language, or that the echoed
+  # value actually reflects the negotiated language.
+  govstack-8.2:
+    description: "operations accepting Accept-Language must echo Content-Language on success responses (guide 8.2, [M+R], proxy)."
+    message: "[8.2][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#82-accept-language-and-content-language
+    severity: warn
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,patch]"
+    then:
+      function: s08-headerEcho
+      functionOptions:
+        requestHeader: Accept-Language
+        responseHeader: Content-Language
+
+  # 8.3 [M+R] — PROXY (bucket B), notched one step: MUST -> warn.
+  # Verifies: a POST operation declaring a 201 response (proxy for "requires
+  # idempotency under §14") accepts an Idempotency-Key header parameter.
+  # Does NOT verify: the actual §14 idempotency-requirement determination,
+  # nor the §14.6 opt-out.
+  govstack-8.3:
+    description: "create-POSTs (201) must accept an Idempotency-Key header (guide 8.3, [M+R], proxy)."
+    message: "[8.3][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#83-idempotency-key-header-accepted
+    severity: warn
+    formats: [oas3_1]
+    given: "$.paths[*].post"
+    then:
+      function: s08-idempotencyKeyRequired
+
+  # 8.4 [M+R] — PROXY (bucket B), notched one step: MUST -> warn.
+  # Verifies: an operation SHOULD declare an X-Request-Id header parameter,
+  # and its 2xx responses MUST declare an X-Request-Id response header.
+  # Does NOT verify: actual runtime echo/generate behaviour, distinctness
+  # from the error-envelope traceId (§11.3, a BB's choice), or path-item-
+  # level (shared) parameters.
+  govstack-8.4:
+    description: "requests should carry X-Request-Id and responses must echo it (guide 8.4, [M+R], proxy)."
+    message: "[8.4][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#84-x-request-id-correlation
+    severity: warn
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,patch]"
+    then:
+      function: s08-requestIdCorrelation
+
+  # 8.5 [M] — implemented (bucket A). New custom headers (parameters and
+  # response headers) must not use the X- prefix, except the legacy
+  # X-Request-Id (§8.4, pending [OPEN-7-A]).
+  govstack-8.5:
+    description: "new custom headers must not use the X- prefix, except X-Request-Id (guide 8.5, [M])."
+    message: "[8.5][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#85-no-new-x--prefixed-headers
+    severity: error
+    formats: [oas3_1]
+    given: $
+    then:
+      function: s08-noXHeaders
+
+  # 8.7 [M+R] — PROXY (bucket B), notched one step: MUST -> warn.
+  # Verifies: an operation declaring a 429 response (proxy for "rate-limited
+  # by the BB itself") declares Retry-After on 429 and the RateLimit-Limit /
+  # RateLimit-Remaining / RateLimit-Reset trio on its 2xx and 429 responses.
+  # Does NOT verify: that rate limiting is actually implemented, the
+  # delegated-to-gateway prose exception, or the newer structured-field
+  # draft form (only the three-header v0.1 form is checked).
+  govstack-8.7:
+    description: "rate-limited endpoints must declare RateLimit-* and 429 responses must declare Retry-After (guide 8.7, [M+R], proxy)."
+    message: "[8.7][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#87-rate-limit-headers-declared
+    severity: warn
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,patch].responses"
+    then:
+      function: s08-rateLimitHeaders

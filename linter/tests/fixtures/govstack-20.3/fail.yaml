@@ -1,0 +1,9 @@
+openapi: 3.0.3
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Fixture for govstack-20.3 — info lacks the x-govstack-api-guide conformance declaration.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths: {}

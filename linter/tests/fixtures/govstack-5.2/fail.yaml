@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API with a singular resource collection name.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/policy:
+    get:
+      operationId: listPolicies
+      summary: List policies
+      description: Returns a page of policies.
+      tags: [Policies]
+      responses:
+        "200":
+          description: A page of policies.

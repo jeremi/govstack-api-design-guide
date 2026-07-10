@@ -1,0 +1,36 @@
+asyncapi: 3.0.0
+info:
+  title: Query service
+  version: 1.0.0
+channels:
+  personQuery:
+    address: org.govstack.reg.v1.person.query
+    messages:
+      cmd:
+        payload:
+          type: object
+        examples:
+          - name: q
+            payload: {}
+  personQueryReply:
+    address: org.govstack.reg.v1.person.query-reply
+    messages:
+      res:
+        # 17.17: no correlationId, and the reply declares no address location.
+        payload:
+          type: object
+        examples:
+          - name: r
+            payload: {}
+operations:
+  askPerson:
+    action: send
+    channel:
+      $ref: '#/channels/personQuery'
+    messages:
+      - $ref: '#/channels/personQuery/messages/cmd'
+    reply:
+      channel:
+        $ref: '#/channels/personQueryReply'
+      messages:
+        - $ref: '#/channels/personQueryReply/messages/res'

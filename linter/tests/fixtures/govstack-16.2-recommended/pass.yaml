@@ -1,0 +1,40 @@
+openapi: 3.1.0
+info:
+  title: Payments Events API
+  version: 1.0.0
+  description: CloudEvents envelope includes the recommended time/datacontenttype.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+webhooks:
+  paymentCompleted:
+    post:
+      summary: Payment completed event
+      requestBody:
+        content:
+          application/cloudevents+json:
+            schema:
+              type: object
+              required: [specversion, id, source, type, data]
+              properties:
+                specversion:
+                  const: "1.0"
+                id:
+                  type: string
+                source:
+                  type: string
+                  const: "urn:govstack:bb:payments"
+                type:
+                  type: string
+                  const: "org.govstack.payments.payment.completed"
+                time:
+                  type: string
+                  format: date-time
+                datacontenttype:
+                  type: string
+                  const: "application/json"
+                data:
+                  type: object
+      responses:
+        '200':
+          description: Acknowledged

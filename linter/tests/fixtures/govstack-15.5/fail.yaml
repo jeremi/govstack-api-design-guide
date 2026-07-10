@@ -1,0 +1,12 @@
+# 15.5 fail: an Operation-cancellation path that is not the canonical shape
+# (missing the /v{N} version prefix).
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+paths:
+  /operations/{operationId}/cancel:
+    post:
+      responses:
+        '202':
+          description: accepted

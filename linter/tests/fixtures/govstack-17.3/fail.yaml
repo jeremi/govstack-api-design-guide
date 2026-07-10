@@ -1,0 +1,30 @@
+asyncapi: 3.0.0
+info:
+  title: Registry events
+  version: 1.0.0
+channels:
+  personEmail:
+    # 17.3: "email" is a directly-identifying attribute in the channel address.
+    address: org.govstack.reg.v1.person.email
+    parameters:
+      # 17.3: personal-data token in a channel parameter name.
+      phoneNumber:
+        description: caller phone
+    messages:
+      evt:
+        $ref: '#/components/messages/PersonEvent'
+operations:
+  onPersonEvent:
+    action: receive
+    channel:
+      $ref: '#/channels/personEmail'
+    messages:
+      - $ref: '#/channels/personEmail/messages/evt'
+components:
+  messages:
+    PersonEvent:
+      payload:
+        type: object
+      examples:
+        - name: sample
+          payload: {}

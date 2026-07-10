@@ -1,0 +1,45 @@
+# Fixture for govstack-18.2-asyncapi — channel address major (v2) matches
+# info.version's major (2).
+asyncapi: 3.0.0
+info:
+  title: Identity Events
+  version: 2.0.0
+  description: Emits identity lifecycle events for the Identity building block.
+  contact:
+    name: GovStack Identity BB
+    url: https://example.org/contact
+servers:
+  production:
+    host: '{brokerHost}'
+    protocol: kafka
+    variables:
+      brokerHost:
+        default: broker.example.org
+channels:
+  userSignedUp:
+    address: org.govstack.identity.v2.user.signedup
+    messages:
+      userSignedUp:
+        $ref: '#/components/messages/UserSignedUp'
+operations:
+  receiveUserSignedUp:
+    action: receive
+    summary: Receive user signed-up events.
+    description: Triggered when a user completes registration.
+    tags:
+      - name: user
+    channel:
+      $ref: '#/channels/userSignedUp'
+    messages:
+      - $ref: '#/channels/userSignedUp/messages/userSignedUp'
+components:
+  messages:
+    UserSignedUp:
+      name: UserSignedUp
+      title: User Signed Up
+      payload:
+        type: object
+        properties:
+          userId:
+            type: string
+            description: Identifier of the user.

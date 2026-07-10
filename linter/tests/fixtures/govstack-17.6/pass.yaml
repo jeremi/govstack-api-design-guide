@@ -1,0 +1,46 @@
+asyncapi: 3.0.0
+info:
+  title: Registry events
+  version: 1.0.0
+channels:
+  personCreated:
+    address: org.govstack.reg.v1.person.created
+    messages:
+      evt:
+        $ref: '#/components/messages/PersonCreated'
+operations:
+  onPersonCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/personCreated'
+    messages:
+      - $ref: '#/channels/personCreated/messages/evt'
+components:
+  messages:
+    PersonCreated:
+      payload:
+        type: object
+        required: [specversion, id, source, type, data]
+        properties:
+          specversion:
+            const: "1.0"
+          id:
+            type: string
+          source:
+            type: string
+          type:
+            type: string
+          data:
+            type: object
+            properties:
+              personId:
+                type: string
+      examples:
+        - name: sample
+          payload:
+            specversion: "1.0"
+            id: e-1
+            source: org.govstack.reg
+            type: org.govstack.reg.v1.person.created
+            data:
+              personId: p-1

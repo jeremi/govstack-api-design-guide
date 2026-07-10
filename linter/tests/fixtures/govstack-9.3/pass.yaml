@@ -1,0 +1,14 @@
+openapi: 3.1.0
+info:
+  title: Section 9.3 pass
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        isActive:
+          type: boolean
+        hasConsent:
+          type: boolean

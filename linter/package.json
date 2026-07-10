@@ -1,0 +1,22 @@
+{
+  "name": "govstack-api-lint",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GovStack Spectral ruleset and lint driver for the Cross-BB API Design Guide",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "lint": "node cli.mjs",
+    "test": "node --test \"tests/*.test.mjs\""
+  },
+  "dependencies": {
+    "@stoplight/spectral-cli": "^6.16.1",
+    "@stoplight/spectral-core": "^1.23.0",
+    "@stoplight/spectral-functions": "^1.10.1",
+    "@stoplight/spectral-parsers": "^1.0.5",
+    "@stoplight/spectral-ruleset-bundler": "^1.6.2",
+    "yaml": "^2.8.0"
+  }
+}

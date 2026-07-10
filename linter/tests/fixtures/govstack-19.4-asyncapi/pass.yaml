@@ -1,0 +1,53 @@
+asyncapi: 3.0.0
+info:
+  title: Identity Events
+  version: 1.0.0
+  description: Fixture for govstack-19.4-asyncapi — both acceptLanguage and contentLanguage messages present on the channel.
+  contact:
+    name: GovStack Identity BB
+    url: https://example.org/contact
+servers:
+  production:
+    host: '{brokerHost}'
+    protocol: kafka
+    variables:
+      brokerHost:
+        default: broker.example.org
+channels:
+  userSignedUp:
+    address: org.govstack.identity.v1.user.signedup
+    messages:
+      requestMessage:
+        name: RequestMessage
+        headers:
+          type: object
+          properties:
+            acceptLanguage:
+              type: string
+        payload:
+          type: object
+          properties:
+            userId:
+              type: string
+      responseMessage:
+        name: ResponseMessage
+        headers:
+          type: object
+          properties:
+            contentLanguage:
+              type: string
+        payload:
+          type: object
+          properties:
+            userId:
+              type: string
+operations:
+  receiveUserSignedUp:
+    action: receive
+    summary: Receive user signed-up events.
+    description: Triggered when a user completes registration.
+    channel:
+      $ref: '#/channels/userSignedUp'
+    messages:
+      - $ref: '#/channels/userSignedUp/messages/requestMessage'
+      - $ref: '#/channels/userSignedUp/messages/responseMessage'

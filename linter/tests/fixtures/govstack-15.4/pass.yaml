@@ -1,0 +1,30 @@
+# 15.4 pass: the canonical GET /v1/operations/{operationId} poll endpoint exists.
+openapi: 3.1.0
+info:
+  title: Registry API
+  version: 1.0.0
+paths:
+  /v1/jobs:
+    post:
+      responses:
+        '202':
+          description: accepted
+          headers:
+            Location:
+              schema:
+                type: string
+  /v1/operations/{operationId}:
+    get:
+      parameters:
+        - name: operationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ok
+components:
+  schemas:
+    Operation:
+      type: object

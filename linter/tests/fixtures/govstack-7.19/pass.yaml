@@ -1,0 +1,34 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Fixture for govstack-7.19 — PATCH operation declares a 415 response.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/things/{thingId}:
+    parameters:
+      - name: thingId
+        in: path
+        required: true
+        schema:
+          type: string
+    patch:
+      operationId: updateThing
+      summary: Partially update a thing
+      description: Applies a merge patch to a thing.
+      tags: [things]
+      requestBody:
+        required: true
+        content:
+          application/merge-patch+json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: OK
+        '415':
+          description: Unsupported Media Type
+        '500':
+          description: Internal Server Error

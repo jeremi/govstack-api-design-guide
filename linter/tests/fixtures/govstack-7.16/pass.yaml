@@ -1,0 +1,46 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: Fixture for govstack-7.16 — GET 200 response declares ETag and a 304 response.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/things/{thingId}:
+    parameters:
+      - name: thingId
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: getThing
+      summary: Get a thing
+      description: Returns a single thing.
+      tags: [things]
+      responses:
+        '200':
+          description: OK
+          headers:
+            ETag:
+              description: Opaque validator derived from the resource state.
+              schema:
+                type: string
+        '304':
+          description: Not Modified
+        '500':
+          description: Internal Server Error
+  # Guide 7.16 applies to endpoints that return resources; the operational
+  # liveness probe /health is exempt, so a bare GET with no ETag/304 must NOT
+  # fire 7.16.
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness check
+      description: Unversioned operational liveness probe (guide 5.9).
+      tags: [health]
+      security: []
+      responses:
+        '200':
+          description: OK

@@ -1,0 +1,18 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: A sample API with a camelCase path segment.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /v1/eventSubscriptions:
+    get:
+      operationId: listEventSubscriptions
+      summary: List event subscriptions
+      description: Returns a page of event subscriptions.
+      tags: [Events]
+      responses:
+        "200":
+          description: A page of event subscriptions.
