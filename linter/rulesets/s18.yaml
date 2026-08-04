@@ -46,7 +46,7 @@ rules:
     message: "[18.2][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel
     severity: error
-    formats: [oas3]
+    formats: [oas3_1]
     given: $
     then:
       function: s18-versionMajorConsistency
@@ -63,7 +63,7 @@ rules:
     message: "[18.2][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel
     severity: error
-    formats: [aas2, aas3]
+    formats: [aas3]
     given: $
     then:
       function: s18-versionMajorConsistency

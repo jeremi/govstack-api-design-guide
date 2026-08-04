@@ -12,10 +12,11 @@ functions:
   - schemaPropertyNames
   - s03-asyncOperation
 rules:
-  # 3.1 [M] — the spec MUST declare asyncapi: 3.0.0; earlier versions MUST NOT.
-  # formats [aas2, aas3] so a 2.x document is still told to move to 3.0.0.
+  # 3.1 [M] — the spec MUST declare an AsyncAPI 3 version qualified by this
+  # ruleset. 0.2.0-draft qualifies 3.0.0 and 3.1.0; 2.x and earlier MUST NOT.
+  # formats [aas2, aas3] so a 2.x document is still told to move to AsyncAPI 3.
   govstack-3.1:
-    description: "AsyncAPI version must be exactly 3.0.0 (guide 3.1, [M])."
+    description: "AsyncAPI version must be a qualified AsyncAPI 3 version, 3.0.0 or 3.1.0 (guide 3.1, [M])."
     message: "[3.1][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#31-asyncapi-300-required
     severity: error
@@ -29,7 +30,7 @@ rules:
           required: [asyncapi]
           properties:
             asyncapi:
-              const: "3.0.0"
+              enum: ["3.0.0", "3.1.0"]
 
   # 3.5 [M] — info MUST include title, version, description, contact.
   # Split per the suffix convention: presence here, SemVer below.

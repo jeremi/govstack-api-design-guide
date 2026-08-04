@@ -58,7 +58,7 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-3.1]
-    note: "assert asyncapi == \"3.0.0\""
+    note: "assert asyncapi is a qualified AsyncAPI 3 version (\"3.0.0\" or \"3.1.0\")"
   - id: "3.2"
     class: "M+R"
     status: driver

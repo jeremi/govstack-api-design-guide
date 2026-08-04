@@ -12,7 +12,7 @@ description: "Rules governing the canonical AsyncAPI document: version, location
 
 ## 3.1 AsyncAPI 3.0.0 required <a href="#31-asyncapi-300-required" id="31-asyncapi-300-required"></a>
 
-**[M]** An event-driven BB surface other than HTTP push webhooks **MUST** be documented in AsyncAPI 3.0 and **MUST** declare `asyncapi: 3.0.0`. Earlier versions **MUST NOT** be used for new GovStack event-driven surfaces.
+**[M]** An event-driven BB surface other than HTTP push webhooks **MUST** be documented in AsyncAPI 3 and **MUST** declare an explicit, published AsyncAPI 3 version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.2.0-draft` qualify `asyncapi: 3.0.0` and `asyncapi: 3.1.0`; every rule in this guide applies identically to both. AsyncAPI 2.x and earlier **MUST NOT** be used for new GovStack event-driven surfaces. A later AsyncAPI version **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it.
 
 ## 3.2 One canonical AsyncAPI entrypoint <a href="#32-one-canonical-asyncapi-entrypoint" id="32-one-canonical-asyncapi-entrypoint"></a>
 
