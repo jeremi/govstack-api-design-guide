@@ -48,4 +48,4 @@ This edition supersedes the circulated v0.1 document. It restructures the rulebo
 
 ## v0.1 (DRAFT, 2026-05-31)
 
-Initial draft circulated to the GovStack committee for feedback: 164 numbered rules in sections 1–18 plus the lettered sections 2A and 15A, with three appendices (companion documents, open questions, normative references). Authored by Jeremi Joslin, drawing on the 2026 cross-BB audit of all 15 Building Blocks.
+Initial draft circulated to the GovStack committee for feedback: 164 numbered rules in sections 1–18 plus the lettered sections 2A and 15A, with three appendices (companion documents, open questions, normative references). Authored by Jeremi Joslin, drawing on a review of the published Building Block API specifications.

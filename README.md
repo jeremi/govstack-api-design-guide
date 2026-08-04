@@ -18,7 +18,7 @@ description: "The rules every GovStack Building Block API specification must fol
 
 ## Executive summary
 
-GovStack has standardised a great deal, but never a single API design guide that every Building Block follows. In its absence each BB team made reasonable local choices that, predictably, diverged. A 2026 cross-BB audit mapped that divergence across all 15 BBs and is the evidence base for every rule below: this guide closes documented gaps, not hypothetical ones.
+GovStack has standardised a great deal, but never a single API design guide that every Building Block follows. In its absence each BB team made reasonable local choices that, predictably, diverged. The rules below were drafted against the published Building Block API specifications as they stood in 2026, so this guide closes gaps observed in those specifications, not hypothetical ones.
 
 The GovStack Cross-BB API Design Guide defines the rules every Building Block API specification must follow, so that an integrator combining several BBs into a national digital platform sees consistent shapes for authentication, errors, identifiers, pagination, events, and lifecycle. It governs OpenAPI 3.1 REST surfaces, CloudEvents event payloads, OpenAPI webhooks, and AsyncAPI 3.0 documentation for brokered event channels and event streams. Operational behaviour (token validation, key rotation, audit logging) and ecosystem governance (ratification, enforcement, exception lifecycle) are out of scope.
 

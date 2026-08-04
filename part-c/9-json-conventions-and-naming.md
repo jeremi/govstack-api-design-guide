@@ -5,7 +5,7 @@ description: "Field naming, JSON representation, forward-compatibility, and spec
 # 9. JSON conventions and naming
 
 {% hint style="info" %}
-**Intent.** One naming style ecosystem-wide. The audit found camelCase, PascalCase, snake_case, and fields with literal spaces coexisting within single BBs.
+**Intent.** One naming style ecosystem-wide. Existing BB specifications mix camelCase, PascalCase, snake_case, and fields with literal spaces, sometimes within a single BB.
 
 **Applies to:** Universal.
 {% endhint %}

@@ -23,7 +23,7 @@ rules:
   surface: OpenAPI
   page: part-a/2-openapi-document-standards.md
   anchor: 22-one-canonical-openapi-entrypoint
-  text: "In the absence of `api/index.yaml`, the canonical OpenAPI entrypoint **MUST** be located at `api/openapi.yaml`, in YAML. It **MAY** `$ref`-compose other repository files provided every reference resolves. A BB with a custom canonical path or multiple independently versioned API surfaces **MUST** enumerate every surface in `api/index.yaml` using §4.5. Either discovery form **MUST** identify exactly one canonical artifact per surface. The audit's legacy `api/swagger.yaml` and `api/swagger.json` names are not canonical under this guide."
+  text: "In the absence of `api/index.yaml`, the canonical OpenAPI entrypoint **MUST** be located at `api/openapi.yaml`, in YAML. It **MAY** `$ref`-compose other repository files provided every reference resolves. A BB with a custom canonical path or multiple independently versioned API surfaces **MUST** enumerate every surface in `api/index.yaml` using §4.5. Either discovery form **MUST** identify exactly one canonical artifact per surface. The legacy `api/swagger.yaml` and `api/swagger.json` names still used by some BBs are not canonical under this guide."
   open_questions: []
 - id: "2.3"
   title: "No divergent OpenAPI copies"
@@ -194,7 +194,7 @@ rules:
   surface: Universal
   page: part-a/4-documentation-requirements.md
   anchor: 44-accurate-operation-descriptions
-  text: "Operation `description` **MUST** describe what the operation actually does. (The audit found at least 9 BBs with cross-endpoint description mismatches from copy-paste.)"
+  text: "Operation `description` **MUST** describe what the operation actually does. (Copy-pasted descriptions that document a different endpoint than the one they sit on are a recurring problem in existing BB specifications.)"
   open_questions: []
 - id: "4.5"
   title: "API surface inventory"
@@ -356,7 +356,7 @@ rules:
   surface: OpenAPI
   page: part-b/6-http-methods.md
   anchor: 67-bulk-mutation-needs-explicit-selection
-  text: "A bulk-mutating or bulk-deleting operation (a `PUT`, `PATCH`, or `DELETE` whose target is a collection rather than a single identified resource) **MUST** require at least one explicit selection parameter. An operation that mutates or deletes every record when invoked with no criteria is forbidden. Resources designated append-only (audit logs, event logs, ledgers) **MUST NOT** expose `PUT`, `PATCH`, or `DELETE`. (The 2026 audit found mutable audit logs and filter-less bulk update/delete that could rewrite or destroy an entire registry.)"
+  text: "A bulk-mutating or bulk-deleting operation (a `PUT`, `PATCH`, or `DELETE` whose target is a collection rather than a single identified resource) **MUST** require at least one explicit selection parameter. An operation that mutates or deletes every record when invoked with no criteria is forbidden. Resources designated append-only (audit logs, event logs, ledgers) **MUST NOT** expose `PUT`, `PATCH`, or `DELETE`. (Mutable audit logs and filter-less bulk update or delete operations that could rewrite or destroy an entire registry have both been observed in existing BB specifications.)"
   open_questions: []
 - id: "7.1"
   title: "200 for successful reads"

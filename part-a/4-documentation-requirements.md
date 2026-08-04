@@ -24,7 +24,7 @@ description: "Documentation requirements for schemas, examples, and operation de
 
 ## 4.4 Accurate operation descriptions <a href="#44-accurate-operation-descriptions" id="44-accurate-operation-descriptions"></a>
 
-**[R]** Operation `description` **MUST** describe what the operation actually does. (The audit found at least 9 BBs with cross-endpoint description mismatches from copy-paste.)
+**[R]** Operation `description` **MUST** describe what the operation actually does. (Copy-pasted descriptions that document a different endpoint than the one they sit on are a recurring problem in existing BB specifications.)
 
 ## 4.5 API surface inventory <a href="#45-api-surface-inventory" id="45-api-surface-inventory"></a>
 

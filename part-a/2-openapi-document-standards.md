@@ -16,7 +16,7 @@ description: "Rules governing the canonical OpenAPI document: version, location,
 
 ## 2.2 One canonical OpenAPI entrypoint <a href="#22-one-canonical-openapi-entrypoint" id="22-one-canonical-openapi-entrypoint"></a>
 
-**[M+R]** In the absence of `api/index.yaml`, the canonical OpenAPI entrypoint **MUST** be located at `api/openapi.yaml`, in YAML. It **MAY** `$ref`-compose other repository files provided every reference resolves. A BB with a custom canonical path or multiple independently versioned API surfaces **MUST** enumerate every surface in `api/index.yaml` using [§4.5](../part-a/4-documentation-requirements.md#45-api-surface-inventory). Either discovery form **MUST** identify exactly one canonical artifact per surface. The audit's legacy `api/swagger.yaml` and `api/swagger.json` names are not canonical under this guide.
+**[M+R]** In the absence of `api/index.yaml`, the canonical OpenAPI entrypoint **MUST** be located at `api/openapi.yaml`, in YAML. It **MAY** `$ref`-compose other repository files provided every reference resolves. A BB with a custom canonical path or multiple independently versioned API surfaces **MUST** enumerate every surface in `api/index.yaml` using [§4.5](../part-a/4-documentation-requirements.md#45-api-surface-inventory). Either discovery form **MUST** identify exactly one canonical artifact per surface. The legacy `api/swagger.yaml` and `api/swagger.json` names still used by some BBs are not canonical under this guide.
 
 ## 2.3 No divergent OpenAPI copies <a href="#23-no-divergent-openapi-copies" id="23-no-divergent-openapi-copies"></a>
 
