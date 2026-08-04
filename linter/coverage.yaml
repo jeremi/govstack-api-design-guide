@@ -718,7 +718,7 @@ rules:
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-17.4]
-    note: "every {param} in channel address declared under parameters with schema+description. AsyncAPI 3.0 parameters have no schema field; 'schema documented' proxied by required description."
+    note: "every {param} in channel address declared under parameters with a non-empty description. The rule's enum/examples clauses are [R]: a parameter's value set being closed is not detectable from the document."
   - id: "17.5"
     class: "M+R"
     status: partial-proxy

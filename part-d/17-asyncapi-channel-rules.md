@@ -24,7 +24,7 @@ description: "Rules governing AsyncAPI channel addressing, payload structure, me
 
 ## 17.4 Declared channel parameters <a href="#174-declared-channel-parameters" id="174-declared-channel-parameters"></a>
 
-**[M+R]** Channel parameters **MAY** be used for non-personal routing values such as tenant, ministry, service, region, resource type, or shard. Each parameter **MUST** be declared under the AsyncAPI channel `parameters` object, and its schema and routing semantics **MUST** be documented.
+**[M+R]** Channel parameters **MAY** be used for non-personal routing values such as tenant, ministry, service, region, resource type, or shard. Each parameter **MUST** be declared under the AsyncAPI channel `parameters` object with a non-empty `description` stating its routing semantics. The AsyncAPI 3 Parameter Object carries no `schema` field: a parameter whose permitted values form a closed set **MUST** declare them with `enum`, and one whose values are open **SHOULD** carry `examples`.
 
 ## 17.5 No environment names in addresses <a href="#175-no-environment-names-in-addresses" id="175-no-environment-names-in-addresses"></a>
 

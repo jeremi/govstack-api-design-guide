@@ -1270,11 +1270,11 @@ rules:
 - id: "17.4"
   title: "Declared channel parameters"
   class: M+R
-  strengths: ["MUST", "MAY"]
+  strengths: ["MUST", "SHOULD", "MAY"]
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
   anchor: 174-declared-channel-parameters
-  text: "Channel parameters **MAY** be used for non-personal routing values such as tenant, ministry, service, region, resource type, or shard. Each parameter **MUST** be declared under the AsyncAPI channel `parameters` object, and its schema and routing semantics **MUST** be documented."
+  text: "Channel parameters **MAY** be used for non-personal routing values such as tenant, ministry, service, region, resource type, or shard. Each parameter **MUST** be declared under the AsyncAPI channel `parameters` object with a non-empty `description` stating its routing semantics. The AsyncAPI 3 Parameter Object carries no `schema` field: a parameter whose permitted values form a closed set **MUST** declare them with `enum`, and one whose values are open **SHOULD** carry `examples`."
   open_questions: []
 - id: "17.5"
   title: "No environment names in addresses"

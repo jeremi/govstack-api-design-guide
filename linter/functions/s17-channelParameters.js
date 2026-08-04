@@ -10,10 +10,10 @@ import { isObject, isNonEmptyString } from './lib/util.js';
  *   - the declared parameter documents its routing semantics via a non-empty
  *     `description`.
  *
- * Note on "schema": the AsyncAPI 3.0 Parameter Object has no `schema` field
- * (unlike AsyncAPI 2.x); a parameter's allowed values are expressed with `enum`.
- * The guide's "its schema ... MUST be documented" is therefore proxied here by
- * requiring a non-empty `description`; the value grammar is not further checked.
+ * The AsyncAPI 3 Parameter Object has no `schema` field (unlike AsyncAPI 2.x);
+ * a parameter's allowed values are expressed with `enum`. §17.4's enum and
+ * examples clauses are [R] and are not checked here: whether a parameter's
+ * value set is closed cannot be determined from the document.
  *
  * options: none.
  * @param {unknown} targetVal - a channel object.
@@ -47,7 +47,7 @@ export default function s17ChannelParameters(targetVal, _options, context) {
     const def = params[name];
     if (!isObject(def) || !isNonEmptyString(def.description)) {
       results.push({
-        message: `channel parameter "${name}" must document its schema and routing semantics via a non-empty "description"`,
+        message: `channel parameter "${name}" must state its routing semantics in a non-empty "description"`,
         path: [...base, 'parameters', name],
       });
     }

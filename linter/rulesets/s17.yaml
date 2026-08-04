@@ -53,9 +53,9 @@ rules:
       function: s17-channelIds
 
   # 17.4 [M+R] — every {param} in a channel address MUST be declared under the
-  # channel parameters object and documented (non-empty description). AsyncAPI
-  # 3.0 Parameter Objects have no `schema` field, so the guide's "schema ... MUST
-  # be documented" is proxied by requiring a description (see the function).
+  # channel parameters object and documented (non-empty description). The rule's
+  # enum-for-closed-sets and examples-for-open-values clauses are [R]: whether a
+  # parameter's value set is closed cannot be determined from the document.
   govstack-17.4:
     description: "Every {param} in a channel address must be declared under parameters and documented (guide 17.4, [M+R])."
     message: "[17.4][M+R] {{error}}"
