@@ -5,7 +5,7 @@ The GovStack Spectral ruleset and lint tooling for the
 behind rule [20.2](../part-e/20-conformance-and-validation.md) (draft; the
 formal companion publication is tracked in
 [Appendix A](../appendix/a-companion-documents.md)). It implements guide
-version **0.2.0** (`guide_version` in [coverage.yaml](coverage.yaml)).
+version **0.2.0-draft** (`guide_version` in [coverage.yaml](coverage.yaml)).
 
 ## Quick start
 
@@ -15,23 +15,68 @@ npm ci
 node cli.mjs --repo-root ../..          # lints api/openapi.yaml + api/asyncapi.yaml
 ```
 
+For multiple API surfaces, declare every document explicitly in
+`api/index.yaml`:
+
+```yaml
+version: 1
+apis:
+  - type: openapi
+    path: api/public-openapi.yaml
+  - type: asyncapi
+    path: api/events-asyncapi.yaml
+```
+
+A BB with no API surface must say so explicitly instead of keeping empty spec
+placeholders:
+
+```yaml
+version: 1
+noApi: true
+reason: This BB publishes reusable components only.
+```
+
 The driver runs everything rule 20 asks for:
 
-1. **File-tree checks** — canonical entrypoints `api/openapi.yaml` /
-   `api/asyncapi.yaml`, legacy `swagger.*` names, divergent spec copies
-   (guide 2.2/2.3/3.2/3.3).
-2. **Base validators** (20.1) — `openapi-spec-validator` and
-   `@asyncapi/cli validate`, when installed (`--skip-validators` to skip).
-3. **The Spectral ruleset** — 125 rules across both surfaces (OpenAPI 3.1,
+1. **File-tree checks** — `api/index.yaml` or canonical entrypoints,
+   declaration/type consistency, legacy `swagger.*` names, and undeclared or
+   divergent spec copies (guide 2.2/2.3/3.2/3.3).
+2. **Requirement coverage** — every keyed requirement marker under
+   `spec/**/*.md` must have one disposition in `api/coverage.yaml`, and mapped
+   operation/message identifiers must exist and be unambiguous.
+3. **Base validators** (20.1) — `openapi-spec-validator` and
+   `@asyncapi/cli validate` are mandatory in conformance mode.
+4. **The Spectral ruleset** — rules across both surfaces (OpenAPI 3.1,
    AsyncAPI 3.0). Spectral auto-detects the document type.
-4. **Declared exceptions** (20.3) — findings for rule ids listed in
-   `info.x-govstack-api-guide.exceptions` are reported as suppressed, not
-   dropped. File-tree findings cannot be suppressed.
+5. **Declared exceptions** (20.3) — approved, unexpired exceptions suppress a
+   matching rule only at or below their RFC 6901 JSON Pointer scope. Driver
+   findings cannot be suppressed.
 
 Flags: `--openapi <path>`, `--asyncapi <path>`, `--ruleset <file>`, `--strict`,
-`--fail-on error|warn|info|never` (default `error`), `--format text|json`,
-`--skip-validators`. Exit codes: `0` clean or below threshold, `1` findings at
-or above `--fail-on`, `2` operational error.
+`--mode conformance|advisory`, `--fail-on error|warn|info|never` (default
+`error`), `--format text|json`, and `--skip-validators`. Conformance mode is
+the default and rejects missing or skipped base validators. Advisory mode can
+use `--skip-validators` for local ruleset review. Exit codes: `0` clean or
+below threshold, `1` findings at or above `--fail-on`, `2` operational error.
+
+Every spec must declare the exact guide and ruleset version. Exceptions use
+the following shape. `record` must be HTTPS, dates use `YYYY-MM-DD`, and
+`scope` must be an RFC 6901 JSON Pointer (the empty string means the root).
+
+```yaml
+info:
+  x-govstack-api-guide:
+    version: 0.2.0-draft
+    rulesetVersion: 0.2.0-draft
+    exceptions:
+      - rule: "9.5"
+        scope: /components/schemas/LegacyRecord
+        rationale: Existing clients depend on this wire name.
+        record: https://example.gov/decisions/API-42
+        reviewedBy: GovStack API review group
+        reviewedAt: "2026-07-01"
+        expiresAt: "2026-10-01"
+```
 
 You can also run Spectral directly:
 
@@ -64,20 +109,20 @@ per reference path. Fixing the schema clears all copies.
 
 ## Coverage
 
-[coverage.yaml](coverage.yaml) maps **all 166 guide rules** to their
+[coverage.yaml](coverage.yaml) maps every guide rule to its
 enforcement status — it is the scope contract, machine-checked by
-`tests/coverage.test.mjs` in both directions (set `COVERAGE_ENFORCE=1`):
+`tests/coverage.test.mjs` in both directions:
 
-| status | count | meaning |
-| --- | --- | --- |
-| `implemented` | 58 | fully checked by the listed Spectral rules |
-| `partial-proxy` | 53 | an automated proxy is checked; the note says what is not |
-| `driver` | 7 | checked by `cli.mjs` (file tree, base validators), not Spectral |
-| `strict-only` | 8 | noisy heuristic, ships only in `strict.yaml` |
-| `needs-context` | 7 | needs input that does not exist yet (common components YAML, BB-code registry) |
-| `runtime` | 10 | constrains wire behaviour; test-harness territory |
-| `human` | 20 | review/governance judgment |
-| `informative` | 3 | non-normative guide entries |
+| status | meaning |
+| --- | --- |
+| `implemented` | fully checked by the listed Spectral rules |
+| `partial-proxy` | an automated proxy is checked; the note says what is not |
+| `driver` | checked by `cli.mjs`, not Spectral |
+| `strict-only` | noisy heuristic, ships only in `strict.yaml` |
+| `needs-context` | needs an external registry, common artifact, or comparison input |
+| `runtime` | constrains wire behaviour; test-harness territory |
+| `human` | review or governance judgment |
+| `informative` | non-normative guide entry |
 
 Cross-version breaking-change rules (18.3/18.4) are diff territory, not lint
 territory: run [oasdiff](https://github.com/oasdiff/oasdiff) against the
@@ -101,14 +146,14 @@ in a BB repo:
     fail-on: error
 ```
 
-The template's own workflow (`.github/workflows/api-spec-lint.yml`) skips
-cleanly while `api/` contains only empty placeholders.
+The template's own workflow (`.github/workflows/api-spec-lint.yml`) runs both
+the linter's test suite and the repository conformance check. Empty legacy
+placeholders are not conformant.
 
 ## Development
 
 ```bash
-npm test                                    # fixtures, functions, driver, golden, harness
-COVERAGE_ENFORCE=1 node --test tests/coverage.test.mjs   # coverage drift checks
+npm test   # fixtures, functions, driver, coverage, golden, and harness
 ```
 
 Every Spectral rule has `tests/fixtures/<rule-name>/{fail,pass}.yaml`: the

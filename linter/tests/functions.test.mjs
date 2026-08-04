@@ -16,6 +16,9 @@ import securityCoverage from '../functions/securityCoverage.js';
 import schemaFieldFormat from '../functions/schemaFieldFormat.js';
 import extensionShape from '../functions/extensionShape.js';
 import mediaTypeExpected from '../functions/mediaTypeExpected.js';
+import successResponseSchema from '../functions/s07-successResponseSchema.js';
+import creationResponses from '../functions/s07-creationResponses.js';
+import baselineResponses from '../functions/s07-baselineResponses.js';
 import { walkSchema } from '../functions/lib/schemaWalk.js';
 
 const count = (r) => (r === undefined ? 0 : r.length);
@@ -33,6 +36,9 @@ const ALL = {
   schemaFieldFormat,
   extensionShape,
   mediaTypeExpected,
+  successResponseSchema,
+  creationResponses,
+  baselineResponses,
 };
 test('all functions return undefined on bad input, never throw', () => {
   for (const [name, fn] of Object.entries(ALL)) {
@@ -206,6 +212,39 @@ test('mediaTypeExpected: require / requireOneOf / forbid', () => {
   assert.equal(count(mediaTypeExpected(content, { require: ['application/merge-patch\\+json'] })), 1);
   assert.equal(count(mediaTypeExpected(content, { requireOneOf: ['application/merge-patch\\+json', 'application/json'] })), 0);
   assert.equal(count(mediaTypeExpected({ 'text/plain': {} }, { forbid: ['text/plain'] })), 1);
+});
+
+test('successResponseSchema: declared success content requires schemas', () => {
+  const bad = {
+    paths: {
+      '/v1/things': {
+        get: { responses: { 200: { content: { 'application/json': {} } }, 204: {} } },
+      },
+    },
+  };
+  assert.equal(count(successResponseSchema(bad)), 1);
+  bad.paths['/v1/things'].get.responses[200].content['application/json'].schema = { type: 'object' };
+  assert.equal(count(successResponseSchema(bad)), 0);
+});
+
+test('creationResponses and baselineResponses use visible operation shape', () => {
+  const doc = {
+    security: [{ oauth: [] }],
+    paths: {
+      '/v1/things/{thingId}': {
+        post: {
+          operationId: 'createThing',
+          requestBody: { content: {} },
+          responses: { 200: {} },
+        },
+      },
+    },
+  };
+  assert.equal(count(creationResponses(doc)), 1);
+  assert.equal(count(baselineResponses(doc)), 3);
+  doc.paths['/v1/things/{thingId}'].post.responses = { 201: {}, 400: {}, 401: {}, 404: {} };
+  assert.equal(count(creationResponses(doc)), 0);
+  assert.equal(count(baselineResponses(doc)), 0);
 });
 
 test('walkSchema: visits combinators and is cycle-safe', () => {

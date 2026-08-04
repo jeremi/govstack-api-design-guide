@@ -4,8 +4,8 @@ info:
   version: 1.0.0
 channels:
   personCreated:
-    # 17.2: not reverse-DNS org.govstack.{bb-code}.v{major}.{resource}.{event}.
-    address: com.example.person.created
+    # 17.2: the logical ID is not reverse-DNS, even though the native address is valid.
+    address: registrants/{tenant}/created
     messages:
       evt:
         $ref: '#/components/messages/PersonCreated'

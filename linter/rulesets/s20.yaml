@@ -8,12 +8,13 @@ functionsDir: "../functions"
 functions:
   - extensionShape
 rules:
-  # 20.3 [M] — info.x-govstack-api-guide MUST be an object with a SemVer
-  # `version`. Surface: Universal, so this applies to both OpenAPI and
+  # 20.3 [M] — info.x-govstack-api-guide MUST be an object with exact-target
+  # SemVer `version` and `rulesetVersion`. Exact supported-version matching is
+  # enforced by the repository driver. Surface: Universal, so this applies to both OpenAPI and
   # AsyncAPI canonical files' info block; formats widened like the other
   # info-level rules so it still fires on a wrong-spec-version doc.
   govstack-20.3:
-    description: "info.x-govstack-api-guide must declare a SemVer version (guide 20.3, [M])."
+    description: "info.x-govstack-api-guide must declare SemVer version and rulesetVersion (guide 20.3, [M])."
     message: "[20.3][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version
     severity: error
@@ -24,15 +25,12 @@ rules:
       functionOptions:
         extension: x-govstack-api-guide
         valueType: object
-        requiredKeys: [version]
-        semverKeys: [version]
+        requiredKeys: [version, rulesetVersion]
+        semverKeys: [version, rulesetVersion]
 
-  # 20.3 [M] — the optional `exceptions` list, when present, must be an array
-  # of objects, not bare rule-id strings: the guide text requires each entry
-  # carry both a rule ID and a reference to its approved exception record,
-  # which a plain string cannot. `[OPEN-20-A]` leaves the exact per-entry key
-  # names undefined, so only the "array of objects" shape is enforced here,
-  # not specific field names.
+  # 20.3 [M] — exceptions are reviewable, expiring records. The repository
+  # driver additionally verifies that `rule` is a known guide rule and that the
+  # exception is not expired before it suppresses any finding.
   govstack-20.3-exceptions:
     description: "x-govstack-api-guide.exceptions entries must be objects referencing an approved exception record (guide 20.3, [M])."
     message: "[20.3][M] {{error}}"
@@ -53,4 +51,27 @@ rules:
                   type: array
                   items:
                     type: object
-                    minProperties: 1
+                    additionalProperties: false
+                    required: [rule, scope, rationale, record, reviewedBy, reviewedAt, expiresAt]
+                    properties:
+                      rule:
+                        type: string
+                        pattern: '^\d+\.\d+$'
+                      scope:
+                        type: string
+                        pattern: '^(?:/(?:[^~]|~[01])*)*$'
+                      rationale:
+                        type: string
+                        minLength: 10
+                      record:
+                        type: string
+                        pattern: '^https://'
+                      reviewedBy:
+                        type: string
+                        minLength: 2
+                      reviewedAt:
+                        type: string
+                        pattern: '^\d{4}-\d{2}-\d{2}$'
+                      expiresAt:
+                        type: string
+                        pattern: '^\d{4}-\d{2}-\d{2}$'

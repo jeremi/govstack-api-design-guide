@@ -14,6 +14,21 @@ functions:
   - s09-enumCasing
   - s09-closedEnum
   - s09-bbCode
+aliases:
+  DataSchemas:
+    description: "Reusable and inline OpenAPI body schemas plus AsyncAPI message payload schemas."
+    targets:
+      - formats: [oas3_1]
+        given:
+          - $.components.schemas[*]
+          - "$.paths[*][get,put,post,delete,options,head,patch,trace].requestBody.content[*].schema"
+          - "$.paths[*][get,put,post,delete,options,head,patch,trace].responses[*].content[*].schema"
+          - "$.webhooks[*][get,put,post,delete,options,head,patch,trace].requestBody.content[*].schema"
+          - "$.webhooks[*][get,put,post,delete,options,head,patch,trace].responses[*].content[*].schema"
+      - formats: [aas3]
+        given:
+          - $.components.messages[*].payload
+          - $.channels[*].messages[*].payload
 rules:
   # 9.1 [M+R] — PROXY (bucket B), MUST -> warn. Every response body should offer
   # a JSON media type (application/json or a +json family type, e.g.
@@ -38,8 +53,8 @@ rules:
     message: "[9.2][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#92-camelcase-field-names
     severity: error
-    formats: [oas3_1]
-    given: $.components.schemas[*]
+    formats: [oas3_1, aas3]
+    given: "#DataSchemas"
     then:
       function: schemaPropertyNames
       functionOptions:
@@ -59,15 +74,16 @@ rules:
     then:
       function: s09-booleanStrings
 
-  # 9.4 [M] — PROXY (bucket B), MUST -> warn. Flags OpenAPI 3.0-style
-  # `nullable`, which is not a 3.1 keyword; nullability must be expressed as
-  # `type: [..., "null"]`. Restricted to 3.1 docs (formats: oas3_1). Does NOT
-  # verify that every genuinely-nullable field declares the null type.
+  # 9.4 [M] — the presence of the removed OpenAPI 3.0 `nullable` keyword is a
+  # deterministic violation: `nullable` is not a 3.1 keyword; nullability must
+  # be expressed as `type: [..., "null"]`. Restricted to 3.1 docs (formats:
+  # oas3_1). Does NOT verify that every genuinely-nullable field declares the
+  # null type.
   govstack-9.4:
     description: "Nullability must be explicit via type: [..., null], not 3.0 nullable (guide 9.4, [M], proxy)."
     message: "[9.4][M] Do not use OpenAPI 3.0 'nullable'; express nullability as type: [..., \"null\"] (§9.4)."
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#94-explicit-nullability
-    severity: warn
+    severity: error
     formats: [oas3_1]
     given: $..nullable
     then:
@@ -79,8 +95,8 @@ rules:
     message: "[9.5][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#95-no-spaces-or-non-ascii-names
     severity: error
-    formats: [oas3_1]
-    given: $.components.schemas[*]
+    formats: [oas3_1, aas3]
+    given: "#DataSchemas"
     then:
       function: schemaPropertyNames
       functionOptions:

@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Sample API
   version: 1.0.0
-  description: No X-Request-Id correlation at all.
+  description: Secured operation missing W3C traceparent.
   contact:
     name: Sample BB Team
     url: https://example.org/contact
@@ -13,6 +13,8 @@ paths:
       summary: List items
       description: List items.
       tags: [items]
+      security:
+        - serviceAuth: []
       responses:
         "200":
           description: OK

@@ -7,7 +7,7 @@ info:
     name: Sample BB Team
     url: https://example.org/contact
 servers:
-  - url: https://{gatewayHost}/sample/v1
+  - url: https://{gatewayHost}/sample
     description: Non-production reference deployment.
     variables:
       gatewayHost:

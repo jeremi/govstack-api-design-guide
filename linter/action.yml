@@ -12,13 +12,13 @@ description: "Lints a BB's OpenAPI/AsyncAPI spec against the GovStack Cross-BB A
 
 inputs:
   openapi-path:
-    description: "Path (relative to the repo root) to the OpenAPI spec to lint."
+    description: "Optional explicit OpenAPI path. Leave empty to use api/index.yaml or canonical discovery."
     required: false
-    default: "api/openapi.yaml"
+    default: ""
   asyncapi-path:
-    description: "Path (relative to the repo root) to the AsyncAPI spec to lint."
+    description: "Optional explicit AsyncAPI path. Leave empty to use api/index.yaml or canonical discovery."
     required: false
-    default: "api/asyncapi.yaml"
+    default: ""
   fail-on:
     description: "Minimum severity that fails the check: error, warn, info, or never."
     required: false
@@ -27,6 +27,10 @@ inputs:
     description: "Set to 'true' to also lint against the guide's strict ruleset."
     required: false
     default: "false"
+  mode:
+    description: "conformance blocks missing validators and contract gaps; advisory permits validator-free local review."
+    required: false
+    default: "conformance"
   node-version:
     description: "Node.js version to set up for running the linter."
     required: false
@@ -35,8 +39,8 @@ inputs:
     description: >-
       Set to 'true' to install openapi-spec-validator (Python) and
       @asyncapi/cli (npm) so the driver can additionally run schema
-      validation. Set to 'false' to skip installing them; the driver is then
-      called with --skip-validators.
+      validation. Set to 'false' only with mode=advisory; conformance rejects
+      skipped or unavailable validators.
     required: false
     default: "true"
 
@@ -48,8 +52,7 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
 
-    # openapi-spec-validator is a Python tool the driver shells out to when
-    # present; it's optional, so only install it when asked.
+    # openapi-spec-validator is a Python tool the driver shells out to.
     - name: Set up Python (for openapi-spec-validator)
       if: inputs.install-validators == 'true'
       uses: actions/setup-python@v5
@@ -59,12 +62,12 @@ runs:
     - name: Install openapi-spec-validator
       if: inputs.install-validators == 'true'
       shell: bash
-      run: pip install openapi-spec-validator
+      run: pip install openapi-spec-validator==0.9.0
 
     - name: Install @asyncapi/cli
       if: inputs.install-validators == 'true'
       shell: bash
-      run: npm i -g @asyncapi/cli
+      run: npm i -g @asyncapi/cli@6.0.2
 
     - name: Install linter dependencies
       shell: bash
@@ -76,10 +79,15 @@ runs:
       run: |
         args=(
           --repo-root "$GITHUB_WORKSPACE"
-          --openapi "${{ inputs.openapi-path }}"
-          --asyncapi "${{ inputs.asyncapi-path }}"
+          --mode "${{ inputs.mode }}"
           --fail-on "${{ inputs.fail-on }}"
         )
+        if [[ -n "${{ inputs.openapi-path }}" ]]; then
+          args+=(--openapi "${{ inputs.openapi-path }}")
+        fi
+        if [[ -n "${{ inputs.asyncapi-path }}" ]]; then
+          args+=(--asyncapi "${{ inputs.asyncapi-path }}")
+        fi
         if [[ "${{ inputs.strict }}" == "true" ]]; then
           args+=(--strict)
         fi

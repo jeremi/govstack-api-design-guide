@@ -5,7 +5,7 @@ const ASYNCAPI_VERSION_SEG = /(?:^|\.)v(\d+)(?:\.|$)/;
 
 /**
  * s18-versionMajorConsistency — guide 18.2: a major version increment MUST be
- * reflected in the OpenAPI URL path (`/v2/`) or the AsyncAPI channel address,
+ * reflected in the OpenAPI URL path (`/v2/`) or AsyncAPI logical channel ID,
  * and that reflected major MUST match `info.version`'s major segment.
  *
  * `given` should be `$` (the whole document), so the function can read
@@ -16,7 +16,7 @@ const ASYNCAPI_VERSION_SEG = /(?:^|\.)v(\d+)(?:\.|$)/;
  *     "openapi"  - every `paths` key that already carries a `/v{N}/` prefix
  *                  must have N == info.version's major. Paths with no version
  *                  prefix at all are guide 5.1's concern, not this rule's.
- *     "asyncapi" - every `channels` entry's address must embed a `.v{N}.`
+ *     "asyncapi" - every logical ID (key under `channels`) must embed a `.v{N}.`
  *                  segment matching info.version's major. Does NOT verify the
  *                  text's alternative "equivalent machine-readable version
  *                  field documented in govstack-asyncapi-common.yaml" (that
@@ -59,20 +59,18 @@ export default function versionMajorConsistency(targetVal, options, context) {
   } else if (opts.surface === 'asyncapi') {
     const channels = targetVal.channels;
     if (!isObject(channels)) return;
-    for (const [key, channel] of Object.entries(channels)) {
-      if (!isObject(channel)) continue;
-      const address = typeof channel.address === 'string' ? channel.address : key;
-      const m = address.match(ASYNCAPI_VERSION_SEG);
+    for (const key of Object.keys(channels)) {
+      const m = key.match(ASYNCAPI_VERSION_SEG);
       if (!m) {
         results.push({
-          message: `channel "${key}" address "${address}" does not include a major version segment (e.g. ".v${infoMajor}."); AsyncAPI channels must include the major version in the channel address`,
+          message: `logical channel ID "${key}" does not include a major version segment (e.g. ".v${infoMajor}.")`,
           path: [...base, 'channels', key],
         });
         continue;
       }
       if (m[1] !== infoMajor) {
         results.push({
-          message: `channel "${key}" address "${address}" declares version v${m[1]} but info.version is "${version}" (major ${infoMajor}); the channel's major version must match info.version's major`,
+          message: `logical channel ID "${key}" declares version v${m[1]} but info.version is "${version}" (major ${infoMajor}); the channel ID's major version must match info.version's major`,
           path: [...base, 'channels', key],
         });
       }

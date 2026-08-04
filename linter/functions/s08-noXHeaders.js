@@ -1,12 +1,10 @@
 import { isObject } from './lib/util.js';
 
 const OPS = ['get', 'put', 'post', 'delete', 'patch', 'options', 'head', 'trace'];
-const ALLOWED_X_HEADER = 'x-request-id';
 
 /**
  * s08 noXHeaders — guide 8.5: new custom headers MUST NOT use the `X-`
- * prefix (RFC 6648), except the legacy X-Request-Id correlation header
- * (§8.4, pending [OPEN-7-A]).
+ * prefix (RFC 6648). There is no exception on conforming new surfaces.
  *
  * Scans every header-carrying location in the document: operation and
  * path-item parameters with `in: header`, response `headers` maps (inline
@@ -27,7 +25,7 @@ export default function noXHeaders(targetVal, options, context) {
 
   const flagName = (name, path) => {
     if (typeof name !== 'string') return;
-    if (/^x-/i.test(name) && name.toLowerCase() !== ALLOWED_X_HEADER) {
+    if (/^x-/i.test(name)) {
       results.push({
         message: `header "${name}" uses the reserved "X-" prefix (RFC 6648); rename without the X- prefix`,
         path,

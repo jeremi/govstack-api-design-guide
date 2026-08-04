@@ -28,12 +28,15 @@ const { Spectral, Document } = spectralCore;
 const { bundleAndLoadRuleset } = bundler;
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
+const SUPPORTED_GUIDE_VERSION = '0.2.0-draft';
+const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
 
 // Spectral severity numbers -> our names. 0=error 1=warn 2=info 3=hint.
 const SEVERITY_NAME = ['error', 'warn', 'info', 'hint'];
 const SEVERITY_NUM = { error: 0, warn: 1, info: 2, hint: 3 };
 // --fail-on threshold: a finding fails the run when its severity number <= threshold.
 const FAIL_ON_THRESHOLD = { error: 0, warn: 1, info: 2, never: -1 };
+const MODES = new Set(['conformance', 'advisory']);
 
 // Directories never scanned for divergent spec copies (§2.3/§3.3).
 const DIVERGENT_EXCLUDE_DIRS = new Set([
@@ -42,7 +45,6 @@ const DIVERGENT_EXCLUDE_DIRS = new Set([
   'api-design-guide',
   'test',
   'examples',
-  'spec',
 ]);
 
 // Operational failures (bad flags, unreadable/unparseable spec, ruleset load failure) -> exit 2.
@@ -65,6 +67,7 @@ function parseCliArgs(argv) {
         strict: { type: 'boolean', default: false },
         'fail-on': { type: 'string', default: 'error' },
         format: { type: 'string', default: 'text' },
+        mode: { type: 'string', default: 'conformance' },
         'skip-validators': { type: 'boolean', default: false },
       },
       allowPositionals: false,
@@ -83,6 +86,16 @@ function parseCliArgs(argv) {
   const format = values.format;
   if (format !== 'text' && format !== 'json') {
     throw new OperationalError(`Invalid --format value "${format}" (expected text|json).`);
+  }
+  if (!MODES.has(values.mode)) {
+    throw new OperationalError(
+      `Invalid --mode value "${values.mode}" (expected conformance|advisory).`,
+    );
+  }
+  if (values.mode === 'conformance' && values['skip-validators']) {
+    throw new OperationalError(
+      '--skip-validators is only available with --mode advisory; conformance requires base validators.',
+    );
   }
   return values;
 }
@@ -107,14 +120,8 @@ function resolveConfig(values) {
     ? path.resolve(values['repo-root'])
     : findRepoRoot(process.cwd());
 
-  const openapiPath = path.resolve(
-    repoRoot,
-    values.openapi ?? path.join('api', 'openapi.yaml'),
-  );
-  const asyncapiPath = path.resolve(
-    repoRoot,
-    values.asyncapi ?? path.join('api', 'asyncapi.yaml'),
-  );
+  const openapiPath = values.openapi ? path.resolve(repoRoot, values.openapi) : null;
+  const asyncapiPath = values.asyncapi ? path.resolve(repoRoot, values.asyncapi) : null;
 
   let rulesetPath;
   if (values.ruleset) {
@@ -130,6 +137,7 @@ function resolveConfig(values) {
     rulesetPath,
     failOn: values['fail-on'],
     format: values.format,
+    mode: values.mode,
     skipValidators: values['skip-validators'],
   };
 }
@@ -159,13 +167,205 @@ async function loadSpec(absPath, relDisplay) {
   return { present: true, empty: false, content, data };
 }
 
+function driverFinding(file, code, message, { guideRule = null, severity = 'error' } = {}) {
+  return {
+    file,
+    code,
+    guideRule,
+    severity,
+    message,
+    jsonPath: [],
+    range: null,
+    documentationUrl: null,
+  };
+}
+
+async function readOptionalText(absPath) {
+  try {
+    return { exists: true, content: await fsp.readFile(absPath, 'utf8') };
+  } catch (err) {
+    if (err.code === 'ENOENT') return { exists: false, content: '' };
+    throw new OperationalError(`Cannot read ${absPath}: ${err.message}`);
+  }
+}
+
+function isInside(parent, candidate) {
+  const relative = path.relative(path.resolve(parent), path.resolve(candidate));
+  return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
+
+function parseYamlObject(content, displayPath) {
+  try {
+    const value = YAML.parse(content);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+      throw new Error('document root must be an object');
+    }
+    return value;
+  } catch (err) {
+    throw new OperationalError(`Cannot parse ${displayPath}: ${err.message}`);
+  }
+}
+
+function validateIndexDocument(index, indexRel, repoRoot, findings) {
+  const declarations = [];
+  let noApi = false;
+
+  if (index.version !== 1) {
+    findings.push(driverFinding(indexRel, 'api-index-invalid', 'api/index.yaml must declare version: 1.'));
+  }
+
+  const hasApis = Object.prototype.hasOwnProperty.call(index, 'apis');
+  const hasNoApi = index.noApi === true;
+  if (hasApis === hasNoApi) {
+    findings.push(
+      driverFinding(
+        indexRel,
+        'api-index-invalid',
+        'api/index.yaml must declare exactly one of a non-empty apis list or noApi: true.',
+      ),
+    );
+    return { declarations, noApi };
+  }
+
+  if (hasNoApi) {
+    noApi = true;
+    if (typeof index.reason !== 'string' || index.reason.trim().length < 3) {
+      findings.push(
+        driverFinding(indexRel, 'api-index-invalid', 'noApi: true requires a non-empty reason.'),
+      );
+    }
+    return { declarations, noApi };
+  }
+
+  if (!Array.isArray(index.apis) || index.apis.length === 0) {
+    findings.push(driverFinding(indexRel, 'api-index-invalid', 'apis must be a non-empty array.'));
+    return { declarations, noApi };
+  }
+
+  const seen = new Set();
+  for (const [i, entry] of index.apis.entries()) {
+    const itemPath = `${indexRel}#apis[${i}]`;
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      findings.push(driverFinding(indexRel, 'api-index-invalid', `${itemPath} must be an object.`));
+      continue;
+    }
+    if (entry.type !== 'openapi' && entry.type !== 'asyncapi') {
+      findings.push(
+        driverFinding(indexRel, 'api-index-invalid', `${itemPath}.type must be openapi or asyncapi.`),
+      );
+      continue;
+    }
+    if (typeof entry.path !== 'string' || !entry.path.trim()) {
+      findings.push(driverFinding(indexRel, 'api-index-invalid', `${itemPath}.path is required.`));
+      continue;
+    }
+    const normalized = entry.path.replaceAll('\\', '/').replace(/^\.\//, '');
+    const abs = path.resolve(repoRoot, normalized);
+    if (!isInside(path.join(repoRoot, 'api'), abs) || !/\.ya?ml$/i.test(normalized)) {
+      findings.push(
+        driverFinding(
+          indexRel,
+          'api-index-invalid',
+          `${itemPath}.path must be a repo-relative YAML path inside api/.`,
+        ),
+      );
+      continue;
+    }
+    if (seen.has(abs)) {
+      findings.push(driverFinding(indexRel, 'api-index-invalid', `${itemPath}.path is duplicated.`));
+      continue;
+    }
+    seen.add(abs);
+    declarations.push({ kind: entry.type, abs, declaredBy: indexRel });
+  }
+  return { declarations, noApi };
+}
+
+async function discoverApiDeclarations(cfg, rel, findings, notices) {
+  const explicit = [];
+  if (cfg.openapiPath) explicit.push({ kind: 'openapi', abs: cfg.openapiPath, declaredBy: 'CLI' });
+  if (cfg.asyncapiPath) explicit.push({ kind: 'asyncapi', abs: cfg.asyncapiPath, declaredBy: 'CLI' });
+  if (explicit.length) return { declarations: explicit, noApi: false, indexPresent: false };
+
+  const indexAbs = path.join(cfg.repoRoot, 'api', 'index.yaml');
+  const indexRel = rel(indexAbs);
+  const indexFile = await readOptionalText(indexAbs);
+  if (indexFile.exists) {
+    if (!indexFile.content.trim()) {
+      findings.push(driverFinding(indexRel, 'api-index-invalid', 'api/index.yaml must not be empty.'));
+      return { declarations: [], noApi: false, indexPresent: true };
+    }
+    const index = parseYamlObject(indexFile.content, indexRel);
+    return { ...validateIndexDocument(index, indexRel, cfg.repoRoot, findings), indexPresent: true };
+  }
+
+  const declarations = [];
+  for (const [kind, name] of [
+    ['openapi', 'openapi.yaml'],
+    ['asyncapi', 'asyncapi.yaml'],
+  ]) {
+    const abs = path.join(cfg.repoRoot, 'api', name);
+    const candidate = await readOptionalText(abs);
+    if (candidate.exists) declarations.push({ kind, abs, declaredBy: 'canonical-path' });
+  }
+
+  if (declarations.length === 0) {
+    const message =
+      'No API declaration found. Add api/openapi.yaml or api/asyncapi.yaml, or declare noApi: true with a reason in api/index.yaml.';
+    if (cfg.mode === 'conformance') {
+      findings.push(driverFinding('api/index.yaml', 'api-declaration-required', message));
+    } else {
+      notices.push(message);
+    }
+  }
+  return { declarations, noApi: false, indexPresent: false };
+}
+
+async function loadDeclaredSpecs(declarations, rel, findings) {
+  const specs = [];
+  for (const declaration of declarations) {
+    const relSpec = rel(declaration.abs);
+    const loaded = await loadSpec(declaration.abs, relSpec);
+    if (!loaded.present) {
+      findings.push(
+        driverFinding(
+          relSpec,
+          loaded.empty ? 'declared-spec-empty' : 'declared-spec-missing',
+          `Declared ${declaration.kind} specification ${relSpec} ${loaded.empty ? 'is empty' : 'does not exist'}.`,
+          { guideRule: declaration.kind === 'openapi' ? '2.2' : '3.2' },
+        ),
+      );
+      continue;
+    }
+    const actualKind =
+      typeof loaded.data?.openapi === 'string'
+        ? 'openapi'
+        : typeof loaded.data?.asyncapi === 'string'
+          ? 'asyncapi'
+          : null;
+    if (actualKind !== declaration.kind) {
+      findings.push(
+        driverFinding(
+          relSpec,
+          'declared-spec-type',
+          `Declared ${declaration.kind} specification ${relSpec} does not contain a matching root version field.`,
+          { guideRule: declaration.kind === 'openapi' ? '2.1' : '3.1' },
+        ),
+      );
+      continue;
+    }
+    specs.push({ kind: declaration.kind, abs: declaration.abs, ...loaded });
+  }
+  return specs;
+}
+
 // --------------------------------------------------------------------------------------
 // File-tree checks (§2.2 / §2.3 / §3.2 / §3.3)
 // --------------------------------------------------------------------------------------
 
-// Legacy api/swagger.{yaml,json}. Non-empty -> file-canonical-name finding (§2.2, error).
-// Empty placeholder -> notice only (the bb-template ships empty placeholders).
-async function checkLegacySwagger(repoRoot, rel, findings, notices) {
+// Legacy api/swagger.{yaml,json} artifacts are always non-conformant, including
+// empty placeholders. An explicit no-API declaration lives in api/index.yaml.
+async function checkLegacySwagger(repoRoot, rel, findings) {
   let anyPresent = false;
   for (const name of ['swagger.yaml', 'swagger.json']) {
     const abs = path.join(repoRoot, 'api', name);
@@ -177,25 +377,15 @@ async function checkLegacySwagger(repoRoot, rel, findings, notices) {
       throw new OperationalError(`Cannot read ${rel(abs)}: ${err.message}`);
     }
     anyPresent = true;
-    if (content.trim() === '') {
-      notices.push(
-        `Empty legacy placeholder ${rel(abs)}; no OpenAPI surface to lint. ` +
-          `Rename to api/openapi.yaml when you add one (guide §2.2).`,
-      );
-    } else {
-      findings.push({
-        file: rel(abs),
-        code: 'file-canonical-name',
-        guideRule: '2.2',
-        severity: 'error',
-        message:
-          `Legacy ${rel(abs)} must be renamed/converted to api/openapi.yaml; ` +
-          `the canonical OpenAPI entrypoint is api/openapi.yaml (guide §2.2).`,
-        jsonPath: [],
-        range: null,
-        documentationUrl: null,
-      });
-    }
+    const qualifier = content.trim() === '' ? 'Empty legacy placeholder' : 'Legacy API specification';
+    findings.push(
+      driverFinding(
+        rel(abs),
+        'file-canonical-name',
+        `${qualifier} ${rel(abs)} must be removed or migrated to a declared YAML entrypoint under api/ (guide §2.2).`,
+        { guideRule: '2.2' },
+      ),
+    );
   }
   return anyPresent;
 }
@@ -234,7 +424,7 @@ async function sniffSpec(absPath) {
   }
   if (size > FULL_PARSE_MAX_BYTES) {
     // Too large to parse cheaply; trust the sniff (heuristic).
-    return { kind: 'API' };
+    return { kind: 'API', heuristic: true };
   }
   let data;
   try {
@@ -243,16 +433,31 @@ async function sniffSpec(absPath) {
     return null;
   }
   if (data && typeof data === 'object' && !Array.isArray(data)) {
-    if (typeof data.openapi === 'string') return { kind: 'OpenAPI' };
-    if (typeof data.asyncapi === 'string') return { kind: 'AsyncAPI' };
+    const hasEntries = (value) =>
+      value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length > 0;
+    const hasComponents = hasEntries(data.components);
+    if (typeof data.openapi === 'string') {
+      return {
+        kind: 'OpenAPI',
+        heuristic: false,
+        supportOnly: hasComponents && !hasEntries(data.paths) && !hasEntries(data.webhooks),
+      };
+    }
+    if (typeof data.asyncapi === 'string') {
+      return {
+        kind: 'AsyncAPI',
+        heuristic: false,
+        supportOnly: hasComponents && !hasEntries(data.channels) && !hasEntries(data.operations),
+      };
+    }
   }
   return null;
 }
 
-// Walk the repo tree for spec documents outside api/, excluding the dirs the guide's own
-// fixtures and vendor trees live in. Heuristic; findings say so (§2.3/§3.3, warn).
+// Walk the repo for undeclared top-level specs, including api/ and spec/ assets.
+// Parsed documents are deterministic errors; only oversized sniff-only hits stay advisory.
 async function scanDivergentCopies(repoRoot, skipAbs, rel, findings) {
-  const apiDir = path.resolve(repoRoot, 'api');
+  const commonRoot = path.resolve(repoRoot, 'api', 'common');
 
   async function walk(dir) {
     let entries;
@@ -266,33 +471,378 @@ async function scanDivergentCopies(repoRoot, skipAbs, rel, findings) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         if (DIVERGENT_EXCLUDE_DIRS.has(entry.name)) continue;
-        if (path.resolve(full) === apiDir) continue;
         await walk(full);
       } else if (entry.isFile()) {
         if (!/\.(ya?ml|json)$/i.test(entry.name)) continue;
         if (skipAbs.has(path.resolve(full))) continue;
         const hit = await sniffSpec(full);
         if (hit) {
+          const insideCommonRoot = path.resolve(full).startsWith(`${commonRoot}${path.sep}`);
+          if (insideCommonRoot && hit.supportOnly) continue;
           const guideRule = hit.kind === 'AsyncAPI' ? '3.3' : '2.3';
-          findings.push({
-            file: rel(full),
-            code: 'file-divergent-copies',
-            guideRule,
-            severity: 'warn',
-            message:
-              `Heuristic: ${rel(full)} looks like an ${hit.kind} document outside api/. ` +
-              `Canonical specs must live under api/ with no divergent copies (guide §${guideRule}); ` +
-              `markdown snippets must $ref the canonical file. Verify this is not a stray copy.`,
-            jsonPath: [],
-            range: null,
-            documentationUrl: null,
-          });
+          findings.push(
+            driverFinding(
+              rel(full),
+              'file-undeclared-spec',
+              `${hit.heuristic ? 'Heuristic: ' : ''}${rel(full)} is an undeclared ${hit.kind} document. ` +
+                `Every top-level API specification must be canonical or listed in api/index.yaml (guide §${guideRule}).`,
+              { guideRule, severity: hit.heuristic ? 'warn' : 'error' },
+            ),
+          );
         }
       }
     }
   }
 
   await walk(repoRoot);
+}
+
+// --------------------------------------------------------------------------------------
+// Requirement-to-contract coverage (api/coverage.yaml)
+// --------------------------------------------------------------------------------------
+
+const REQUIREMENT_ID_RE = /^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$/;
+const DISPOSITIONS = new Set(['operation', 'message', 'external', 'not-applicable', 'planned']);
+const REQUIREMENT_MARKER_RE =
+  /^\s*-\s+\*\*([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)\*\*\s+\*\*(REQUIRED|RECOMMENDED|OPTIONAL)\*\*:\s+(.\S|\S.*)$/;
+const LEGACY_REQUIREMENT_RE = /\((REQUIRED|RECOMMENDED|OPTIONAL)\)/;
+
+function nonEmptyStrings(value) {
+  return Array.isArray(value) && value.length > 0 && value.every((item) => typeof item === 'string' && item.trim());
+}
+
+function isHttpUrl(value) {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+function isHttpsUrl(value) {
+  if (typeof value !== 'string') return false;
+  try {
+    return new URL(value).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+async function scanRequirementMarkers(repoRoot, rel, findings) {
+  const specDir = path.join(repoRoot, 'spec');
+  const markers = new Map();
+
+  async function walk(dir) {
+    let entries;
+    try {
+      entries = await fsp.readdir(dir, { withFileTypes: true });
+    } catch (err) {
+      if (err.code === 'ENOENT') return;
+      throw new OperationalError(`Cannot scan requirement sources under ${rel(dir)}: ${err.message}`);
+    }
+    for (const entry of entries) {
+      if (entry.isSymbolicLink()) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(full);
+        continue;
+      }
+      if (!entry.isFile() || !/\.md$/i.test(entry.name)) continue;
+      const lines = (await fsp.readFile(full, 'utf8')).split(/\r?\n/);
+      let fenced = false;
+      for (let i = 0; i < lines.length; i += 1) {
+        const line = lines[i];
+        if (/^\s*```/.test(line)) {
+          fenced = !fenced;
+          continue;
+        }
+        if (fenced) continue;
+        const match = line.match(REQUIREMENT_MARKER_RE);
+        if (match) {
+          const [, id, strength, text] = match;
+          const location = `${rel(full)}:${i + 1}`;
+          if (markers.has(id)) {
+            findings.push(
+              driverFinding(
+                rel(full),
+                'requirements-duplicate-id',
+                `Requirement id "${id}" is duplicated at ${markers.get(id).location} and ${location}.`,
+              ),
+            );
+          } else {
+            markers.set(id, { id, strength, text: text.trim(), location });
+          }
+          continue;
+        }
+        if (LEGACY_REQUIREMENT_RE.test(line)) {
+          findings.push(
+            driverFinding(
+              rel(full),
+              'requirements-unkeyed',
+              `Legacy unkeyed requirement at ${rel(full)}:${i + 1}; use "- **REQ-ID** **REQUIRED|RECOMMENDED|OPTIONAL**: text".`,
+            ),
+          );
+        } else if (/\*\*(REQUIRED|RECOMMENDED|OPTIONAL)\*\*/.test(line)) {
+          findings.push(
+            driverFinding(
+              rel(full),
+              'requirements-invalid-marker',
+              `Invalid requirement marker at ${rel(full)}:${i + 1}.`,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  await walk(specDir);
+  return markers;
+}
+
+function collectReferenceInventory(specs, rel, findings, coverageRel) {
+  const operationOwners = new Map();
+  const messageOwners = new Map();
+
+  const addOwner = (map, id, owner) => {
+    if (typeof id !== 'string' || !id.trim()) return;
+    const owners = map.get(id) ?? new Set();
+    owners.add(owner);
+    map.set(id, owners);
+  };
+
+  for (const spec of specs) {
+    const owner = rel(spec.abs);
+    if (spec.kind === 'openapi') {
+      const paths = spec.data?.paths;
+      if (paths && typeof paths === 'object') {
+        for (const item of Object.values(paths)) {
+          if (!item || typeof item !== 'object') continue;
+          for (const method of HTTP_METHODS) addOwner(operationOwners, item[method]?.operationId, owner);
+        }
+      }
+      const webhooks = spec.data?.webhooks;
+      if (webhooks && typeof webhooks === 'object') {
+        for (const item of Object.values(webhooks)) {
+          if (!item || typeof item !== 'object') continue;
+          for (const method of HTTP_METHODS) addOwner(operationOwners, item[method]?.operationId, owner);
+        }
+      }
+    } else {
+      for (const id of Object.keys(spec.data?.operations ?? {})) addOwner(operationOwners, id, owner);
+      const ownMessages = new Set(Object.keys(spec.data?.components?.messages ?? {}));
+      for (const channel of Object.values(spec.data?.channels ?? {})) {
+        for (const id of Object.keys(channel?.messages ?? {})) ownMessages.add(id);
+      }
+      for (const id of ownMessages) addOwner(messageOwners, id, owner);
+    }
+  }
+
+  for (const [id, owners] of operationOwners) {
+    if (owners.size > 1) {
+      findings.push(
+        driverFinding(
+          coverageRel,
+          'coverage-ambiguous-reference',
+          `Operation identifier "${id}" is declared by multiple surfaces: ${[...owners].join(', ')}.`,
+        ),
+      );
+    }
+  }
+  for (const [id, owners] of messageOwners) {
+    if (owners.size > 1) {
+      findings.push(
+        driverFinding(
+          coverageRel,
+          'coverage-ambiguous-reference',
+          `Message key "${id}" is declared by multiple surfaces: ${[...owners].join(', ')}.`,
+        ),
+      );
+    }
+  }
+
+  return { operationOwners, messageOwners };
+}
+
+async function validateRequirementCoverage(cfg, specs, noApi, rel, findings) {
+  const coverageAbs = path.join(cfg.repoRoot, 'api', 'coverage.yaml');
+  const coverageRel = rel(coverageAbs);
+  const file = await readOptionalText(coverageAbs);
+
+  if (noApi) {
+    if (file.exists) {
+      findings.push(
+        driverFinding(
+          coverageRel,
+          'coverage-without-api',
+          'api/coverage.yaml must be removed when api/index.yaml declares noApi: true.',
+        ),
+      );
+    }
+    return;
+  }
+  if (specs.length === 0) return;
+  const markers = await scanRequirementMarkers(cfg.repoRoot, rel, findings);
+  if (markers.size === 0) {
+    findings.push(
+      driverFinding(
+        'spec/',
+        'requirements-missing',
+        'Declared API surfaces require at least one keyed requirement marker under spec/**/*.md.',
+      ),
+    );
+  }
+  if (!file.exists || !file.content.trim()) {
+    findings.push(
+      driverFinding(
+        coverageRel,
+        file.exists ? 'coverage-empty' : 'coverage-missing',
+        'Declared API surfaces require a non-empty api/coverage.yaml requirement mapping.',
+      ),
+    );
+    return;
+  }
+
+  const doc = parseYamlObject(file.content, coverageRel);
+  const { operationOwners, messageOwners } = collectReferenceInventory(specs, rel, findings, coverageRel);
+  if (doc.version !== 1) {
+    findings.push(driverFinding(coverageRel, 'coverage-invalid', 'api/coverage.yaml must declare version: 1.'));
+  }
+  if (!Array.isArray(doc.requirements) || doc.requirements.length === 0) {
+    findings.push(
+      driverFinding(coverageRel, 'coverage-invalid', 'requirements must be a non-empty array.'),
+    );
+    return;
+  }
+
+  const seenIds = new Set();
+  for (const [i, entry] of doc.requirements.entries()) {
+    const label = `requirements[${i}]`;
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
+      findings.push(driverFinding(coverageRel, 'coverage-invalid', `${label} must be an object.`));
+      continue;
+    }
+    if (typeof entry.id !== 'string' || !REQUIREMENT_ID_RE.test(entry.id)) {
+      findings.push(
+        driverFinding(
+          coverageRel,
+          'coverage-invalid',
+          `${label}.id must match ${REQUIREMENT_ID_RE}.`,
+        ),
+      );
+    } else if (seenIds.has(entry.id)) {
+      findings.push(driverFinding(coverageRel, 'coverage-invalid', `Requirement id "${entry.id}" is duplicated.`));
+    } else {
+      seenIds.add(entry.id);
+      if (!markers.has(entry.id)) {
+        findings.push(
+          driverFinding(
+            coverageRel,
+            'coverage-unknown-requirement',
+            `Coverage id "${entry.id}" has no matching marker under spec/**/*.md.`,
+          ),
+        );
+      }
+    }
+
+    if (!DISPOSITIONS.has(entry.disposition)) {
+      findings.push(
+        driverFinding(
+          coverageRel,
+          'coverage-invalid',
+          `${label}.disposition must be one of ${[...DISPOSITIONS].join(', ')}.`,
+        ),
+      );
+      continue;
+    }
+
+    const allowedKeys = {
+      operation: new Set(['id', 'disposition', 'operations']),
+      message: new Set(['id', 'disposition', 'messages']),
+      external: new Set(['id', 'disposition', 'reference']),
+      'not-applicable': new Set(['id', 'disposition', 'rationale']),
+      planned: new Set(['id', 'disposition', 'issue']),
+    }[entry.disposition];
+    const extras = Object.keys(entry).filter((key) => !allowedKeys.has(key));
+    if (extras.length) {
+      findings.push(
+        driverFinding(
+          coverageRel,
+          'coverage-invalid',
+          `${label} has fields incompatible with ${entry.disposition}: ${extras.join(', ')}.`,
+        ),
+      );
+    }
+
+    if (entry.disposition === 'operation') {
+      if (!nonEmptyStrings(entry.operations)) {
+        findings.push(driverFinding(coverageRel, 'coverage-invalid', `${label}.operations must be a non-empty string array.`));
+      } else {
+        for (const id of new Set(entry.operations)) {
+          if (!operationOwners.has(id)) {
+            findings.push(
+              driverFinding(coverageRel, 'coverage-missing-reference', `${label} references unknown operation "${id}".`),
+            );
+          }
+        }
+      }
+    } else if (entry.disposition === 'message') {
+      if (!nonEmptyStrings(entry.messages)) {
+        findings.push(driverFinding(coverageRel, 'coverage-invalid', `${label}.messages must be a non-empty string array.`));
+      } else {
+        for (const id of new Set(entry.messages)) {
+          if (!messageOwners.has(id)) {
+            findings.push(
+              driverFinding(coverageRel, 'coverage-missing-reference', `${label} references unknown message "${id}".`),
+            );
+          }
+        }
+      }
+    } else if (entry.disposition === 'external') {
+      if (!isHttpUrl(entry.reference)) {
+        findings.push(driverFinding(coverageRel, 'coverage-invalid', `${label}.reference must be an http(s) URL.`));
+      }
+    } else if (entry.disposition === 'not-applicable') {
+      if (typeof entry.rationale !== 'string' || entry.rationale.trim().length < 3) {
+        findings.push(driverFinding(coverageRel, 'coverage-invalid', `${label}.rationale is required.`));
+      }
+      if (markers.get(entry.id)?.strength === 'REQUIRED') {
+        findings.push(
+          driverFinding(
+            coverageRel,
+            'coverage-required-not-applicable',
+            `${label} cannot mark REQUIRED requirement "${entry.id}" as not-applicable.`,
+          ),
+        );
+      }
+    } else {
+      if (!isHttpUrl(entry.issue)) {
+        findings.push(driverFinding(coverageRel, 'coverage-invalid', `${label}.issue must be an http(s) URL.`));
+      } else {
+        findings.push(
+          driverFinding(
+            coverageRel,
+            'coverage-planned',
+            `${label} remains planned and is not implemented: ${entry.issue}.`,
+            { severity: cfg.mode === 'conformance' ? 'error' : 'warn' },
+          ),
+        );
+      }
+    }
+  }
+
+  for (const [id, marker] of markers) {
+    if (!seenIds.has(id)) {
+      findings.push(
+        driverFinding(
+          coverageRel,
+          'coverage-missing-requirement',
+          `Requirement "${id}" at ${marker.location} is not represented in api/coverage.yaml.`,
+        ),
+      );
+    }
+  }
 }
 
 // --------------------------------------------------------------------------------------
@@ -328,9 +878,9 @@ async function validateOpenapi(absPath) {
   const r = await runCommand('openapi-spec-validator', [absPath]);
   if (r.spawnError) {
     return {
-      notice:
+      unavailable:
         `openapi-spec-validator not found; skipping OpenAPI base validation (§20.1). ` +
-        `Install with: pip install openapi-spec-validator`,
+          `Install with: pip install openapi-spec-validator`,
     };
   }
   if (r.code === 0) return { ok: true };
@@ -356,31 +906,32 @@ async function validateAsyncapi(absPath) {
   const global = await runCommand('asyncapi', ['validate', absPath]);
   if (global.spawnError) {
     return {
-      notice:
+      unavailable:
         `AsyncAPI CLI not found; skipping AsyncAPI base validation (§20.1). ` +
-        `Install with: npm i -g @asyncapi/cli`,
+          `Install with: npm i -g @asyncapi/cli`,
     };
   }
   if (global.code === 0) return { ok: true };
   return { finding: `asyncapi validate: ${trimOutput(`${global.stdout}\n${global.stderr}`)}` };
 }
 
-async function runBaseValidator(kind, absPath, rel, findings, notices) {
+async function runBaseValidator(kind, absPath, rel, findings, notices, mode) {
   const result =
     kind === 'openapi' ? await validateOpenapi(absPath) : await validateAsyncapi(absPath);
-  if (result.notice) {
-    notices.push(result.notice);
+  if (result.unavailable) {
+    if (mode === 'conformance') {
+      findings.push(
+        driverFinding(rel(absPath), 'base-validator-unavailable', result.unavailable, {
+          guideRule: '20.1',
+        }),
+      );
+    } else {
+      notices.push(result.unavailable);
+    }
   } else if (result.finding) {
-    findings.push({
-      file: rel(absPath),
-      code: 'base-validator',
-      guideRule: '20.1',
-      severity: 'error',
-      message: result.finding,
-      jsonPath: [],
-      range: null,
-      documentationUrl: null,
-    });
+    findings.push(
+      driverFinding(rel(absPath), 'base-validator', result.finding, { guideRule: '20.1' }),
+    );
   }
 }
 
@@ -427,64 +978,155 @@ function mapSpectralResult(r, relPath) {
 // Guide-version declaration & exceptions (§20.3)
 // --------------------------------------------------------------------------------------
 
-// exceptions entries may be strings ("9.2") or objects ({rule, record}). Normalize to a
-// Map of guideRuleId -> record (string|null).
-function normalizeExceptions(raw) {
-  const map = new Map();
-  if (!Array.isArray(raw)) return map;
-  for (const item of raw) {
-    if (typeof item === 'string') {
-      map.set(item.trim(), null);
-    } else if (item && typeof item === 'object') {
-      const rule = item.rule ?? item.id ?? item.ruleId;
-      if (typeof rule === 'string') {
-        map.set(rule.trim(), item.record ?? item.reference ?? item.ref ?? null);
-      }
-    }
-  }
-  return map;
-}
-
-function majorMinor(version) {
-  const m = String(version).match(/^(\d+)\.(\d+)/);
-  return m ? `${m[1]}.${m[2]}` : null;
-}
-
-let cachedGuideVersion;
-function getGuideVersion() {
-  if (cachedGuideVersion !== undefined) return cachedGuideVersion;
-  cachedGuideVersion = null;
+let cachedGuideCatalogue;
+function getGuideCatalogue() {
+  if (cachedGuideCatalogue) return cachedGuideCatalogue;
   try {
-    const raw = fs.readFileSync(path.join(HERE, 'coverage.yaml'), 'utf8');
-    const parsed = YAML.parse(raw);
-    if (parsed && typeof parsed.guide_version === 'string') {
-      cachedGuideVersion = parsed.guide_version;
-    }
-  } catch {
-    // coverage.yaml missing/unparseable: skip version comparison silently (it ships beside
-    // this CLI; its absence is not a spec error).
-  }
-  return cachedGuideVersion;
-}
-
-// Reads info.x-govstack-api-guide. Returns { exceptions: Map }. Emits a version-mismatch
-// notice when the declared major.minor differs from the linter's target guide version.
-function consumeGuideDeclaration(specData, relPath, notices) {
-  const decl = specData?.info?.['x-govstack-api-guide'];
-  if (!decl || typeof decl !== 'object') return { exceptions: new Map() };
-
-  const guideVersion = getGuideVersion();
-  if (typeof decl.version === 'string' && guideVersion) {
-    const declMM = majorMinor(decl.version);
-    const targetMM = majorMinor(guideVersion);
-    if (declMM && targetMM && declMM !== targetMM) {
-      notices.push(
-        `${relPath} declares guide version ${decl.version}, but this linter targets ` +
-          `${guideVersion} (major.minor mismatch); applied rules may differ (guide §20.3).`,
+    const coverage = YAML.parse(fs.readFileSync(path.join(HERE, 'coverage.yaml'), 'utf8'));
+    const catalogue = YAML.parse(fs.readFileSync(path.join(HERE, '..', 'rules.yaml'), 'utf8'));
+    if (coverage?.guide_version !== SUPPORTED_GUIDE_VERSION) {
+      throw new Error(
+        `coverage.yaml guide_version is ${coverage?.guide_version ?? '(missing)'}, expected ${SUPPORTED_GUIDE_VERSION}`,
       );
     }
+    if (catalogue?.version !== SUPPORTED_GUIDE_VERSION) {
+      throw new Error(
+        `rules.yaml version is ${catalogue?.version ?? '(missing)'}, expected ${SUPPORTED_GUIDE_VERSION}`,
+      );
+    }
+    cachedGuideCatalogue = {
+      version: SUPPORTED_GUIDE_VERSION,
+      ids: new Set((catalogue.rules ?? []).map((rule) => String(rule.id))),
+    };
+    return cachedGuideCatalogue;
+  } catch (err) {
+    throw new OperationalError(`Cannot load the supported guide catalogue: ${err.message}`);
   }
-  return { exceptions: normalizeExceptions(decl.exceptions) };
+}
+
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const EXCEPTION_KEYS = new Set([
+  'rule',
+  'scope',
+  'rationale',
+  'record',
+  'reviewedBy',
+  'reviewedAt',
+  'expiresAt',
+]);
+const JSON_POINTER_RE = /^(?:\/(?:[^~]|~[01])*)*$/;
+
+function decodeJsonPointer(pointer) {
+  if (pointer === '') return [];
+  if (typeof pointer !== 'string' || !JSON_POINTER_RE.test(pointer)) return null;
+  return pointer
+    .slice(1)
+    .split('/')
+    .map((token) => token.replaceAll('~1', '/').replaceAll('~0', '~'));
+}
+
+function applicableException(exceptions, finding) {
+  const candidates = exceptions.get(finding.guideRule) ?? [];
+  const findingPath = Array.isArray(finding.jsonPath) ? finding.jsonPath.map(String) : [];
+  return candidates.find(
+    (candidate) =>
+      candidate.decodedScope.length <= findingPath.length &&
+      candidate.decodedScope.every((token, i) => token === findingPath[i]),
+  );
+}
+
+function consumeGuideDeclaration(specData, relPath, findings, mode) {
+  const { version, ids } = getGuideCatalogue();
+  const decl = specData?.info?.['x-govstack-api-guide'];
+  const severity = mode === 'conformance' ? 'error' : 'warn';
+  if (!decl || typeof decl !== 'object' || Array.isArray(decl)) {
+    findings.push(
+      driverFinding(
+        relPath,
+        'guide-version',
+        `Specification must declare info.x-govstack-api-guide.version and rulesetVersion as ${version}.`,
+        { guideRule: '20.3', severity },
+      ),
+    );
+    return { exceptions: new Map() };
+  }
+  if (decl.version !== version) {
+    findings.push(
+      driverFinding(
+        relPath,
+        'guide-version',
+        `Specification declares guide version ${String(decl.version)}, but this linter supports exactly ${version}.`,
+        { guideRule: '20.3', severity },
+      ),
+    );
+  }
+  if (decl.rulesetVersion !== version) {
+    findings.push(
+      driverFinding(
+        relPath,
+        'guide-version',
+        `Specification declares ruleset version ${String(decl.rulesetVersion)}, but this linter supports exactly ${version}.`,
+        { guideRule: '20.3', severity },
+      ),
+    );
+  }
+
+  const exceptions = new Map();
+  if (decl.exceptions === undefined) return { exceptions };
+  if (!Array.isArray(decl.exceptions)) {
+    findings.push(
+      driverFinding(relPath, 'guide-exception', 'x-govstack-api-guide.exceptions must be an array.', {
+        guideRule: '20.3',
+      }),
+    );
+    return { exceptions };
+  }
+
+  const today = new Date();
+  for (const [i, item] of decl.exceptions.entries()) {
+    const label = `x-govstack-api-guide.exceptions[${i}]`;
+    const problems = [];
+    if (!item || typeof item !== 'object' || Array.isArray(item)) {
+      problems.push('must be an object');
+    } else {
+      const extra = Object.keys(item).filter((key) => !EXCEPTION_KEYS.has(key));
+      if (extra.length) problems.push(`has unsupported fields: ${extra.join(', ')}`);
+      if (typeof item.rule !== 'string' || !ids.has(item.rule)) problems.push('must name a known guide rule');
+      const decodedScope = decodeJsonPointer(item.scope);
+      if (decodedScope === null) problems.push('scope must be a valid RFC 6901 JSON Pointer');
+      if (typeof item.rationale !== 'string' || item.rationale.trim().length < 10) {
+        problems.push('requires a substantive rationale');
+      }
+      if (!isHttpsUrl(item.record)) problems.push('record must be an approved HTTPS link');
+      if (typeof item.reviewedBy !== 'string' || item.reviewedBy.trim().length < 2) {
+        problems.push('reviewedBy is required');
+      }
+      if (!DATE_RE.test(item.reviewedAt ?? '')) problems.push('reviewedAt must be YYYY-MM-DD');
+      if (!DATE_RE.test(item.expiresAt ?? '')) problems.push('expiresAt must be YYYY-MM-DD');
+      if (DATE_RE.test(item.reviewedAt ?? '') && DATE_RE.test(item.expiresAt ?? '')) {
+        const reviewed = new Date(`${item.reviewedAt}T00:00:00Z`);
+        const expires = new Date(`${item.expiresAt}T23:59:59Z`);
+        if (reviewed > expires) problems.push('expiresAt must be after reviewedAt');
+        if (expires < today) problems.push('exception has expired');
+      }
+      const duplicate = (exceptions.get(item.rule) ?? []).some(
+        (candidate) => candidate.scope === item.scope,
+      );
+      if (duplicate) problems.push(`duplicates exception for rule ${item.rule} at scope ${item.scope}`);
+    }
+    if (problems.length) {
+      findings.push(
+        driverFinding(relPath, 'guide-exception', `${label} ${problems.join('; ')}.`, {
+          guideRule: '20.3',
+        }),
+      );
+      continue;
+    }
+    const candidates = exceptions.get(item.rule) ?? [];
+    candidates.push({ ...item, decodedScope: decodeJsonPointer(item.scope) });
+    exceptions.set(item.rule, candidates);
+  }
+  return { exceptions };
 }
 
 // --------------------------------------------------------------------------------------
@@ -525,7 +1167,7 @@ function groupFindings(findings) {
 }
 
 function renderText(report) {
-  const { files, notices, suppressed, summary, failOn, failed, noSpecBanner } = report;
+  const { files, notices, suppressed, summary, failOn, mode, failed, noSpecBanner } = report;
   const lines = [];
 
   if (noSpecBanner) {
@@ -572,12 +1214,12 @@ function renderText(report) {
     `Summary: ${summary.filesLinted} file(s) linted; ${summary.errors} error(s), ` +
       `${summary.warnings} warning(s), ${summary.info} info; ${summary.suppressed} suppressed.`,
   );
-  lines.push(`Result: ${failed ? 'FAIL' : 'PASS'} (fail-on=${failOn}).`);
+  lines.push(`Result: ${failed ? 'FAIL' : 'PASS'} (mode=${mode}, fail-on=${failOn}).`);
   return lines.join('\n');
 }
 
 function renderJson(report) {
-  const { files, notices, summary, failOn, failed } = report;
+  const { files, notices, summary, failOn, mode, failed } = report;
   return JSON.stringify(
     {
       files: files.map((f) => ({
@@ -605,6 +1247,7 @@ function renderJson(report) {
       notices,
       summary,
       failOn,
+      mode,
       failed,
     },
     null,
@@ -627,27 +1270,22 @@ async function main(argv) {
   const findings = [];
   const suppressed = [];
   const notices = [];
+  getGuideCatalogue();
 
-  // --- Load candidate spec files -------------------------------------------------------
-  const openapi = await loadSpec(cfg.openapiPath, rel(cfg.openapiPath));
-  const asyncapi = await loadSpec(cfg.asyncapiPath, rel(cfg.asyncapiPath));
-
-  const specs = [];
-  if (openapi.present) specs.push({ kind: 'openapi', abs: cfg.openapiPath, ...openapi });
-  if (asyncapi.present) specs.push({ kind: 'asyncapi', abs: cfg.asyncapiPath, ...asyncapi });
+  // --- Discover and load declared spec files -------------------------------------------
+  const discovery = await discoverApiDeclarations(cfg, rel, findings, notices);
+  const specs = await loadDeclaredSpecs(discovery.declarations, rel, findings);
 
   // --- File-tree checks (§2.2/§2.3/§3.2/§3.3) -----------------------------------------
-  const legacyPresent = await checkLegacySwagger(cfg.repoRoot, rel, findings, notices);
-  const skipAbs = new Set([cfg.openapiPath, cfg.asyncapiPath].map((p) => path.resolve(p)));
+  await checkLegacySwagger(cfg.repoRoot, rel, findings);
+  const skipAbs = new Set(discovery.declarations.map((entry) => path.resolve(entry.abs)));
+  skipAbs.add(path.join(cfg.repoRoot, 'api', 'swagger.yaml'));
+  skipAbs.add(path.join(cfg.repoRoot, 'api', 'swagger.json'));
   await scanDivergentCopies(cfg.repoRoot, skipAbs, rel, findings);
+  await validateRequirementCoverage(cfg, specs, discovery.noApi, rel, findings);
+  if (discovery.noApi) notices.push('api/index.yaml explicitly declares that this BB exposes no API surface.');
 
   const noSpec = specs.length === 0;
-  if (noSpec && !legacyPresent) {
-    notices.push(
-      `No API spec files found (looked for ${rel(cfg.openapiPath)} and ${rel(cfg.asyncapiPath)}). ` +
-        `An API surface is optional; nothing to lint.`,
-    );
-  }
 
   // --- Spectral (§20.2) + base validators (§20.1) + guide declaration (§20.3) ----------
   let spectral;
@@ -655,11 +1293,11 @@ async function main(argv) {
     const relSpec = rel(spec.abs);
 
     // §20.3: version comparison + exception set for this spec.
-    const { exceptions } = consumeGuideDeclaration(spec.data, relSpec, notices);
+    const { exceptions } = consumeGuideDeclaration(spec.data, relSpec, findings, cfg.mode);
 
     // §20.1 base validator.
     if (!cfg.skipValidators) {
-      await runBaseValidator(spec.kind, spec.abs, rel, findings, notices);
+      await runBaseValidator(spec.kind, spec.abs, rel, findings, notices, cfg.mode);
     }
 
     // §20.2 Spectral.
@@ -678,21 +1316,14 @@ async function main(argv) {
 
     for (const r of results) {
       const finding = mapSpectralResult(r, relSpec);
-      if (finding.guideRule && exceptions.has(finding.guideRule)) {
-        suppressed.push({ ...finding, exceptionRecord: exceptions.get(finding.guideRule) });
+      const exception = finding.guideRule ? applicableException(exceptions, finding) : null;
+      if (exception) {
+        suppressed.push({ ...finding, exceptionRecord: exception.record });
       } else {
         findings.push(finding);
       }
     }
 
-    // §20.1/§20.3: base-validator findings for this spec are also subject to its exceptions.
-    for (let i = findings.length - 1; i >= 0; i -= 1) {
-      const f = findings[i];
-      if (f.code === 'base-validator' && f.file === relSpec && exceptions.has(f.guideRule)) {
-        findings.splice(i, 1);
-        suppressed.push({ ...f, exceptionRecord: exceptions.get(f.guideRule) });
-      }
-    }
   }
 
   // --- Assemble per-file report --------------------------------------------------------
@@ -737,8 +1368,9 @@ async function main(argv) {
       suppressed: suppressed.length,
     },
     failOn: cfg.failOn,
+    mode: cfg.mode,
     failed,
-    noSpecBanner: noSpec && !legacyPresent,
+    noSpecBanner: noSpec && !discovery.noApi,
   };
 
   const output = cfg.format === 'json' ? renderJson(report) : renderText(report);

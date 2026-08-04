@@ -5,8 +5,9 @@
 # bundled ruleset simultaneously and to double as a copy-able reference for BB
 # spec editors.
 #
-# It exercises the guide's event-driven shapes: reverse-DNS channel addresses with
-# the major version (§17.2) and declared+described parameters (§17.4), operations
+# It exercises the guide's event-driven shapes: reverse-DNS logical channel IDs
+# with the major version (§17.2), native addresses, and declared+described
+# parameters (§17.4), operations
 # with send/receive perspective and complete metadata (§3.7/§17.1), CloudEvents
 # JSON payloads (§17.6) with camelCase properties (§3.9) and camelCase headers
 # (§17.8), message examples (§17.20), security covering every operation via the
@@ -35,7 +36,8 @@ info:
     name: CC-BY-4.0
     url: https://creativecommons.org/licenses/by/4.0/
   x-govstack-api-guide:
-    version: 0.2.0
+    version: 0.2.0-draft
+    rulesetVersion: 0.2.0-draft
 servers:
   production:
     host: kafka.example.gov:9092
@@ -45,8 +47,8 @@ servers:
       - $ref: '#/components/securitySchemes/registryOAuth'
 defaultContentType: application/json
 channels:
-  registrantRegistered:
-    address: org.govstack.registry.v1.registrant.registered
+  org.govstack.registry.v1.registrant.registered:
+    address: registry.registrant.registered
     description: Registrant lifecycle events published by the Registry BB.
     servers:
       - $ref: '#/servers/production'
@@ -56,8 +58,8 @@ channels:
     bindings:
       kafka:
         bindingVersion: '0.5.0'
-  registrantCommands:
-    address: org.govstack.registry.v1.registrant.{registrantId}.commands
+  org.govstack.registry.v1.registrant.commands:
+    address: registry.registrant.{registrantId}.commands
     description: Commands directed at a specific registrant, consumed by the Registry BB.
     parameters:
       registrantId:
@@ -70,8 +72,8 @@ channels:
     bindings:
       kafka:
         bindingVersion: '0.5.0'
-  registrantCommandReplies:
-    address: org.govstack.registry.v1.registrant.command-replies
+  org.govstack.registry.v1.registrant.command-replies:
+    address: registry.registrant.command-replies
     description: Replies and rejections for registrant commands.
     servers:
       - $ref: '#/servers/production'
@@ -94,9 +96,9 @@ operations:
     tags:
       - name: Registrants
     channel:
-      $ref: '#/channels/registrantRegistered'
+      $ref: '#/channels/org.govstack.registry.v1.registrant.registered'
     messages:
-      - $ref: '#/channels/registrantRegistered/messages/registered'
+      - $ref: '#/channels/org.govstack.registry.v1.registrant.registered/messages/registered'
     x-govstack-delivery: atLeastOnce
     x-govstack-ordering:
       scope: partitionKey
@@ -116,14 +118,14 @@ operations:
     tags:
       - name: Registrants
     channel:
-      $ref: '#/channels/registrantCommands'
+      $ref: '#/channels/org.govstack.registry.v1.registrant.commands'
     messages:
-      - $ref: '#/channels/registrantCommands/messages/deregister'
+      - $ref: '#/channels/org.govstack.registry.v1.registrant.commands/messages/deregister'
     reply:
       channel:
-        $ref: '#/channels/registrantCommandReplies'
+        $ref: '#/channels/org.govstack.registry.v1.registrant.command-replies'
       messages:
-        - $ref: '#/channels/registrantCommandReplies/messages/result'
+        - $ref: '#/channels/org.govstack.registry.v1.registrant.command-replies/messages/result'
     x-govstack-delivery: atLeastOnce
     x-govstack-ordering:
       scope: partitionKey
@@ -142,9 +144,9 @@ operations:
     tags:
       - name: Registrants
     channel:
-      $ref: '#/channels/registrantCommandReplies'
+      $ref: '#/channels/org.govstack.registry.v1.registrant.command-replies'
     messages:
-      - $ref: '#/channels/registrantCommandReplies/messages/rejected'
+      - $ref: '#/channels/org.govstack.registry.v1.registrant.command-replies/messages/rejected'
     x-govstack-delivery: atLeastOnce
     x-govstack-ordering: none
     x-govstack-redelivery: supported

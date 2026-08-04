@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Sample API
   version: 1.0.0
-  description: No new X- prefixed headers; the legacy X-Request-Id is still allowed.
+  description: No X- prefixed headers; W3C Trace Context is used.
   contact:
     name: Sample BB Team
     url: https://example.org/contact
@@ -14,7 +14,7 @@ paths:
       description: List items.
       tags: [items]
       parameters:
-        - name: X-Request-Id
+        - name: traceparent
           in: header
           required: false
           schema:

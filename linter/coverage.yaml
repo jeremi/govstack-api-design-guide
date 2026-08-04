@@ -1,6 +1,6 @@
 # GovStack API lint coverage manifest: every guide rule and how (or why not) the linter covers it.
 # Hand-maintained alongside the rulesets; machine-checked by tests/coverage.test.mjs against
-# ../rules.yaml (all 166 ids present exactly once) and against the rule names actually defined
+# ../rules.yaml (all 171 ids present exactly once) and against the rule names actually defined
 # in ruleset.yaml / strict.yaml (spectral_rules lists must match, both directions).
 #
 # status values:
@@ -12,13 +12,13 @@
 #   runtime       - constrains wire behaviour; conformance test-harness territory, not a linter's
 #   human         - review/governance judgment; no useful automated check
 #   informative   - non-normative guide entry; nothing to enforce
-guide_version: "0.2.0"
+guide_version: "0.2.0-draft"
 rules:
   - id: "2.1"
     class: "M"
     status: implemented
     spectral_rules: [govstack-2.1]
-    note: "assert openapi == \"3.1.0\""
+    note: "assert openapi is one of the ruleset-qualified patches 3.1.0, 3.1.1, 3.1.2"
   - id: "2.2"
     class: "M+R"
     status: driver
@@ -43,7 +43,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-2.6]
-    note: "proxy: servers non-empty and no localhost/127.0.0.1 URLs; \"meaningful\"/\"not fake\" unverifiable"
+    note: "deterministic: non-empty HTTPS servers, no loopback, no duplicated /vN; meaningful/fake-domain judgment remains review"
   - id: "2.7"
     class: "M+R"
     status: implemented
@@ -119,6 +119,16 @@ rules:
     status: strict-only
     spectral_rules: [govstack-4.4]
     note: "proxy: flag identical descriptions reused across operations"
+  - id: "4.5"
+    class: "M+R"
+    status: driver
+    spectral_rules: []
+    note: "driver validates canonical discovery, api/index.yaml shape and paths, declared document types, explicit noApi reasons, and undeclared spec copies"
+  - id: "4.6"
+    class: "M+R"
+    status: driver
+    spectral_rules: []
+    note: "driver validates exact Markdown marker and coverage ID sets, dispositions and compatible fields, REQUIRED/not-applicable conflicts, operation/message references, uniqueness across surfaces, and planned gaps"
   - id: "5.1"
     class: "M"
     status: implemented
@@ -267,8 +277,8 @@ rules:
   - id: "7.14"
     class: "M"
     status: partial-proxy
-    spectral_rules: [govstack-7.14]
-    note: "proxy: each operation declares >1 code / >=1 non-2xx"
+    spectral_rules: [govstack-7.14, govstack-7.14-creation-status, govstack-7.14-baseline-errors]
+    note: "proxy: >1 code and >=1 non-2xx; creation-like POSTs expose 201/202; visible security/scope/body/parameter/path shape deterministically requires baseline 401/403/400/404"
   - id: "7.15"
     class: "R"
     status: human
@@ -299,6 +309,11 @@ rules:
     status: implemented
     spectral_rules: [govstack-7.20]
     note: "problem+json / operation-status responses declare Cache-Control (no-store)"
+  - id: "7.21"
+    class: "M"
+    status: implemented
+    spectral_rules: [govstack-7.21]
+    note: "declared 2xx response media types carry non-empty schemas; 204 has no content"
   - id: "8.1"
     class: "M+R"
     status: partial-proxy
@@ -318,12 +333,12 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-8.4]
-    note: "proxy: request declares X-Request-Id param + response header"
+    note: "proxy: operations with effective nonempty security declare W3C traceparent request header; runtime propagation remains review/test"
   - id: "8.5"
     class: "M"
     status: implemented
     spectral_rules: [govstack-8.5]
-    note: "no header param/response header uses X- prefix except X-Request-Id"
+    note: "no header parameter or response header uses the X- prefix"
   - id: "8.6"
     class: "R"
     status: strict-only
@@ -332,8 +347,8 @@ rules:
   - id: "8.7"
     class: "M+R"
     status: partial-proxy
-    spectral_rules: [govstack-8.7]
-    note: "proxy: 429 responses declare Retry-After; rate-limited ops declare RateLimit-* headers"
+    spectral_rules: [govstack-8.7, govstack-8.7-no-legacy]
+    note: "proxy: 429 responses declare Retry-After and structured RateLimit; deterministic error forbids legacy RateLimit-Limit/Remaining/Reset"
   - id: "9.1"
     class: "M+R"
     status: partial-proxy
@@ -343,7 +358,7 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-9.2]
-    note: "recursive: all schema property names camelCase. Walks components.schemas only; inline body schemas not walked."
+    note: "recursive: all reusable and inline OpenAPI body fields plus AsyncAPI payload fields use camelCase"
   - id: "9.3"
     class: "M"
     status: partial-proxy
@@ -358,7 +373,7 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-9.5]
-    note: "recursive: property names no spaces/non-ASCII. Walks components.schemas only; inline body schemas not walked."
+    note: "recursive: reusable and inline OpenAPI body fields plus AsyncAPI payload fields contain no spaces/non-ASCII"
   - id: "9.6"
     class: "R"
     status: strict-only
@@ -388,7 +403,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-9.11]
-    note: "in-doc: extract bb-code from error codes/scopes/event types/channels, verify identical + regex ^[a-z][a-z0-9-]{1,30}$; ecosystem-uniqueness needs registry"
+    note: "in-doc: extract bb-code from error codes/scopes/event types/logical channel IDs, verify identical + regex ^[a-z][a-z0-9-]{1,30}$; protocol-native address values are excluded; ecosystem-uniqueness needs registry"
   - id: "10.1"
     class: "M+R"
     status: partial-proxy
@@ -474,6 +489,11 @@ rules:
     status: needs-context
     spectral_rules: []
     note: "common errors $ref'd from govstack-openapi-common.yaml - needs common file"
+  - id: "11.8"
+    class: "M+R"
+    status: needs-context
+    spectral_rules: []
+    note: "shared GovStackAsyncError reference and transport-specific rejection binding require common-artifact resolution; §17.16 has a weaker in-document proxy"
   - id: "12.1"
     class: "M+R"
     status: partial-proxy
@@ -532,8 +552,8 @@ rules:
   - id: "13.2"
     class: "M+R"
     status: partial-proxy
-    spectral_rules: [govstack-13.2]
-    note: "proxy: an openIdConnect/oauth2 scheme exists"
+    spectral_rules: [govstack-13.2, govstack-13.2-forbidden-flows]
+    note: "proxy: an openIdConnect/oauth2 scheme exists; deterministic error forbids password and implicit OAuth2 flows"
   - id: "13.3"
     class: "M+R"
     status: partial-proxy
@@ -554,6 +574,11 @@ rules:
     status: partial-proxy
     spectral_rules: [govstack-13.6]
     note: "proxy: apiKey applied only to operational (/health-like) ops"
+  - id: "13.7"
+    class: "M+R"
+    status: human
+    spectral_rules: []
+    note: "externally reachable surface classification, equivalent AsyncAPI transport protection, and deployment TLS configuration require protocol and runtime review; §2.6 separately checks declared OpenAPI server URLs"
   - id: "14.1"
     class: "M+R"
     status: partial-proxy
@@ -680,10 +705,10 @@ rules:
     spectral_rules: [govstack-17.1]
     note: "every operation has action in {send,receive}"
   - id: "17.2"
-    class: "M"
-    status: implemented
+    class: "M+R"
+    status: partial-proxy
     spectral_rules: [govstack-17.2]
-    note: "channel address keys match org.govstack.{bb-code}.v{major}.{resource}.{event}"
+    note: "logical channel keys match org.govstack.{bb-code}.v{major}.{resource}.{event}; native address syntax and binding mapping require protocol-aware review"
   - id: "17.3"
     class: "R"
     status: strict-only
@@ -783,7 +808,7 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-18.2-openapi, govstack-18.2-asyncapi]
-    note: "OpenAPI paths carry /v{N}; AsyncAPI channels carry major version; consistency with info.version major"
+    note: "OpenAPI paths and AsyncAPI logical channel IDs carry / match info.version major; the alternative common-schema version field is not checked"
   - id: "18.3"
     class: "M+R"
     status: needs-context
@@ -843,4 +868,4 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-20.3, govstack-20.3-exceptions]
-    note: "info.x-govstack-api-guide has version(SemVer) + optional exceptions[]"
+    note: "exact guide/ruleset versions; scoped exceptions require known rule, rationale, HTTPS record, reviewer, review date, and unexpired expiry"

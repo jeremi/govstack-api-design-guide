@@ -9,6 +9,7 @@
 functionsDir: "../functions"
 functions:
   - valuePattern
+  - s17-channelIds
   - schemaPropertyNames
   - extensionShape
   - s17-channelParameters
@@ -38,21 +39,18 @@ rules:
             action:
               enum: [send, receive]
 
-  # 17.2 [M] — channel addresses MUST follow reverse-DNS
-  # org.govstack.{bb-code}.v{major}.{resource}.{event}. bb-code per §9.11
-  # (^[a-z][a-z0-9-]{1,30}$). Variable segments may themselves be {param} tokens.
+  # 17.2 [M+R] — logical channel IDs (the keys under `channels`) MUST follow
+  # reverse-DNS org.govstack.{bb-code}.v{major}.{resource}.{event}. Channel
+  # Object addresses intentionally retain protocol-native destination syntax.
   govstack-17.2:
-    description: "Channel addresses must follow reverse-DNS org.govstack.{bb-code}.v{major}.{resource}.{event} (guide 17.2, [M])."
-    message: "[17.2][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#172-reverse-dns-channel-addresses
+    description: "Logical channel IDs must follow reverse-DNS org.govstack.{bb-code}.v{major}.{resource}.{event} (guide 17.2, [M+R])."
+    message: "[17.2][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses
     severity: error
     formats: [aas3]
-    given: $.channels[*].address
+    given: $.channels
     then:
-      function: valuePattern
-      functionOptions:
-        name: channel address
-        match: '^org\.govstack\.[a-z][a-z0-9-]{1,30}\.v[0-9]+(?:\.(?:[a-z][a-zA-Z0-9-]*|\{[a-zA-Z0-9_]+\})){2,}$'
+      function: s17-channelIds
 
   # 17.4 [M+R] — every {param} in a channel address MUST be declared under the
   # channel parameters object and documented (non-empty description). AsyncAPI

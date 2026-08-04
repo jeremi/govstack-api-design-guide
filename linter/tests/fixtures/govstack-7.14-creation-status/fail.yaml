@@ -1,0 +1,9 @@
+openapi: 3.1.0
+info: { title: Creation status fail, version: 1.0.0 }
+paths:
+  /v1/things:
+    post:
+      operationId: createThing
+      responses:
+        "200": { description: Incorrect creation response. }
+        "500": { description: Error. }

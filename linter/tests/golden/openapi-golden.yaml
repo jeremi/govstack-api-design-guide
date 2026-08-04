@@ -9,8 +9,8 @@
 # params/properties, described schemas (§4.1) with examples (§4.2), the §5.9
 # health endpoint family, RFC 9457 problem+json error envelopes with the
 # GovStack extension fields and field-level errors[] (§11), cursor pagination
-# (§12), a creating POST with Idempotency-Key + Location (§8.3/§14.1), X-Request-Id
-# correlation (§8.4), ETag/If-Match optimistic concurrency (§7.16/§7.17), merge-
+# (§12), a creating POST with Idempotency-Key + Location (§8.3/§14.1), traceparent
+# Trace Context correlation (§8.4), ETag/If-Match optimistic concurrency (§7.16/§7.17), merge-
 # patch PATCH (§6.4), async long-running Operations (§15), CloudEvents webhooks +
 # subscription control plane (§16), OAuth2/OIDC/mTLS security with namespaced
 # scopes (§13), and the §20.3 conformance declaration.
@@ -42,7 +42,8 @@ info:
     name: CC-BY-4.0
     url: https://creativecommons.org/licenses/by/4.0/
   x-govstack-api-guide:
-    version: 0.2.0
+    version: 0.2.0-draft
+    rulesetVersion: 0.2.0-draft
 servers:
   - url: https://api.example.gov/registry
     description: Production gateway for the Registry Building Block.
@@ -72,13 +73,13 @@ paths:
       tags: [Health]
       security: []
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
       responses:
         '200':
           description: The service is alive; body reports the aggregate status.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
           content:
             application/health+json:
               schema:
@@ -99,7 +100,7 @@ paths:
         updated first. Supports simple equality filtering and sorting.
       tags: [Registrants]
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Cursor'
         - $ref: '#/components/parameters/Sort'
@@ -109,8 +110,8 @@ paths:
         '200':
           description: A page of registrants.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
             ETag:
               $ref: '#/components/headers/ETag'
           content:
@@ -123,6 +124,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/ServerError'
     post:
@@ -136,7 +139,7 @@ paths:
         - registryOAuth:
             - bb:registry:registrant:write
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -149,8 +152,8 @@ paths:
         '201':
           description: The registrant was created.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
             Location:
               $ref: '#/components/headers/Location'
             ETag:
@@ -163,6 +166,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
         '500':
@@ -176,13 +181,13 @@ paths:
       description: Returns a single registrant record by its opaque identifier.
       tags: [Registrants]
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
       responses:
         '200':
           description: The registrant record.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
             ETag:
               $ref: '#/components/headers/ETag'
           content:
@@ -191,8 +196,12 @@ paths:
                 $ref: '#/components/schemas/Registrant'
         '304':
           $ref: '#/components/responses/NotModified'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -208,7 +217,7 @@ paths:
         - registryOAuth:
             - bb:registry:registrant:write
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
         - $ref: '#/components/parameters/IfMatch'
       requestBody:
         required: true
@@ -221,8 +230,8 @@ paths:
         '200':
           description: The registrant was replaced.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
             ETag:
               $ref: '#/components/headers/ETag'
           content:
@@ -233,6 +242,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
@@ -252,7 +263,7 @@ paths:
         - registryOAuth:
             - bb:registry:registrant:write
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
         - $ref: '#/components/parameters/IfMatch'
       requestBody:
         required: true
@@ -265,8 +276,8 @@ paths:
         '200':
           description: The registrant was updated.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
             ETag:
               $ref: '#/components/headers/ETag'
           content:
@@ -277,6 +288,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
@@ -296,15 +309,19 @@ paths:
         - registryOAuth:
             - bb:registry:registrant:write
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
       responses:
         '204':
           description: The registrant was deleted; no body is returned.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -319,7 +336,7 @@ paths:
         request body per guide §6.6/§12.9.
       tags: [Registrants]
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
       requestBody:
         required: true
         description: The search filter plus cursor pagination controls.
@@ -331,8 +348,8 @@ paths:
         '200':
           description: A page of matching registrants.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
           content:
             application/json:
               schema:
@@ -341,6 +358,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/ServerError'
   /v1/bulk-imports:
@@ -356,7 +375,7 @@ paths:
         - registryOAuth:
             - bb:registry:registrant:write
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -369,8 +388,8 @@ paths:
         '202':
           description: The import was accepted; poll the Operation for progress.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
             Location:
               $ref: '#/components/headers/Location'
           content:
@@ -381,6 +400,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/ServerError'
   /v1/operations/{operationId}:
@@ -394,13 +415,13 @@ paths:
         for completion, per guide §15.4.
       tags: [Operations]
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
       responses:
         '200':
           description: The current Operation state.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
             ETag:
               $ref: '#/components/headers/ETag'
           content:
@@ -409,8 +430,12 @@ paths:
                 $ref: '#/components/schemas/Operation'
         '304':
           $ref: '#/components/responses/NotModified'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -429,19 +454,23 @@ paths:
         - registryOAuth:
             - bb:registry:registrant:write
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
       responses:
         '200':
           description: Cancellation was requested; the Operation state is returned.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Operation'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '409':
@@ -458,15 +487,15 @@ paths:
         - registryOAuth:
             - bb:registry:subscription:manage
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
         - $ref: '#/components/parameters/PageSize'
         - $ref: '#/components/parameters/Cursor'
       responses:
         '200':
           description: A page of subscriptions.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
             ETag:
               $ref: '#/components/headers/ETag'
           content:
@@ -475,8 +504,12 @@ paths:
                 $ref: '#/components/schemas/SubscriptionPage'
         '304':
           $ref: '#/components/responses/NotModified'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/ServerError'
     post:
@@ -491,7 +524,7 @@ paths:
         - registryOAuth:
             - bb:registry:subscription:manage
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
         - $ref: '#/components/parameters/IdempotencyKey'
       requestBody:
         required: true
@@ -504,8 +537,8 @@ paths:
         '201':
           description: The subscription was created.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
             Location:
               $ref: '#/components/headers/Location'
           content:
@@ -516,6 +549,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/ServerError'
   /v1/subscriptions/{subscriptionId}:
@@ -530,15 +565,19 @@ paths:
         - registryOAuth:
             - bb:registry:subscription:manage
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
       responses:
         '204':
           description: The subscription was deleted; no body is returned.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -557,19 +596,23 @@ paths:
         - registryOAuth:
             - bb:registry:subscription:manage
       parameters:
-        - $ref: '#/components/parameters/XRequestId'
+        - $ref: '#/components/parameters/Traceparent'
       responses:
         '200':
           description: The secret was rotated; the new secret is returned once.
           headers:
-            X-Request-Id:
-              $ref: '#/components/headers/XRequestId'
+            traceparent:
+              $ref: '#/components/headers/Traceparent'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SubscriptionSecret'
+        '400':
+          $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
         '500':
@@ -632,16 +675,16 @@ components:
       type: mutualTLS
       description: Mutual TLS for high-assurance service-to-service calls.
   parameters:
-    XRequestId:
-      name: X-Request-Id
+    Traceparent:
+      name: traceparent
       in: header
       required: false
       description: >-
-        Client-supplied correlation identifier (§8.4). Echoed on the response; if
-        omitted the server generates one.
+        W3C Trace Context traceparent (§8.4). The service propagates a valid
+        received context or creates a valid new context when absent or invalid.
       schema:
         type: string
-        format: uuid
+        pattern: '^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$'
     IdempotencyKey:
       name: Idempotency-Key
       in: header
@@ -740,11 +783,11 @@ components:
         type: string
         pattern: '^[A-Z]{2}$'
   headers:
-    XRequestId:
-      description: Correlation identifier echoed from the request or generated by the server.
+    Traceparent:
+      description: Optional W3C Trace Context returned for diagnostic convenience.
       schema:
         type: string
-        format: uuid
+        pattern: '^[0-9a-f]{2}-[0-9a-f]{32}-[0-9a-f]{16}-[0-9a-f]{2}$'
     Location:
       description: Absolute URL of the created or referenced resource.
       schema:
@@ -782,6 +825,15 @@ components:
       headers:
         WWW-Authenticate:
           $ref: '#/components/headers/WwwAuthenticate'
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: The authenticated principal lacks a required OAuth scope.
+      headers:
         Cache-Control:
           $ref: '#/components/headers/CacheControl'
       content:

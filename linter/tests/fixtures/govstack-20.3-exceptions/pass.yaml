@@ -7,10 +7,21 @@ info:
     name: Sample BB Team
     url: https://example.org/contact
   x-govstack-api-guide:
-    version: 0.2.0
+    version: 0.2.0-draft
+    rulesetVersion: 0.2.0-draft
     exceptions:
-      - rule: RULE-9.3
-        approvedBy: https://example.org/exceptions/RULE-9.3
-      - rule: RULE-11.2
-        approvedBy: https://example.org/exceptions/RULE-11.2
+      - rule: "9.3"
+        scope: /components/schemas/Legacy/properties/enabled
+        rationale: Temporary compatibility exception for a reviewed legacy boolean field.
+        record: https://example.org/exceptions/RULE-9.3
+        reviewedBy: API Working Group
+        reviewedAt: "2026-07-10"
+        expiresAt: "2099-12-31"
+      - rule: "11.2"
+        scope: /paths/~1v1~1things/get/responses/400
+        rationale: Temporary compatibility exception for a reviewed problem-details field.
+        record: https://example.org/exceptions/RULE-11.2
+        reviewedBy: API Working Group
+        reviewedAt: "2026-07-10"
+        expiresAt: "2099-12-31"
 paths: {}

@@ -1,0 +1,10 @@
+openapi: 3.1.0
+info: { title: Success schema fail, version: 1.0.0 }
+paths:
+  /v1/things:
+    get:
+      responses:
+        "200":
+          description: Thing response.
+          content:
+            application/json: {}

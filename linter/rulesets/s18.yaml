@@ -53,13 +53,13 @@ rules:
       functionOptions:
         surface: openapi
 
-  # 18.2 [M] AsyncAPI half — a channel address MUST include the major version,
+  # 18.2 [M] AsyncAPI half — a logical channel ID MUST include the major version,
   # consistent with info.version's major segment. Does NOT verify the text's
   # alternative "equivalent machine-readable version field documented in
   # govstack-asyncapi-common.yaml" (needs the vendored common file, out of
-  # scope here); only the address-embedded convention is checked.
+  # scope here); only the logical-ID convention is checked.
   govstack-18.2-asyncapi:
-    description: "AsyncAPI channel addresses must include a major version matching info.version's major segment (guide 18.2, [M])."
+    description: "AsyncAPI logical channel IDs must include a major version matching info.version's major segment (guide 18.2, [M])."
     message: "[18.2][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel
     severity: error

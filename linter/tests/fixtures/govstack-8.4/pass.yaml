@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Sample API
   version: 1.0.0
-  description: Accepts and echoes X-Request-Id.
+  description: Secured operation accepts W3C traceparent.
   contact:
     name: Sample BB Team
     url: https://example.org/contact
@@ -13,8 +13,10 @@ paths:
       summary: List items
       description: List items.
       tags: [items]
+      security:
+        - serviceAuth: []
       parameters:
-        - name: X-Request-Id
+        - name: traceparent
           in: header
           required: false
           schema:
@@ -22,7 +24,3 @@ paths:
       responses:
         "200":
           description: OK
-          headers:
-            X-Request-Id:
-              schema:
-                type: string

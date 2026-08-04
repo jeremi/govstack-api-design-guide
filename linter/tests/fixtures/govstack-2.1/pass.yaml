@@ -1,8 +1,8 @@
-openapi: 3.1.0
+openapi: 3.1.2
 info:
   title: Sample API
   version: 1.0.0
-  description: A sample API on the correct OpenAPI version.
+  description: A sample API on a qualified OpenAPI 3.1 patch version.
   contact:
     name: Sample BB Team
     url: https://example.org/contact

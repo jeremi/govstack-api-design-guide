@@ -12,7 +12,7 @@ functions:
   - s08-credentialsInUrl
   - s08-headerEcho
   - s08-idempotencyKeyRequired
-  - s08-requestIdCorrelation
+  - s08-traceContext
   - s08-noXHeaders
   - s08-rateLimitHeaders
 rules:
@@ -66,27 +66,23 @@ rules:
     then:
       function: s08-idempotencyKeyRequired
 
-  # 8.4 [M+R] — PROXY (bucket B), notched one step: MUST -> warn.
-  # Verifies: an operation SHOULD declare an X-Request-Id header parameter,
-  # and its 2xx responses MUST declare an X-Request-Id response header.
-  # Does NOT verify: actual runtime echo/generate behaviour, distinctness
-  # from the error-envelope traceId (§11.3, a BB's choice), or path-item-
-  # level (shared) parameters.
+  # 8.4 [M+R] — cross-service proxy: operations with effective nonempty
+  # security declare the W3C traceparent request header. Explicit security: []
+  # operations such as /health are excluded. Runtime propagation is review/test.
   govstack-8.4:
-    description: "requests should carry X-Request-Id and responses must echo it (guide 8.4, [M+R], proxy)."
+    description: "secured cross-service operations should declare traceparent (guide 8.4, [M+R], proxy)."
     message: "[8.4][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#84-x-request-id-correlation
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#84-w3c-trace-context-correlation
     severity: warn
     formats: [oas3_1]
-    given: "$.paths[*][get,put,post,delete,patch]"
+    given: $
     then:
-      function: s08-requestIdCorrelation
+      function: s08-traceContext
 
   # 8.5 [M] — implemented (bucket A). New custom headers (parameters and
-  # response headers) must not use the X- prefix, except the legacy
-  # X-Request-Id (§8.4, pending [OPEN-7-A]).
+  # response headers) must not use the X- prefix.
   govstack-8.5:
-    description: "new custom headers must not use the X- prefix, except X-Request-Id (guide 8.5, [M])."
+    description: "new custom headers must not use the X- prefix (guide 8.5, [M])."
     message: "[8.5][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#85-no-new-x--prefixed-headers
     severity: error
@@ -97,13 +93,12 @@ rules:
 
   # 8.7 [M+R] — PROXY (bucket B), notched one step: MUST -> warn.
   # Verifies: an operation declaring a 429 response (proxy for "rate-limited
-  # by the BB itself") declares Retry-After on 429 and the RateLimit-Limit /
-  # RateLimit-Remaining / RateLimit-Reset trio on its 2xx and 429 responses.
+  # by the BB itself") declares Retry-After on 429 and the structured
+  # RateLimit header on its 2xx and 429 responses.
   # Does NOT verify: that rate limiting is actually implemented, the
-  # delegated-to-gateway prose exception, or the newer structured-field
-  # draft form (only the three-header v0.1 form is checked).
+  # delegated-to-gateway prose exception or the header's runtime value.
   govstack-8.7:
-    description: "rate-limited endpoints must declare RateLimit-* and 429 responses must declare Retry-After (guide 8.7, [M+R], proxy)."
+    description: "rate-limited endpoints must declare structured RateLimit and 429 Retry-After (guide 8.7, [M+R], proxy)."
     message: "[8.7][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#87-rate-limit-headers-declared
     severity: warn
@@ -111,3 +106,17 @@ rules:
     given: "$.paths[*][get,put,post,delete,patch].responses"
     then:
       function: s08-rateLimitHeaders
+
+  # 8.7 [M+R] — deterministic MUST NOT: the legacy three-header variant is
+  # not conformant to the pinned structured-field draft.
+  govstack-8.7-no-legacy:
+    description: "legacy RateLimit-Limit/Remaining/Reset headers are forbidden (guide 8.7, [M+R])."
+    message: "[8.7][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#87-rate-limit-headers-declared
+    severity: error
+    formats: [oas3_1]
+    given: "$.paths[*][get,put,post,delete,patch].responses"
+    then:
+      function: s08-rateLimitHeaders
+      functionOptions:
+        forbidLegacy: true

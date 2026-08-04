@@ -17,27 +17,15 @@ paths:
         "200":
           description: OK
           headers:
-            RateLimit-Limit:
+            RateLimit:
               schema:
-                type: integer
-            RateLimit-Remaining:
-              schema:
-                type: integer
-            RateLimit-Reset:
-              schema:
-                type: integer
+                type: string
         "429":
           description: Too Many Requests
           headers:
             Retry-After:
               schema:
                 type: integer
-            RateLimit-Limit:
+            RateLimit:
               schema:
-                type: integer
-            RateLimit-Remaining:
-              schema:
-                type: integer
-            RateLimit-Reset:
-              schema:
-                type: integer
+                type: string

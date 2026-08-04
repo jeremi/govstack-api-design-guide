@@ -48,6 +48,25 @@ rules:
         types: [openIdConnect, oauth2]
         label: "OAuth 2.0 / OpenID Connect"
 
+  # 13.2 [M+R] — deterministic security baseline: resource-owner password and
+  # implicit grants MUST NOT be declared.
+  govstack-13.2-forbidden-flows:
+    description: "OAuth2 schemes must not declare password or implicit flows (guide 13.2, [M+R])."
+    message: "[13.2][M+R] OAuth2 password and implicit flows are forbidden."
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations
+    severity: error
+    formats: [oas3_1]
+    given: $.components.securitySchemes[*].flows
+    then:
+      function: schema
+      functionOptions:
+        schema:
+          type: object
+          not:
+            anyOf:
+              - required: [password]
+              - required: [implicit]
+
   # 13.3 [M+R] — PROXY (bucket B), MUST notched to warn.
   # Verifies: a service-to-service scheme is declared (mutualTLS, or oauth2 with
   # a clientCredentials flow).

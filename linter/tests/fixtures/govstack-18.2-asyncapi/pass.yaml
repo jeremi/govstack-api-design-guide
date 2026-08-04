@@ -1,4 +1,4 @@
-# Fixture for govstack-18.2-asyncapi — channel address major (v2) matches
+# Fixture for govstack-18.2-asyncapi — logical channel ID major (v2) matches
 # info.version's major (2).
 asyncapi: 3.0.0
 info:
@@ -16,8 +16,8 @@ servers:
       brokerHost:
         default: broker.example.org
 channels:
-  userSignedUp:
-    address: org.govstack.identity.v2.user.signedup
+  org.govstack.identity.v2.user.signedup:
+    address: users/signed-up
     messages:
       userSignedUp:
         $ref: '#/components/messages/UserSignedUp'
@@ -29,9 +29,9 @@ operations:
     tags:
       - name: user
     channel:
-      $ref: '#/channels/userSignedUp'
+      $ref: '#/channels/org.govstack.identity.v2.user.signedup'
     messages:
-      - $ref: '#/channels/userSignedUp/messages/userSignedUp'
+      - $ref: '#/channels/org.govstack.identity.v2.user.signedup/messages/userSignedUp'
 components:
   messages:
     UserSignedUp:
