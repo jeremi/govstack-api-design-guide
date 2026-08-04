@@ -20,6 +20,12 @@ import { isObject, asArray } from './lib/util.js';
  *   oauthFlows {string[]} if present, a `type: oauth2` scheme also matches when
  *                         it declares at least one of these flow names under
  *                         `flows` (e.g. ["clientCredentials"]).
+ *   httpBearerFormats {string[]} if present, a `type: http` scheme with
+ *                         `scheme: bearer` also matches when its `bearerFormat`
+ *                         is one of these (e.g. ["JWT"]). This is the §13.2
+ *                         resource-server case: an API that validates tokens
+ *                         from an authorization server it does not own would
+ *                         misdescribe itself by declaring an oauth2 flow.
  *   label      {string}   human label used in the message.
  *
  * @param {unknown} targetVal - the document root.
@@ -33,6 +39,7 @@ export default function schemeExists(targetVal, options, context) {
   const base = context && Array.isArray(context.path) ? context.path : [];
   const types = asArray(opts.types).filter((t) => typeof t === 'string');
   const oauthFlows = asArray(opts.oauthFlows).filter((f) => typeof f === 'string');
+  const httpBearerFormats = asArray(opts.httpBearerFormats).filter((f) => typeof f === 'string');
   const label = typeof opts.label === 'string' ? opts.label : 'a matching';
 
   const components = isObject(targetVal.components) ? targetVal.components : {};
@@ -44,6 +51,9 @@ export default function schemeExists(targetVal, options, context) {
     if (typeof t === 'string' && types.includes(t)) return true;
     if (t === 'oauth2' && oauthFlows.length && isObject(scheme.flows)) {
       return oauthFlows.some((f) => isObject(scheme.flows[f]));
+    }
+    if (t === 'http' && httpBearerFormats.length && scheme.scheme === 'bearer') {
+      return httpBearerFormats.includes(scheme.bearerFormat);
     }
     return false;
   };

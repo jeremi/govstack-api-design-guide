@@ -12,7 +12,7 @@ description: "Mandatory pagination for collections, cursor and offset envelopes,
 
 ## 12.1 Collections must paginate <a href="#121-collections-must-paginate" id="121-collections-must-paginate"></a>
 
-**[M+R]** Endpoints returning collections **MUST** paginate. Unbounded responses are forbidden.
+**[M+R]** Endpoints returning collections **MUST** paginate. Unbounded responses are forbidden. A collection whose size is fixed by the specification itself **MAY** be returned unpaginated, provided the bound is declared in the schema with `maxItems`; an undeclared expectation that a collection stays small does not qualify, because an integrator cannot see it and a linter cannot check it. The standard unversioned endpoints of [§5.10](../part-b/5-url-structure-and-versioning.md#510-standard-unversioned-endpoints) are not collections and this section does not apply to them.
 
 ## 12.2 Cursor pagination by default <a href="#122-cursor-pagination-by-default" id="122-cursor-pagination-by-default"></a>
 

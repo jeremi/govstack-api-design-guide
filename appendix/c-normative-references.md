@@ -19,6 +19,7 @@ description: "Normative references cited throughout the guide."
 - IETF RFC 7797, *JSON Web Signature (JWS) Unencoded Payload Option* (explicitly excluded by the `0.2.0-draft` event-signature profile; cited by [§16.8](../part-d/16-cloudevents-and-webhooks.md#168-pinned-signature-profile))
 - IETF RFC 8785, *JSON Canonicalization Scheme (JCS)* (cited by [§16.8](../part-d/16-cloudevents-and-webhooks.md#168-pinned-signature-profile))
 - IETF RFC 8594, *The Sunset HTTP Header Field* (cited by [§18.5](../part-d/18-compatibility-and-lifecycle.md#185-deprecation-and-sunset-headers))
+- IETF RFC 8615, *Well-Known Uniform Resource Identifiers (URIs)* (cited by [§5.10](../part-b/5-url-structure-and-versioning.md#510-standard-unversioned-endpoints))
 - IETF RFC 8705, *OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens*
 - IETF RFC 9110, *HTTP Semantics* (obsoletes RFC 7231)
 - IETF RFC 9396, *OAuth 2.0 Rich Authorization Requests*
@@ -29,7 +30,6 @@ description: "Normative references cited throughout the guide."
 - IETF RFC 9745, *The Deprecation HTTP Response Header Field* (cited by [§18.5](../part-d/18-compatibility-and-lifecycle.md#185-deprecation-and-sunset-headers))
 - IETF draft `draft-ietf-httpapi-ratelimit-headers-11`, *RateLimit Header Fields for HTTP* (pinned work-in-progress revision; cited by [§8.7](../part-b/8-headers.md#87-rate-limit-headers-declared))
 - IETF draft `draft-ietf-httpapi-idempotency-key-header-07`, *The Idempotency-Key HTTP Header Field* (pinned expired Internet-Draft revision used as a GovStack convention; cited by [§14.1](../part-d/14-idempotency.md#141-idempotency-key-on-non-idempotent-posts))
-- IETF draft `draft-inadarei-api-health-check`, *Health Check Response Format for HTTP APIs* (expired Internet-Draft, never an RFC; cited by [§5.9](../part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint))
 - OpenAPI Specification 3.1 patch series; guide/ruleset `0.2.0-draft` qualify 3.1.0, 3.1.1, and 3.1.2
 - AsyncAPI Specification 3.0 (cited by [§1.2](../1-introduction.md#12-scope), [§3](../part-a/3-asyncapi-document-standards.md), [§16.1](../part-d/16-cloudevents-and-webhooks.md#161-event-surfaces-documented), [§17](../part-d/17-asyncapi-channel-rules.md), [§20](../part-e/20-conformance-and-validation.md))
 - OpenID Connect Core 1.0
@@ -40,6 +40,7 @@ description: "Normative references cited throughout the guide."
 - Google AIP-158, *Pagination* (cited by [§12.2](../part-c/12-pagination-filtering-sorting.md#122-cursor-pagination-by-default))
 - GraphQL Cursor Connections Specification (cited by [§12.3](../part-c/12-pagination-filtering-sorting.md#123-cursor-pagination-envelope))
 - gRPC, *google.rpc.Code* canonical error codes (cited by [§11.7](../part-c/11-errors.md#117-common-error-catalogue))
+- IANA registries whose registered values keep their own casing under [§9.7](../part-c/9-json-conventions-and-naming.md#97-screaming-snake-case-enum-values): *JSON Web Signature and Encryption Algorithms*, *JSON Web Key Elliptic Curve*, *COSE Algorithms*, and *Media Types*
 - ISO 3166-1 alpha-2 (country codes)
 - ISO 4217 (currency codes)
 - BCP 47 (language tags)

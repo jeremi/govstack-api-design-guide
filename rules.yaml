@@ -5,7 +5,7 @@
 # The same `#anchor` fragment resolves on both GitHub and GitBook.
 guide: GovStack Cross-BB API Design Guide
 version: 0.2.0-draft
-rule_count: 172
+rule_count: 173
 rules:
 - id: "2.1"
   title: "OpenAPI 3.1 required"
@@ -221,7 +221,7 @@ rules:
   surface: OpenAPI
   page: part-b/5-url-structure-and-versioning.md
   anchor: 51-major-version-in-the-path
-  text: "Major version **MUST** appear in the URL path as `/v{N}/...` (e.g., `/v1/policies`). The unversioned operational endpoints of §5.9 (`/health`, and `/ready` where exposed) are the only exception. `[OPEN-4-A]`"
+  text: "Major version **MUST** appear in the URL path as `/v{N}/...` (e.g., `/v1/policies`). The standard unversioned endpoints of §5.10 are the only exception. `[OPEN-4-A]`"
   open_questions: ["OPEN-4-A"]
 - id: "5.2"
   title: "Plural noun resources"
@@ -239,7 +239,7 @@ rules:
   surface: OpenAPI
   page: part-b/5-url-structure-and-versioning.md
   anchor: 53-kebab-case-path-segments
-  text: "Multi-word path segments **MUST** use kebab-case (`/event-subscriptions`)."
+  text: "Multi-word path segments **MUST** use kebab-case (`/event-subscriptions`). The standard unversioned endpoints of §5.10 keep the segment spelling their own definition gives them, including the `.well-known` prefix that RFC 8615 fixes."
   open_questions: []
 - id: "5.4"
   title: "Shallow path nesting"
@@ -289,12 +289,21 @@ rules:
 - id: "5.9"
   title: "Unversioned health endpoint"
   class: M+R
-  strengths: ["MUST NOT", "MUST", "MAY"]
+  strengths: ["MUST NOT", "MUST", "SHOULD", "MAY"]
   surface: OpenAPI
   page: part-b/5-url-structure-and-versioning.md
   anchor: 59-unversioned-health-endpoint
-  text: "Each BB **MUST** expose an unversioned operational liveness endpoint at `/health` using media type `application/health+json` with `status` values `\"pass\" | \"fail\" | \"warn\"`. This shape is modelled on `draft-inadarei-api-health-check`, an expired individual Internet-Draft (never adopted as an RFC); GovStack adopts it as a local convention, not as a live IETF standard. A separate `/ready` endpoint **MAY** be exposed for readiness probes. These endpoints **MUST NOT** carry citizen authentication and **MUST NOT** expose system-internal detail. `[OPEN-4-B]`"
-  open_questions: ["OPEN-4-B"]
+  text: "Each BB **MUST** expose an unversioned operational liveness endpoint at `/health`. Health is carried by the HTTP status: `200` when the service is healthy and able to accept work, `503` when it is temporarily unable to. A consumer **MUST** determine health from the status code; response body fields are informational and **MUST NOT** be required for that determination. The `200` response **MUST** use media type `application/json` and **SHOULD** be minimal; the `503` is an error response and carries the problem envelope of §11.1 like any other. The endpoint **MUST** be cheap and bounded, **MUST NOT** carry citizen authentication, and **MUST NOT** expose system-internal detail such as hostnames, versions, stack traces, or dependency topology. It **MUST NOT** probe an external dependency unless that dependency genuinely determines whether the service can accept work. A separate `/ready` endpoint **MAY** be exposed where readiness and liveness semantics differ, under the same rules."
+  open_questions: []
+- id: "5.10"
+  title: "Standard unversioned endpoints"
+  class: M
+  strengths: ["MUST NOT", "MAY"]
+  surface: OpenAPI
+  page: part-b/5-url-structure-and-versioning.md
+  anchor: 510-standard-unversioned-endpoints
+  text: "A closed set of endpoints sits outside the versioned business surface, because their location or spelling is fixed by something other than this guide. That set is: well-known URIs under `/.well-known/`, whose location RFC 8615 roots at that exact prefix; the operational endpoints of §5.9; and a runtime specification-discovery endpoint where a BB serves one, conventionally `/openapi.json` or `/asyncapi.json`. These endpoints are exempt from §5.1, §5.3, and the collection rules of §12, and they satisfy §13.1 with an explicit empty security requirement (`security: []`) where they are unauthenticated. No other endpoint **MAY** claim this exemption, and a BB **MUST NOT** place a business resource under one of these paths in order to escape the rules above: they are read-only and **MUST NOT** declare `POST`, `PUT`, `PATCH`, or `DELETE`."
+  open_questions: []
 - id: "6.1"
   title: "GET is safe and idempotent"
   class: M+R
@@ -671,7 +680,7 @@ rules:
   surface: Universal
   page: part-c/9-json-conventions-and-naming.md
   anchor: 97-screaming-snake-case-enum-values
-  text: "Enum values that name a BB-defined state or category **MUST** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`). Values whose form is fixed elsewhere keep the casing their own definition gives them and **MUST NOT** be re-cased to satisfy this rule: identifiers built to a shape this guide defines (error codes per §11.5, event types per §16.3, sort keys per §12.7), the GovStack `x-govstack-*` extension vocabularies (§17.11, §17.13), codes drawn from an external standard (BCP 47 language tags per §10.9, ISO 4217 currency codes per §10.10), and the health-status vocabulary of §5.9."
+  text: "Enum values that name a BB-defined state or category **MUST** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`). Values whose form is fixed elsewhere keep the casing their own definition gives them and **MUST NOT** be re-cased to satisfy this rule: identifiers built to a shape this guide defines (error codes per §11.5, event types per §16.3, sort keys per §12.7), the GovStack `x-govstack-*` extension vocabularies (§17.11, §17.13), codes drawn from an external standard (BCP 47 language tags per §10.9, ISO 4217 currency codes per §10.10), and values registered in an IANA registry, including JOSE and COSE algorithm and curve names such as `ES256`, `EdDSA`, and `Ed25519`, and media types. The distinction is ownership, not appearance: a value this BB defines is re-cased to satisfy this rule, a value defined elsewhere is reproduced exactly as its own registry or specification spells it."
   open_questions: []
 - id: "9.8"
   title: "Forward-compatible schemas"
@@ -883,11 +892,11 @@ rules:
 - id: "12.1"
   title: "Collections must paginate"
   class: M+R
-  strengths: ["MUST"]
+  strengths: ["MUST", "MAY"]
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 121-collections-must-paginate
-  text: "Endpoints returning collections **MUST** paginate. Unbounded responses are forbidden."
+  text: "Endpoints returning collections **MUST** paginate. Unbounded responses are forbidden. A collection whose size is fixed by the specification itself **MAY** be returned unpaginated, provided the bound is declared in the schema with `maxItems`; an undeclared expectation that a collection stays small does not qualify, because an integrator cannot see it and a linter cannot check it. The standard unversioned endpoints of §5.10 are not collections and this section does not apply to them."
   open_questions: []
 - id: "12.2"
   title: "Cursor pagination by default"
@@ -977,7 +986,7 @@ rules:
   surface: Universal
   page: part-d/13-authentication-and-authorisation.md
   anchor: 131-default-security-on-every-operation
-  text: "Each BB API spec **MUST** declare a security scheme block and apply it by default to every operation. On the OpenAPI surface this is a root-level `security` requirement referencing schemes under `components.securitySchemes`. AsyncAPI 3.0 has no root-level `security`: schemes are declared under `components.securitySchemes` and applied on the `servers` and `operations` objects, which together **MUST** cover every operation. Per-operation overrides **MUST** be explicit."
+  text: "Each BB API spec **MUST** declare a security scheme block and apply it by default to every operation. On the OpenAPI surface this is a root-level `security` requirement referencing schemes under `components.securitySchemes`. AsyncAPI 3.0 has no root-level `security`: schemes are declared under `components.securitySchemes` and applied on the `servers` and `operations` objects, which together **MUST** cover every operation. Per-operation overrides **MUST** be explicit. The standard unversioned endpoints of §5.10 satisfy this rule with an explicit empty security requirement (`security: []`) where they are unauthenticated: they are exempt from carrying a scheme, not from declaring what they carry."
   open_questions: []
 - id: "13.2"
   title: "OAuth and OIDC for citizen operations"
@@ -986,7 +995,7 @@ rules:
   surface: Universal
   page: part-d/13-authentication-and-authorisation.md
   anchor: 132-oauth-and-oidc-for-citizen-operations
-  text: "Citizen-facing protected operations **MUST** declare OAuth 2.0 authorization backed by an OpenID Connect provider. On OpenAPI this is either `type: openIdConnect` with `openIdConnectUrl`, or `type: oauth2` with an `authorizationCode` flow. The security-scheme description **MUST** state that the API accepts access tokens and **MUST NOT** treat an OIDC ID Token as an API access token. Authorization-code clients **MUST** use PKCE with `S256` as required by the RFC 9700 security baseline; the resource-owner password grant **MUST NOT** be declared, and the implicit grant **MUST NOT** be declared for a new surface. Reference specifications not tied to a live provider **MAY** use a reserved documentation-domain discovery URL; adopter-specific discovery, authorisation, token, and JWKS endpoints belong in implementation profiles."
+  text: "Citizen-facing protected operations **MUST** declare OAuth 2.0 authorization backed by an OpenID Connect provider. On OpenAPI this is either `type: openIdConnect` with `openIdConnectUrl`, or `type: oauth2` with an `authorizationCode` flow. An API that is purely a resource server, validating access tokens issued by an authorization server it does not own and whose endpoints are not part of its own contract, **MAY** instead declare `type: http` with `scheme: bearer` and `bearerFormat: JWT`, because declaring an `oauth2` flow it does not operate would misdescribe the deployed API. That declaration **MUST** document, in the scheme description or an adjacent `/.well-known/` metadata document, the issuers it accepts and the audience value it requires, so an integrator can still discover how to obtain a usable token. The security-scheme description **MUST** state that the API accepts access tokens and **MUST NOT** treat an OIDC ID Token as an API access token. Authorization-code clients **MUST** use PKCE with `S256` as required by the RFC 9700 security baseline; the resource-owner password grant **MUST NOT** be declared, and the implicit grant **MUST NOT** be declared for a new surface. Reference specifications not tied to a live provider **MAY** use a reserved documentation-domain discovery URL; adopter-specific discovery, authorisation, token, and JWKS endpoints belong in implementation profiles."
   open_questions: []
 - id: "13.3"
   title: "Distinct scheme for BB-to-BB calls"
@@ -1000,11 +1009,11 @@ rules:
 - id: "13.4"
   title: "Namespaced OAuth scopes"
   class: M
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: Universal
   page: part-d/13-authentication-and-authorisation.md
   anchor: 134-namespaced-oauth-scopes
-  text: "OAuth scope strings **MUST** be documented per operation, and **MUST** follow a single ecosystem-wide naming convention so that one BB's scope does not collide with another's. The default shape is `bb:{bb-code}:{resource}:{action}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The `bb:` prefix is retained for OAuth scopes because colon-separated scope strings are widely supported and readable in OAuth tooling; reverse-DNS (`global.govstack.{bb-code}.{resource}.{action}`) and `resource.action` are alternatives. `[OPEN-12-A]`"
+  text: "Where an operation's authorization is scope-based, its OAuth scope strings **MUST** be documented per operation, and **MUST** follow a single ecosystem-wide naming convention so that one BB's scope does not collide with another's. An API that authorizes on verified token claims rather than scopes **MUST** document, per operation, which claims it requires and what values it accepts; it **MUST NOT** declare scope strings it does not enforce. The default shape is `bb:{bb-code}:{resource}:{action}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The `bb:` prefix is retained for OAuth scopes because colon-separated scope strings are widely supported and readable in OAuth tooling; reverse-DNS (`global.govstack.{bb-code}.{resource}.{action}`) and `resource.action` are alternatives. `[OPEN-12-A]`"
   open_questions: ["OPEN-12-A"]
 - id: "13.5"
   title: "Authorization is the credential channel"
@@ -1432,11 +1441,11 @@ rules:
 - id: "18.1"
   title: "SemVer versioning"
   class: M
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: Universal
   page: part-d/18-compatibility-and-lifecycle.md
   anchor: 181-semver-versioning
-  text: "`info.version` **MUST** follow SemVer. As a GovStack convention, it is the version of that surface's published API contract and its canonical description together; the major component **MUST** match the major version exposed under §18.2."
+  text: "`info.version` **MUST** follow SemVer. As a GovStack convention, it is the version of that surface's published API contract and its canonical description together; the major component **MUST** match the major version exposed under §18.2. An API served under `/v1` therefore carries an `info.version` of `1.x.y`. The version of the software that implements the contract is a separate number that this guide does not constrain: an implementation may be at `0.16.3` while the contract it serves is at `1.4.0`, and `info.version` **MUST NOT** be set to the implementation version."
   open_questions: []
 - id: "18.2"
   title: "Major version in path or channel"

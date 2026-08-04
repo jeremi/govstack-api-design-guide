@@ -75,7 +75,8 @@ Where this guide adopts an external standard or convention on the OpenAPI 3.1, C
 
 - RFC 9457 fields inside error envelopes ([§11.1](part-c/11-errors.md#111-rfc-9457-problem-details); carve-out on [§9.2](part-c/9-json-conventions-and-naming.md#carve-out-from-92)).
 - CloudEvents fields inside event envelopes ([§16.2](part-d/16-cloudevents-and-webhooks.md#162-cloudevents-envelope-required); carve-out on [§9.2](part-c/9-json-conventions-and-naming.md#carve-out-from-92)).
-- GovStack-adopted health-check enum values derived from `draft-inadarei-api-health-check` inside `/health` responses ([§5.9](part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint); carve-out on [§9.7](part-c/9-json-conventions-and-naming.md#carve-out-from-97)).
+- IANA-registered values, notably JOSE and COSE algorithm and curve names and media types, wherever a BB enumerates them (carve-out on [§9.7](part-c/9-json-conventions-and-naming.md#carve-out-from-97)).
+- RFC 8615 well-known URIs, whose location is fixed at `/.well-known/` and therefore outside the versioned path scheme ([§5.10](part-b/5-url-structure-and-versioning.md#510-standard-unversioned-endpoints)).
 - OAuth 2.0 / OIDC field shapes inside tokens, claims, and discovery documents ([§13.2](part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations)).
 - Code-list standards (ISO 3166-1, ISO 4217, BCP 47, E.164) inside their respective fields ([§10.5](part-c/10-data-types-and-formats.md#105-e164-phone-numbers)–[§10.10](part-c/10-data-types-and-formats.md#1010-iso-4217-currency-codes)).
 

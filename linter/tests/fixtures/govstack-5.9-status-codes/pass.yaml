@@ -18,19 +18,13 @@ paths:
         "200":
           description: Service is healthy.
           content:
-            application/health+json:
+            application/json:
               schema:
                 type: object
-                required: [status]
                 properties:
-                  status:
-                    type: string
-                    enum: [pass, fail, warn]
-        # Per guide 11.1, the error response is problem+json with an integer
-        # `status`, NOT the health pass|fail|warn enum. 5.9-status-enum is scoped
-        # to the 200 response, so this problem envelope must NOT fire it.
-        "500":
-          description: Service is unhealthy.
+                  description: { type: string }
+        "503":
+          description: Service is temporarily unable to accept work.
           content:
             application/problem+json:
               schema:

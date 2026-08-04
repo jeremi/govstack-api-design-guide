@@ -6,14 +6,15 @@
 // BB spec editors.
 //
 // BOTH goldens MUST lint to ZERO findings of any severity under the default
-// ruleset. The ruleset exempts the guide §5.9 operational endpoints (/health,
-// /ready) from the resource-oriented rules that do not apply to a liveness probe
-// (§5.1 version prefix, §12.x pagination, §7.16 ETag), scopes the §5.9 health+json
-// media type / status enum to the SUCCESS response so the §11.1 problem+json error
-// response is satisfiable, and counts only non-param path segments toward §5.4 max
-// nesting depth so the §15.5/§16.11 mandated action sub-resource paths stay in
-// bounds. Any finding is therefore a genuine regression; the test prints the full
-// finding list on failure for debugging.
+// ruleset. The ruleset exempts the guide §5.10 standard unversioned endpoints
+// (/health, /ready, /.well-known/*, spec discovery) from the resource-oriented
+// rules that do not apply to them (§5.1 version prefix, §5.3 segment casing,
+// §12.x pagination, §7.16 ETag), scopes the §5.9 application/json media type to
+// the SUCCESS response so the §11.1 problem+json error response is satisfiable,
+// and counts only non-param path segments toward §5.4 max nesting depth so the
+// §15.5/§16.11 mandated action sub-resource paths stay in bounds. Any finding is
+// therefore a genuine regression; the test prints the full finding list on
+// failure for debugging.
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

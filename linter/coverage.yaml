@@ -172,8 +172,13 @@ rules:
   - id: "5.9"
     class: "M+R"
     status: implemented
-    spectral_rules: [govstack-5.9-presence, govstack-5.9-media-type, govstack-5.9-status-enum, govstack-5.9-no-auth]
-    note: "/health present, unversioned, media application/health+json, status enum pass/fail/warn, no auth; media-type and status-enum checks scoped to the 200 response so the 11.1 problem+json error response is satisfiable"
+    spectral_rules: [govstack-5.9-presence, govstack-5.9-media-type, govstack-5.9-status-codes, govstack-5.9-no-auth]
+    note: "/health present, unversioned, 200 media application/json, both 200 and 503 declared, no auth; the media-type check is scoped to the 200 response so the 11.1 problem+json error responses stay satisfiable. Not checked: 'cheap and bounded', 'MUST NOT expose system-internal detail', and the dependency-probing limit, none of which are decidable from the document."
+  - id: "5.10"
+    class: "M"
+    status: implemented
+    spectral_rules: [govstack-5.10]
+    note: "the exemptions this rule grants are implemented where they bite (5.1/5.3 in pathSegments, 12.x in s12-collectionPagination, 13.1 by accepting an explicit `security: []`), all reading the closed set from functions/lib/standardEndpoints.js; the rule of its own enforces the prohibition, that these paths declare no mutating method. Whether a GET on such a path is a business resource in disguise is left to review."
   - id: "6.1"
     class: "M+R"
     status: implemented
@@ -383,7 +388,7 @@ rules:
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-9.7]
-    note: "proxy: enum string values SCREAMING_SNAKE_CASE minus the rule's carve-outs (BCP 47 tags, reverse-DNS error codes and event types, x-govstack-* vocabularies, health status). §12.7 sort keys are a known false positive."
+    note: "proxy: enum string values SCREAMING_SNAKE_CASE minus the rule's carve-outs (BCP 47 tags, reverse-DNS error codes and event types, media types, x-govstack-* vocabularies, and the JOSE/COSE names not already all-caps). IANA registry membership is not visible in a document, so a registered value outside the listed set is a miss. §12.7 sort keys are a known false positive."
   - id: "9.8"
     class: "M"
     status: implemented
@@ -503,7 +508,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-12.1]
-    note: "proxy: list endpoints (array response) declare pagination params/envelope; exempts the 5.9 operational endpoints /health and /ready (a liveness probe is not a collection)"
+    note: "proxy: list endpoints (array response) declare pagination params/envelope; exempts the 5.10 standard unversioned endpoints (not collections) and collections whose response declares its own maxItems bound"
   - id: "12.2"
     class: "M+R"
     status: partial-proxy
@@ -518,7 +523,7 @@ rules:
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-12.4]
-    note: "pageSize param schema has default and maximum; exempts the 5.9 operational endpoints /health and /ready"
+    note: "pageSize param schema has default and maximum; exempts the 5.10 standard unversioned endpoints and collections bounded by their own maxItems, on the same terms as 12.1"
   - id: "12.5"
     class: "R"
     status: human
@@ -553,12 +558,12 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-13.1]
-    note: "root security + securitySchemes present and every operation covered (or explicit override)"
+    note: "root security + securitySchemes present and every operation covered (or explicit override); the 5.10 standard unversioned endpoints satisfy it with an explicit `security: []`, which counts as that override"
   - id: "13.2"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-13.2, govstack-13.2-forbidden-flows]
-    note: "proxy: an openIdConnect/oauth2 scheme exists; deterministic error forbids password and implicit OAuth2 flows"
+    note: "proxy: an openIdConnect/oauth2 scheme exists, or the resource-server alternative (type http, scheme bearer, bearerFormat JWT); deterministic error forbids password and implicit OAuth2 flows. Not checked: that the resource-server case really is one, or that its accepted issuers and required audience are documented"
   - id: "13.3"
     class: "M+R"
     status: partial-proxy
@@ -568,7 +573,7 @@ rules:
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-13.4]
-    note: "proxy: scope strings match bb:{bb-code}:{resource}:{action}"
+    note: "proxy: scope strings match bb:{bb-code}:{resource}:{action}. Only fires where scopes are declared, so an API authorizing on token claims instead is silent here; that its required claims are documented per operation is left to review"
   - id: "13.5"
     class: "M+R"
     status: implemented
@@ -808,7 +813,7 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-18.1]
-    note: "info.version matches SemVer regex"
+    note: "info.version matches SemVer regex. Not checked: that it is the contract version rather than the implementation version, which no document reveals"
   - id: "18.2"
     class: "M"
     status: implemented

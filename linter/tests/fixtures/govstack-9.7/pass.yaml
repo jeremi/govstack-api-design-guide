@@ -12,9 +12,15 @@ components:
         - PENDING_REVIEW
     # §9.7 carve-outs: values whose form is fixed by another rule or an
     # external standard keep their own casing and must not be flagged.
-    HealthStatus:
+    SigningAlgorithm:
       type: string
-      enum: [pass, fail, warn]
+      enum: [ES256, EdDSA]
+    SigningCurve:
+      type: string
+      enum: [Ed25519, P-256]
+    MediaType:
+      type: string
+      enum: [application/json, application/problem+json]
     DeliveryGuarantee:
       type: string
       enum: [atMostOnce, atLeastOnce, effectivelyOnce]

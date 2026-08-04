@@ -11,7 +11,6 @@ The **Blocks v1.0?** column marks the questions whose answers shape the shared `
 | ID | Topic | Default | Section | Blocks v1.0? |
 |---|---|---|---|---|
 | OPEN-4-A | BB code in URL path | No (rely on `servers` URL or mediator routing) | [§5](../part-b/5-url-structure-and-versioning.md) | Yes |
-| OPEN-4-B | Health endpoint shape: align with `draft-inadarei-api-health-check`, or use a simpler local shape | Align with the draft | [§5.9](../part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint) | No |
 | OPEN-4-C | Path nesting depth: soft cap of two levels under `/v{N}/` | Keep as SHOULD with the soft cap | [§5.4](../part-b/5-url-structure-and-versioning.md#54-shallow-path-nesting) | No |
 | OPEN-6-A | 400 vs 422 boundary | Keep both (400 unparseable, 422 semantic) | [§7](../part-b/7-http-status-codes.md) | No |
 | OPEN-10-A | Error code shape: reverse-DNS named code vs reverse-DNS numeric code vs shorter BB-prefixed code | Reverse-DNS named code: `global.govstack.{bb-code}.{error-name}` | [§11.5](../part-c/11-errors.md#115-namespaced-stable-error-codes) | Yes |
@@ -33,6 +32,7 @@ The identifiers below remain frozen for discussion-history links, but they are n
 
 | ID | Resolution | Section |
 |---|---|---|
+| OPEN-4-B | Use the simpler local shape, not `draft-inadarei-api-health-check` (an expired Internet-Draft that never became an RFC). Health is carried by the status code, `200` or `503`; the `200` body is `application/json`, minimal, and informational. | [§5.9](../part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint) |
 | OPEN-7-A | Use W3C `traceparent` / `tracestate`; do not introduce `X-Request-Id` as the cross-BB standard. | [§8.4–8.5](../part-b/8-headers.md#84-w3c-trace-context-correlation) |
 | OPEN-7-B | Pin the Structured Field `RateLimit` / `RateLimit-Policy` form from draft revision 11; the legacy three-field form is not draft-conformant. | [§8.7](../part-b/8-headers.md#87-rate-limit-headers-declared) |
 | OPEN-15-C | Use HTTP `GovStack-Signature` and camelCase AsyncAPI metadata `govstackSignature`, unless a protocol binding supplies a standard field. | [§16.6](../part-d/16-cloudevents-and-webhooks.md#166-govstack-signature-header) |

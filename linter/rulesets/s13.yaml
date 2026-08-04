@@ -32,11 +32,17 @@ rules:
         requireSchemes: true
 
   # 13.2 [M+R] — PROXY (bucket B), MUST notched to warn.
-  # Verifies: an openIdConnect or oauth2 scheme is declared.
+  # Verifies: an openIdConnect or oauth2 scheme is declared, or the resource-
+  # server alternative the guide allows (type: http, scheme: bearer,
+  # bearerFormat: JWT) for an API that validates tokens from an authorization
+  # server it does not own.
   # Does NOT verify: which operations are citizen-facing, that citizen-facing
-  # operations actually apply this scheme, or discovery-URL validity.
+  # operations actually apply this scheme, discovery-URL validity, that the
+  # resource-server case really is one, or that its accepted issuers and
+  # required audience are documented (guide 13.2 requires it in prose or an
+  # adjacent /.well-known/ document; neither is mechanically decidable).
   govstack-13.2:
-    description: "an OAuth 2.0 / OpenID Connect security scheme must be declared (guide 13.2, [M+R], proxy)."
+    description: "an OAuth 2.0 / OpenID Connect (or resource-server bearer JWT) security scheme must be declared (guide 13.2, [M+R], proxy)."
     message: "[13.2][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations
     severity: warn
@@ -46,7 +52,8 @@ rules:
       function: s13-schemeExists
       functionOptions:
         types: [openIdConnect, oauth2]
-        label: "OAuth 2.0 / OpenID Connect"
+        httpBearerFormats: [JWT]
+        label: "OAuth 2.0 / OpenID Connect (or resource-server bearer JWT)"
 
   # 13.2 [M+R] — deterministic security baseline: resource-owner password and
   # implicit grants MUST NOT be declared.

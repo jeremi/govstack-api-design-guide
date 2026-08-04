@@ -1,0 +1,29 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: >-
+    A sample API that hides a business resource under a standard unversioned
+    path to escape the versioning and collection rules.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  # Guide 5.10: the standard unversioned endpoints are read-only. A mutating
+  # method here is a business resource on an exempt path.
+  /.well-known/registrants:
+    post:
+      operationId: createRegistrant
+      summary: Create a registrant
+      description: Creates a registrant record.
+      tags: [Registrants]
+      security: []
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }

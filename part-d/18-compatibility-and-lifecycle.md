@@ -12,7 +12,7 @@ description: "Rules governing SemVer versioning, backward-compatible and breakin
 
 ## 18.1 SemVer versioning <a href="#181-semver-versioning" id="181-semver-versioning"></a>
 
-**[M]** `info.version` **MUST** follow SemVer. As a GovStack convention, it is the version of that surface's published API contract and its canonical description together; the major component **MUST** match the major version exposed under [§18.2](#182-major-version-in-path-or-channel).
+**[M]** `info.version` **MUST** follow SemVer. As a GovStack convention, it is the version of that surface's published API contract and its canonical description together; the major component **MUST** match the major version exposed under [§18.2](#182-major-version-in-path-or-channel). An API served under `/v1` therefore carries an `info.version` of `1.x.y`. The version of the software that implements the contract is a separate number that this guide does not constrain: an implementation may be at `0.16.3` while the contract it serves is at `1.4.0`, and `info.version` **MUST NOT** be set to the implementation version.
 
 ## 18.2 Major version in path or channel <a href="#182-major-version-in-path-or-channel" id="182-major-version-in-path-or-channel"></a>
 

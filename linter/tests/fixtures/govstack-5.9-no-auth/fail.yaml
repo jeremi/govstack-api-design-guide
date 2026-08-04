@@ -25,11 +25,8 @@ paths:
         "200":
           description: Service is healthy.
           content:
-            application/health+json:
+            application/json:
               schema:
                 type: object
-                required: [status]
                 properties:
-                  status:
-                    type: string
-                    enum: [pass, fail, warn]
+                  description: { type: string }

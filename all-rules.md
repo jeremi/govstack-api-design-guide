@@ -57,6 +57,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [5.7](part-b/5-url-structure-and-versioning.md#57-no-verbs-in-crud-paths) | M+R | MUST | OpenAPI | No verbs in CRUD paths |
 | [5.8](part-b/5-url-structure-and-versioning.md#58-actions-as-sub-resources) | R | MUST | OpenAPI | Actions as sub-resources |
 | [5.9](part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint) | M+R | MUST | OpenAPI | Unversioned health endpoint |
+| [5.10](part-b/5-url-structure-and-versioning.md#510-standard-unversioned-endpoints) | M | MUST | OpenAPI | Standard unversioned endpoints |
 
 ## 6. HTTP methods
 

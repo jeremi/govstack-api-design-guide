@@ -1,0 +1,60 @@
+openapi: 3.1.0
+info:
+  title: Sample API
+  version: 1.0.0
+  description: >-
+    A sample API whose standard unversioned endpoints are read-only, and whose
+    business resources stay on the versioned surface.
+  contact:
+    name: Sample BB Team
+    url: https://example.org/contact
+paths:
+  /.well-known/oauth-protected-resource:
+    get:
+      operationId: getProtectedResourceMetadata
+      summary: Protected-resource metadata
+      description: RFC 9728 metadata describing this resource server.
+      tags: [Discovery]
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  resource: { type: string, format: uri }
+  /health:
+    get:
+      operationId: getHealth
+      summary: Liveness check
+      description: Unversioned operational liveness probe (guide 5.9).
+      tags: [Health]
+      security: []
+      responses:
+        "200":
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  description: { type: string }
+  # A mutating method is fine where it belongs: on the versioned surface.
+  /v1/registrants:
+    post:
+      operationId: createRegistrant
+      summary: Create a registrant
+      description: Creates a registrant record.
+      tags: [Registrants]
+      security: []
+      responses:
+        "201":
+          description: Created.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id: { type: string }

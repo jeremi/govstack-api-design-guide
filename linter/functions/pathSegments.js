@@ -1,9 +1,11 @@
 import { isObject } from './lib/util.js';
 import { matchesCasing } from './lib/casing.js';
+import { isStandardUnversionedPath } from './lib/standardEndpoints.js';
 
 const VERSION_SEG = /^v\d+$/;
 const isParam = (seg) => seg.startsWith('{') && seg.endsWith('}');
 const split = (key) => key.split('/').filter((s) => s.length > 0);
+const MUTATING_METHODS = ['post', 'put', 'patch', 'delete'];
 
 /**
  * pathSegments — structural checks over the OpenAPI `paths` object. One check
@@ -20,11 +22,16 @@ const split = (key) => key.split('/').filter((s) => s.length > 0);
  *     "maxDepthAfterVersion" at most `max` NON-PARAM levels follow the version
  *                            prefix; `{param}` segments do NOT count as levels
  *                            (default max 2)                     (guide 5.4)
+ *     "standardEndpointsReadOnly" the guide 5.10 standard unversioned endpoints
+ *                            declare no mutating method            (guide 5.10)
  *   casing      {string}   for "segmentCasing" (default "kebab").
  *   max         {number}   for "maxDepthAfterVersion" (default 2).
- *   exemptPaths {string[]} for "versionPrefix": path keys matched EXACTLY that
- *                          are exempt from the version-prefix requirement (the
- *                          guide 5.9 unversioned operational endpoints).
+ *   exemptPaths {string[]} for "versionPrefix": additional path keys matched
+ *                          EXACTLY that are exempt from the version-prefix
+ *                          requirement, on top of the guide 5.10 set.
+ *
+ * "versionPrefix" and "segmentCasing" both skip the guide 5.10 standard
+ * unversioned endpoints, whose location and spelling are fixed elsewhere.
  *
  * @param {unknown} targetVal - the paths object.
  * @param {object} options
@@ -43,10 +50,12 @@ export default function pathSegments(targetVal, options, context) {
     const segs = split(key);
     const here = [...base, key];
 
+    // Guide 5.10 fixes the location and spelling of a closed set of endpoints
+    // elsewhere (RFC 8615 well-known URIs, the 5.9 operational endpoints, and
+    // runtime specification discovery), so 5.1 and 5.3 must not fire on them.
+    if (isStandardUnversionedPath(key) && (check === 'versionPrefix' || check === 'segmentCasing')) continue;
+
     if (check === 'versionPrefix') {
-      // Guide 5.9 mandates UNVERSIONED operational liveness endpoints (/health,
-      // and optionally /ready); exempt those exact path keys from the /v{N}/
-      // requirement so 5.1 and 5.9 do not contradict each other.
       const exemptPaths = Array.isArray(opts.exemptPaths) ? opts.exemptPaths : [];
       if (exemptPaths.includes(key)) continue;
       if (segs.length === 0 || !VERSION_SEG.test(segs[0])) {
@@ -58,6 +67,18 @@ export default function pathSegments(targetVal, options, context) {
         if (VERSION_SEG.test(seg) || isParam(seg)) continue;
         if (!matchesCasing(seg, casing)) {
           results.push({ message: `path "${key}" segment "${seg}" must be ${casing} case`, path: here });
+        }
+      }
+    } else if (check === 'standardEndpointsReadOnly') {
+      if (!isStandardUnversionedPath(key)) continue;
+      const item = targetVal[key];
+      if (!isObject(item)) continue;
+      for (const method of MUTATING_METHODS) {
+        if (method in item) {
+          results.push({
+            message: `path "${key}" is a standard unversioned endpoint (guide 5.10) and must not declare "${method}"; a business resource belongs on the versioned surface`,
+            path: [...here, method],
+          });
         }
       }
     } else if (check === 'maxDepthAfterVersion') {

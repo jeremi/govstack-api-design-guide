@@ -16,14 +16,14 @@
 # scopes (§13), and the §20.3 conformance declaration.
 #
 # This spec lints to ZERO findings under the default ruleset. The ruleset
-# exempts the operational /health (and /ready) endpoint from the resource-
-# oriented rules that do not apply to a liveness probe (§5.1 version prefix,
-# §12.x pagination, §7.16 ETag), scopes the §5.9 health+json media type and
-# status enum to the SUCCESS (200) response so the §11.1 problem+json error
-# response is satisfiable, and counts only non-param segments toward §5.4 max
-# nesting depth so the §15.5/§16.11 mandated action sub-resource paths
-# (/v1/operations/{operationId}/cancel, .../subscriptions/{id}/rotate-secret)
-# stay within two levels.
+# exempts the §5.10 standard unversioned endpoints (here, /health) from the
+# resource-oriented rules that do not apply to them (§5.1 version prefix, §5.3
+# segment casing, §12.x pagination, §7.16 ETag), scopes the §5.9
+# application/json media type to the SUCCESS (200) response so the §11.1
+# problem+json error responses are satisfiable, and counts only non-param
+# segments toward §5.4 max nesting depth so the §15.5/§16.11 mandated action
+# sub-resource paths (/v1/operations/{operationId}/cancel,
+# .../subscriptions/{id}/rotate-secret) stay within two levels.
 openapi: 3.1.0
 info:
   title: GovStack Registry Building Block API
@@ -67,28 +67,32 @@ paths:
       operationId: getHealth
       summary: Liveness check
       description: >-
-        Unversioned operational liveness endpoint per guide §5.9. Reports overall
-        service health using the application/health+json media type. Unauthenticated
-        and free of citizen data and system-internal detail.
+        Unversioned operational liveness endpoint per guide §5.9. Health is carried
+        by the status code: 200 when the service can accept work, 503 when it
+        temporarily cannot. Unauthenticated and free of citizen data and
+        system-internal detail.
       tags: [Health]
       security: []
       parameters:
         - $ref: '#/components/parameters/Traceparent'
       responses:
         '200':
-          description: The service is alive; body reports the aggregate status.
+          description: The service is alive and able to accept work.
           headers:
             traceparent:
               $ref: '#/components/headers/Traceparent'
           content:
-            application/health+json:
+            application/json:
               schema:
                 $ref: '#/components/schemas/HealthStatus'
-        # §7.13 requires a documented 500. Per §11.1 every 4xx/5xx MUST be
-        # application/problem+json, so the /health error response uses the
-        # standard problem envelope (Cache-Control: no-store included). The
-        # §5.9 health+json media type and pass|fail|warn status enum apply to
-        # the SUCCESS (200) payload above, not to error responses.
+        # §5.9 requires the unhealthy status code as well as the healthy one, and
+        # §11.1 makes every 4xx/5xx application/problem+json, so the 503 carries
+        # the standard problem envelope (Cache-Control: no-store included). The
+        # §5.9 application/json media type applies to the SUCCESS (200) payload
+        # above, not to error responses.
+        '503':
+          $ref: '#/components/responses/ServiceUnavailable'
+        # §7.13 requires a documented 500 on every operation.
         '500':
           $ref: '#/components/responses/ServerError'
   /v1/registrants:
@@ -885,6 +889,15 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    ServiceUnavailable:
+      description: The service is temporarily unable to accept work (guide §5.9).
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
   schemas:
     Problem:
       type: object
@@ -975,26 +988,18 @@ components:
           description: Human-readable description of what is wrong with the field.
     HealthStatus:
       type: object
-      description: application/health+json body reporting aggregate service health.
-      required: [status]
+      description: >-
+        Minimal application/json body accompanying a 200 from the liveness
+        endpoint. Health itself is carried by the status code (§5.9), so this
+        body is informational: it names the service and nothing more. Versions,
+        hostnames, and dependency topology are system-internal detail §5.9
+        forbids here.
       properties:
-        status:
+        description:
           type: string
-          description: >-
-            Aggregate health indicator: "pass" (healthy), "warn" (healthy but with
-            concerns) or "fail" (unhealthy).
-          enum: [pass, warn, fail]
-          x-extensible-enum: true
-        version:
-          type: string
-          description: Version of the service reporting health.
-        releaseId:
-          type: string
-          description: Deployed release identifier of the service.
+          description: Human-readable name of the service reporting health.
       examples:
-        - status: pass
-          version: '1.0.0'
-          releaseId: '2026.07.10'
+        - description: health of the registry BB
     Money:
       type: object
       description: >-

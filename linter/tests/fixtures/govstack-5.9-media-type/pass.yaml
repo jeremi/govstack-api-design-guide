@@ -18,18 +18,15 @@ paths:
         "200":
           description: Service is healthy.
           content:
-            application/health+json:
+            application/json:
               schema:
                 type: object
-                required: [status]
                 properties:
-                  status:
-                    type: string
-                    enum: [pass, fail, warn]
-        # Per guide 11.1, the error response is problem+json, NOT health+json.
+                  description: { type: string }
+        # Per guide 11.1 an error response is problem+json, not application/json.
         # 5.9-media-type is scoped to the 200 response, so it must NOT fire here.
-        "500":
-          description: Service is unhealthy.
+        "503":
+          description: Service is temporarily unable to accept work.
           content:
             application/problem+json:
               schema:

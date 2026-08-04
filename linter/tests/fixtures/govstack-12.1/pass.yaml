@@ -36,6 +36,27 @@ paths:
                     properties:
                       nextCursor: { type: string, nullable: true }
                       hasMore: { type: boolean }
+  # Guide 12.1 lets a collection whose size the specification itself fixes go
+  # unpaginated, provided the bound is declared with maxItems.
+  /v1/supported-locales:
+    get:
+      operationId: listSupportedLocales
+      summary: List supported locales
+      description: The fixed set of locales this BB serves.
+      tags: [foos]
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    maxItems: 40
+                    items: { type: string }
   # Guide 12.1 covers endpoints returning collections; the operational liveness
   # probe /health is not a collection, so a bare GET must NOT fire this rule.
   /health:

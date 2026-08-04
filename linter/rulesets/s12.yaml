@@ -14,11 +14,10 @@
 # 12.7), it is used only to scope an otherwise-exact shape check to the
 # endpoints the shape applies to.
 #
-# Operational-endpoint carve-out: the guide 5.9 liveness probes `/health` and
-# `/ready` are NOT collections, so they are exempt from the collection-GET
-# rules. Function-driven rules (12.2/12.3/12.6) exempt them inside
-# `s12-collectionPagination` (exact path-key match); the two inline-schema
-# rules (12.1/12.4) exempt them directly in their `given`.
+# Two carve-outs are shared by every collection-GET rule and therefore live in
+# one place, inside `s12-collectionPagination`: the guide 5.10 standard
+# unversioned endpoints are not collections, and a collection whose 200
+# response declares its own `maxItems` bound may go unpaginated (guide 12.1).
 functionsDir: "../functions"
 functions:
   - s12-collectionPagination
@@ -37,23 +36,11 @@ rules:
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#121-collections-must-paginate
     severity: warn
     formats: [oas3_1]
-    # Inline-schema rule: exempt /health and /ready (guide 5.9 operational
-    # endpoints, not collections) directly in the given.
-    given: '$.paths[?(!@property.match(/\/\{[^}]+\}$/) && @property != "/health" && @property != "/ready")][get]'
+    given: '$.paths[?(!@property.match(/\/\{[^}]+\}$/))][get]'
     then:
-      function: schema
+      function: s12-collectionPagination
       functionOptions:
-        schema:
-          type: object
-          required: [parameters]
-          properties:
-            parameters:
-              type: array
-              contains:
-                type: object
-                required: [name]
-                properties:
-                  name: { enum: [pageSize, offset] }
+        mode: pageParam
 
   # 12.2 [M+R] — PROXY (bucket B, MUST -> warn). Default pagination MUST be
   # cursor-based with `pageSize` + `cursor` query parameters. No-op (via
@@ -94,32 +81,17 @@ rules:
   # 12.4 [M+R] — pageSize MUST have a documented default and maximum. Fires
   # both when pageSize is missing entirely and when it is present without
   # both keywords (both cases mean "not documented").
-  # Inline-schema rule: exempt /health and /ready (guide 5.9 operational
-  # endpoints, not collections) directly in the given, same as 12.1.
   govstack-12.4:
     description: "pageSize parameter must declare a default and a maximum (guide 12.4, [M+R])."
     message: "[12.4][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#124-documented-pagesize-bounds
     severity: error
     formats: [oas3_1]
-    given: '$.paths[?(!@property.match(/\/\{[^}]+\}$/) && @property != "/health" && @property != "/ready")][get]'
+    given: '$.paths[?(!@property.match(/\/\{[^}]+\}$/))][get]'
     then:
-      function: schema
+      function: s12-collectionPagination
       functionOptions:
-        schema:
-          type: object
-          required: [parameters]
-          properties:
-            parameters:
-              type: array
-              contains:
-                type: object
-                required: [name, schema]
-                properties:
-                  name: { const: pageSize }
-                  schema:
-                    type: object
-                    required: [default, maximum]
+        mode: pageSizeBounds
 
   # 12.6 [M+R] — offset pagination, when opted into (an `offset` parameter is
   # declared), MUST use the flat envelope { items, offset, limit, total },

@@ -19,7 +19,10 @@ import mediaTypeExpected from '../functions/mediaTypeExpected.js';
 import successResponseSchema from '../functions/s07-successResponseSchema.js';
 import creationResponses from '../functions/s07-creationResponses.js';
 import baselineResponses from '../functions/s07-baselineResponses.js';
+import collectionPagination from '../functions/s12-collectionPagination.js';
+import schemeExists from '../functions/s13-schemeExists.js';
 import { walkSchema } from '../functions/lib/schemaWalk.js';
+import { isStandardUnversionedPath } from '../functions/lib/standardEndpoints.js';
 
 const count = (r) => (r === undefined ? 0 : r.length);
 
@@ -39,6 +42,8 @@ const ALL = {
   successResponseSchema,
   creationResponses,
   baselineResponses,
+  collectionPagination,
+  schemeExists,
 };
 test('all functions return undefined on bad input, never throw', () => {
   for (const [name, fn] of Object.entries(ALL)) {
@@ -131,6 +136,84 @@ test('pathSegments: version prefix / casing / depth', () => {
   assert.equal(count(pathSegments(paths, { check: 'versionPrefix', exemptPaths: ['/accounts'] })), 0); // 5.9 exemption
   assert.equal(count(pathSegments(paths, { check: 'segmentCasing', casing: 'kebab' })), 1); // Bad_Segment
   assert.equal(count(pathSegments(paths, { check: 'maxDepthAfterVersion', max: 2 })), 1); // only the 3-non-param-level path
+});
+
+test('isStandardUnversionedPath: the 5.10 closed set', () => {
+  for (const p of ['/health', '/ready', '/openapi.json', '/asyncapi.json', '/.well-known/oauth-protected-resource']) {
+    assert.equal(isStandardUnversionedPath(p), true, p);
+  }
+  for (const p of ['/v1/health', '/healthz', '/well-known/jwks.json', '/', '', 42, undefined]) {
+    assert.equal(isStandardUnversionedPath(p), false, String(p));
+  }
+});
+
+test('pathSegments: standard unversioned endpoints are exempt (5.10) and read-only', () => {
+  const paths = {
+    '/health': { get: {}, delete: {} },
+    '/.well-known/oauth-protected-resource': { get: {}, post: {} },
+    '/v1/things': { get: {}, post: {} },
+  };
+  // The 5.10 set sits outside /v{N}/ by design, and `.well-known` is not kebab.
+  assert.equal(count(pathSegments(paths, { check: 'versionPrefix' })), 0);
+  assert.equal(count(pathSegments(paths, { check: 'segmentCasing', casing: 'kebab' })), 0);
+  // They are read-only: a mutating method there is a business resource in hiding.
+  const readOnly = pathSegments(paths, { check: 'standardEndpointsReadOnly' });
+  assert.deepEqual(readOnly.map((r) => r.path.join(' ')).sort(), [
+    '/.well-known/oauth-protected-resource post',
+    '/health delete',
+  ]);
+});
+
+test('s12-collectionPagination: 5.10 and maxItems carve-outs, pageParam, pageSizeBounds', () => {
+  const ctx = (pathKey) => ({ path: ['paths', pathKey, 'get'] });
+  const withSchema = (schema, parameters) => ({
+    ...(parameters ? { parameters } : {}),
+    responses: { 200: { content: { 'application/json': { schema } } } },
+  });
+  const unbounded = withSchema({ type: 'object', properties: { items: { type: 'array' } } });
+
+  // An unpaginated, unbounded collection fires both 12.1 and 12.4...
+  assert.equal(count(collectionPagination(unbounded, { mode: 'pageParam' }, ctx('/v1/things'))), 1);
+  assert.equal(count(collectionPagination(unbounded, { mode: 'pageSizeBounds' }, ctx('/v1/things'))), 1);
+  // ...unless the path is a standard unversioned endpoint, which is not a collection...
+  assert.equal(count(collectionPagination(unbounded, { mode: 'pageParam' }, ctx('/health'))), 0);
+  assert.equal(count(collectionPagination(unbounded, { mode: 'pageSizeBounds' }, ctx('/health'))), 0);
+  // ...or the response bounds every array it returns with maxItems (12.1).
+  const bounded = withSchema({ type: 'object', properties: { items: { type: 'array', maxItems: 40 } } });
+  assert.equal(count(collectionPagination(bounded, { mode: 'pageParam' }, ctx('/v1/locales'))), 0);
+  // One unbounded array is enough to make the whole response unbounded.
+  const halfBounded = withSchema({
+    type: 'object',
+    properties: { items: { type: 'array', maxItems: 40 }, extras: { type: 'array' } },
+  });
+  assert.equal(count(collectionPagination(halfBounded, { mode: 'pageParam' }, ctx('/v1/locales'))), 1);
+
+  // 12.1 is satisfied by either cursor or offset pagination (12.6).
+  const offset = withSchema({ type: 'object' }, [{ name: 'offset' }, { name: 'limit' }]);
+  assert.equal(count(collectionPagination(offset, { mode: 'pageParam' }, ctx('/v1/things'))), 0);
+  // 12.4 wants both bounds on pageSize, not just its presence.
+  const noMaximum = withSchema({ type: 'object' }, [{ name: 'pageSize', schema: { default: 20 } }]);
+  assert.equal(count(collectionPagination(noMaximum, { mode: 'pageSizeBounds' }, ctx('/v1/things'))), 1);
+  const bothBounds = withSchema({ type: 'object' }, [{ name: 'pageSize', schema: { default: 20, maximum: 100 } }]);
+  assert.equal(count(collectionPagination(bothBounds, { mode: 'pageSizeBounds' }, ctx('/v1/things'))), 0);
+});
+
+test('s13-schemeExists: types / oauthFlows / httpBearerFormats', () => {
+  const doc = (schemes) => ({ components: { securitySchemes: schemes } });
+  const citizen = { types: ['openIdConnect', 'oauth2'], httpBearerFormats: ['JWT'] };
+  assert.equal(count(schemeExists(doc({ a: { type: 'openIdConnect' } }), citizen)), 0);
+  // A resource server that only validates tokens issued elsewhere declares
+  // http bearer + JWT rather than misdescribing itself with an oauth2 flow.
+  assert.equal(count(schemeExists(doc({ a: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } }), citizen)), 0);
+  // An opaque bearer token or basic auth is not that profile.
+  assert.equal(count(schemeExists(doc({ a: { type: 'http', scheme: 'bearer' } }), citizen)), 1);
+  assert.equal(count(schemeExists(doc({ a: { type: 'http', scheme: 'basic' } }), citizen)), 1);
+
+  const service = { types: ['mutualTLS'], oauthFlows: ['clientCredentials'] };
+  assert.equal(count(schemeExists(doc({ a: { type: 'mutualTLS' } }), service)), 0);
+  assert.equal(count(schemeExists(doc({ a: { type: 'oauth2', flows: { clientCredentials: {} } } }), service)), 0);
+  assert.equal(count(schemeExists(doc({ a: { type: 'oauth2', flows: { authorizationCode: {} } } }), service)), 1);
+  assert.equal(count(schemeExists(doc({}), service)), 1);
 });
 
 test('envelopeShape: required / nested / const / enum / allOf', () => {

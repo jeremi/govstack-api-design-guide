@@ -1,6 +1,6 @@
 # Rules for §5 URL structure and versioning. Source text: ../../rules.yaml.
 #
-# Implements guide rules 5.1, 5.3, 5.4, 5.6, 5.9 (implemented) and 5.5
+# Implements guide rules 5.1, 5.3, 5.4, 5.6, 5.9, 5.10 (implemented) and 5.5
 # (partial-proxy). Strict-only siblings 5.2, 5.7, 5.8 live in
 # rulesets/s05-strict.yaml. Severity policy and formats follow
 # ../README.md#rule-naming-and-severities.
@@ -9,14 +9,13 @@ functions:
   - pathSegments
   - valuePattern
   - mediaTypeExpected
-  - envelopeShape
+  - operationResponses
   - securityCoverage
 rules:
-  # 5.1 [M] MUST — major version prefix /v{N}/... on every path.
-  # exemptPaths carves out the guide 5.9 UNVERSIONED operational endpoints:
-  # "Each BB MUST expose an UNVERSIONED operational liveness endpoint at /health
-  # ... A separate /ready endpoint MAY be exposed." Those exact path keys cannot
-  # carry a /v{N}/ prefix, so 5.1 must not fire on them.
+  # 5.1 [M] MUST — major version prefix /v{N}/... on every path. The guide 5.10
+  # standard unversioned endpoints cannot carry a /v{N}/ prefix and are skipped
+  # inside `pathSegments` (functions/lib/standardEndpoints.js), which is the one
+  # place that closed set is written down.
   govstack-5.1:
     description: "Every path must start with a major version prefix /v{N}/ (guide 5.1, [M])."
     message: "[5.1][M] {{error}}"
@@ -26,7 +25,7 @@ rules:
     given: $.paths
     then:
       function: pathSegments
-      functionOptions: { check: versionPrefix, exemptPaths: ['/health', '/ready'] }
+      functionOptions: { check: versionPrefix }
 
   # 5.3 [M] MUST — multi-word path segments must be kebab-case.
   govstack-5.3:
@@ -117,12 +116,12 @@ rules:
           type: object
           required: ["/health"]
 
-  # Scoped to the SUCCESS (200) response only. Guide 5.9's health+json media
-  # type describes the health PAYLOAD; guide 11.1 separately REQUIRES 4xx/5xx to
-  # be application/problem+json, so a responses[*] scope would make /health's
-  # error responses unsatisfiable (health+json vs problem+json conflict).
+  # Scoped to the SUCCESS (200) response only. Guide 5.9 gives the 200 body
+  # plain application/json and says the 503 is an ordinary error response, so
+  # guide 11.1 (4xx/5xx MUST be application/problem+json) owns the 503 and a
+  # responses[*] scope here would make the two unsatisfiable together.
   govstack-5.9-media-type:
-    description: "/health 200 response must declare media type application/health+json (guide 5.9, [M+R])."
+    description: "/health 200 response must declare media type application/json (guide 5.9, [M+R])."
     message: "[5.9][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint
     severity: error
@@ -131,25 +130,26 @@ rules:
     then:
       function: mediaTypeExpected
       functionOptions:
-        require: ['application/health\+json']
+        require: ['^application/json\s*(;|$)']
 
-  # Scoped to the SUCCESS (200) response only — same 5.9-vs-11.1 interplay as
-  # 5.9-media-type above: the pass|fail|warn health enum belongs to the
-  # health+json 200 payload, not to the problem+json error responses.
-  govstack-5.9-status-enum:
-    description: "/health 200 response body must declare status with enum pass|fail|warn (guide 5.9, [M+R])."
+  # Guide 5.9 carries health in the status code: 200 healthy, 503 temporarily
+  # unable to accept work. Both must be declared, or a consumer told to read the
+  # status code has no documented 503 to read. Applies to /ready on the same
+  # terms ("under the same rules"), and only when it is present (the MAY clause
+  # means an absent /ready is not a finding).
+  govstack-5.9-status-codes:
+    description: "/health (and /ready, if present) must declare both 200 and 503 responses (guide 5.9, [M+R])."
     message: "[5.9][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint
     severity: error
     formats: [oas3_1]
-    given: "$.paths['/health'].get.responses['200'].content[*].schema"
+    given:
+      - "$.paths['/health'].get"
+      - "$.paths['/ready'].get"
     then:
-      function: envelopeShape
+      function: operationResponses
       functionOptions:
-        requiredProperties: [status]
-        properties:
-          status:
-            enum: ["pass", "fail", "warn"]
+        require: ["200", "503"]
 
   govstack-5.9-no-auth:
     description: "/health (and /ready, if present) must not require citizen authentication (guide 5.9, [M+R])."
@@ -163,3 +163,23 @@ rules:
     then:
       function: securityCoverage
       functionOptions: { mode: none }
+
+  # 5.10 [M] — the closed set of standard unversioned endpoints. The exemptions
+  # the section grants are implemented where they bite (5.1 and 5.3 in
+  # `pathSegments`, §12 in `s12-collectionPagination`, 13.1 in
+  # `securityCoverage`), all reading the same set from
+  # functions/lib/standardEndpoints.js. What is left for a rule of its own is
+  # the prohibition: "a BB MUST NOT place a business resource under one of these
+  # paths ... they are read-only and MUST NOT declare POST, PUT, PATCH, or
+  # DELETE". Whether a GET under one of these paths is a business resource in
+  # disguise is not mechanically decidable and stays with review.
+  govstack-5.10:
+    description: "standard unversioned endpoints are read-only and must not declare a mutating method (guide 5.10, [M])."
+    message: "[5.10][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#510-standard-unversioned-endpoints
+    severity: error
+    formats: [oas3_1]
+    given: $.paths
+    then:
+      function: pathSegments
+      functionOptions: { check: standardEndpointsReadOnly }
