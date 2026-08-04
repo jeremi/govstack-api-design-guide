@@ -667,11 +667,11 @@ rules:
 - id: "9.7"
   title: "Screaming snake case enum values"
   class: M
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: Universal
   page: part-c/9-json-conventions-and-naming.md
   anchor: 97-screaming-snake-case-enum-values
-  text: "Enum values **MUST** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`)."
+  text: "Enum values that name a BB-defined state or category **MUST** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`). Values whose form is fixed elsewhere keep the casing their own definition gives them and **MUST NOT** be re-cased to satisfy this rule: identifiers built to a shape this guide defines (error codes per §11.5, event types per §16.3, sort keys per §12.7), the GovStack `x-govstack-*` extension vocabularies (§17.11, §17.13), codes drawn from an external standard (BCP 47 language tags per §10.9, ISO 4217 currency codes per §10.10), and the health-status vocabulary of §5.9."
   open_questions: []
 - id: "9.8"
   title: "Forward-compatible schemas"

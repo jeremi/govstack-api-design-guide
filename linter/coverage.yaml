@@ -383,7 +383,7 @@ rules:
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-9.7]
-    note: "proxy: enum string values SCREAMING_SNAKE_CASE with known exceptions (ISO codes, health status)"
+    note: "proxy: enum string values SCREAMING_SNAKE_CASE minus the rule's carve-outs (BCP 47 tags, reverse-DNS error codes and event types, x-govstack-* vocabularies, health status). §12.7 sort keys are a known false positive."
   - id: "9.8"
     class: "M"
     status: implemented

@@ -10,3 +10,26 @@ components:
       enum:
         - ACTIVE
         - PENDING_REVIEW
+    # §9.7 carve-outs: values whose form is fixed by another rule or an
+    # external standard keep their own casing and must not be flagged.
+    HealthStatus:
+      type: string
+      enum: [pass, fail, warn]
+    DeliveryGuarantee:
+      type: string
+      enum: [atMostOnce, atLeastOnce, effectivelyOnce]
+    DeliveryCapability:
+      type: string
+      enum: [supported, unsupported, notApplicable]
+    ErrorCode:
+      type: string
+      enum: [global.govstack.identity.personNotFound]
+    EventType:
+      type: string
+      enum: [global.govstack.registration.record.created]
+    LanguageTag:
+      type: string
+      enum: [en, en-US, zh-Hans-CN]
+    CurrencyCode:
+      type: string
+      enum: [USD, EUR]

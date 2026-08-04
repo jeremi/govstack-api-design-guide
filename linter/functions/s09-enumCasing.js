@@ -3,17 +3,22 @@ import { isObject, toRegExp } from './lib/util.js';
 
 /**
  * s09-enumCasing — PROXY for §9.7 (SCREAMING_SNAKE_CASE enum values). Flags
- * string `enum` members that are not SCREAMING_SNAKE_CASE, with documented
- * exceptions for values that idiomatically stay lowercase:
+ * string `enum` members that are not SCREAMING_SNAKE_CASE, minus the carve-outs
+ * §9.7 lists for values whose form is fixed by another rule or an external
+ * standard:
  *
- *   - ISO-style short codes / locales (language `en`, `fra`, locale `en-US`),
- *     matched by `allowPattern`;
- *   - health / status vocab (`pass`, `fail`, `warn`, `up`, `down`, ...), listed
- *     in `allowValues`.
+ *   - BCP 47 language tags and reverse-DNS identifiers (error codes, event
+ *     types), matched by `allowPattern`;
+ *   - the health-status vocabulary and the GovStack x-govstack-* extension
+ *     vocabularies, listed in `allowValues`.
  *
  * Because those exceptions are pattern-based, a lowercase enum that merely looks
  * ISO-like (any 2-3 letter token) is not flagged: the proxy trades a few misses
  * for far fewer false positives. Non-string enum members are ignored.
+ *
+ * Known false positive: §12.7 sort keys are field names in lowerCamelCase, which
+ * is indistinguishable from a mis-cased state name, so a sort-key enum declared
+ * under components.schemas is flagged. Inline sort parameters are not visited.
  *
  * `given` should select a schema (e.g. `$.components.schemas[*]`). Cycle-safe.
  *
@@ -28,8 +33,13 @@ import { isObject, toRegExp } from './lib/util.js';
  * @returns {{message:string, path:(string|number)[]}[]|undefined}
  */
 const SCREAMING = /^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$/;
-const DEFAULT_ALLOW_PATTERN = '^[a-z]{2,3}([-_][A-Za-z0-9]{2,4})?$';
+// Two shapes §9.7 carves out and that are distinguishable from a mis-cased
+// state name: BCP 47 language tags (§10.9) and reverse-DNS identifiers built to
+// a shape this guide defines (error codes §11.5, event types §16.3).
+const DEFAULT_ALLOW_PATTERN =
+  '^([a-z]{2,3}([-_][A-Za-z0-9]{2,8})*|[a-z][a-zA-Z0-9]*(\\.[a-zA-Z0-9-]+)+)$';
 const DEFAULT_ALLOW_VALUES = [
+  // §5.9 health-status vocabulary and the operational synonyms around it.
   'pass',
   'fail',
   'warn',
@@ -39,6 +49,15 @@ const DEFAULT_ALLOW_VALUES = [
   'healthy',
   'unhealthy',
   'degraded',
+  // §17.11 delivery guarantees.
+  'atMostOnce',
+  'atLeastOnce',
+  'effectivelyOnce',
+  // §17.13 delivery-management capabilities, and §17.12's explicit "no ordering".
+  'supported',
+  'unsupported',
+  'notApplicable',
+  'none',
 ];
 
 export default function s09EnumCasing(targetVal, options, context) {

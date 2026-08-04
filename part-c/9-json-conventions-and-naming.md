@@ -36,7 +36,7 @@ description: "Field naming, JSON representation, forward-compatibility, and spec
 
 ## 9.7 Screaming snake case enum values <a href="#97-screaming-snake-case-enum-values" id="97-screaming-snake-case-enum-values"></a>
 
-**[M]** Enum values **MUST** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`).
+**[M]** Enum values that name a BB-defined state or category **MUST** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`). Values whose form is fixed elsewhere keep the casing their own definition gives them and **MUST NOT** be re-cased to satisfy this rule: identifiers built to a shape this guide defines (error codes per [§11.5](../part-c/11-errors.md#115-namespaced-stable-error-codes), event types per [§16.3](../part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types), sort keys per [§12.7](../part-c/12-pagination-filtering-sorting.md#127-sort-parameter-convention)), the GovStack `x-govstack-*` extension vocabularies ([§17.11](../part-d/17-asyncapi-channel-rules.md#1711-documented-delivery-guarantees), [§17.13](../part-d/17-asyncapi-channel-rules.md#1713-declared-delivery-management-capabilities)), codes drawn from an external standard (BCP 47 language tags per [§10.9](../part-c/10-data-types-and-formats.md#109-bcp-47-language-codes), ISO 4217 currency codes per [§10.10](../part-c/10-data-types-and-formats.md#1010-iso-4217-currency-codes)), and the health-status vocabulary of [§5.9](../part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint).
 
 ## 9.8 Forward-compatible schemas <a href="#98-forward-compatible-schemas" id="98-forward-compatible-schemas"></a>
 

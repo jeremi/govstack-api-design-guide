@@ -103,9 +103,11 @@ rules:
         forbidPattern: '\s|[^\x00-\x7F]'
 
   # 9.7 [M] — PROXY (bucket B), MUST -> warn. Flags string enum members that are
-  # not SCREAMING_SNAKE_CASE. Does NOT flag ISO-style short lowercase codes
-  # (language/locale) or health-status vocab, which are exempted; a few genuine
-  # violations that happen to look ISO-like are therefore missed.
+  # not SCREAMING_SNAKE_CASE, minus the carve-outs the rule lists (BCP 47 tags,
+  # reverse-DNS error codes and event types, x-govstack-* vocabularies, health
+  # status). A few genuine violations that happen to look ISO-like are missed,
+  # and §12.7 sort keys are lowerCamelCase field names indistinguishable from a
+  # mis-cased state name, so a sort-key schema is a known false positive.
   govstack-9.7:
     description: "Enum values must be SCREAMING_SNAKE_CASE (guide 9.7, [M], proxy)."
     message: "[9.7][M] {{error}}"
