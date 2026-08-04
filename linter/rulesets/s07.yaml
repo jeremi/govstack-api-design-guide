@@ -5,7 +5,7 @@
 # checks) and 7.14, 7.16, 7.17 as partial-proxy (bucket B: severity notched
 # one step below the rule's strongest normative keyword; each carries a
 # comment on what it does NOT verify). Source text: ../../rules.yaml.
-# Severity/formats policy: <SCRATCHPAD>/linter-conventions.md.
+# Severity/formats policy: ../README.md#rule-naming-and-severities.
 functionsDir: "../functions"
 functions:
   - responseHeaderRequired

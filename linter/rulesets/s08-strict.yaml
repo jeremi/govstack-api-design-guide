@@ -1,7 +1,7 @@
 # STRICT-only rules for §8 — implements guide rule 8.6.
 #
-# Ships only via ../strict.yaml (opt-in). See ../coverage.yaml and the
-# fragment format in <SCRATCHPAD>/linter-conventions.md.
+# Ships only via ../strict.yaml (opt-in). See ../coverage.yaml and
+# ../README.md#rule-naming-and-severities.
 functionsDir: "../functions"
 functions:
   - s08-personalDataInUrl

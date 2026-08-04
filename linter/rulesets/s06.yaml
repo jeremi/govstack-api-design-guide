@@ -1,7 +1,7 @@
 # Rules for §6 HTTP methods — generated from the guide; see coverage.yaml
 #
 # Implements guide rules 6.1, 6.4, 6.5, 6.6, 6.7. Source text: ../../rules.yaml.
-# Severity policy and formats follow <SCRATCHPAD>/linter-conventions.md.
+# Severity policy and formats follow ../README.md#rule-naming-and-severities.
 # surface: OpenAPI for all of §6 (these are HTTP-method semantics; AsyncAPI
 # has no GET/PUT/PATCH/DELETE/POST), so every rule uses formats: [oas3_1].
 functionsDir: "../functions"

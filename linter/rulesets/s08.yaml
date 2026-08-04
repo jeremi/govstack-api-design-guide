@@ -1,7 +1,7 @@
 # Rules for §8 HTTP headers — implements guide rules 8.1-8.5, 8.7.
 #
 # 8.6 is STRICT-ONLY; see ./s08-strict.yaml. Source text: ../../rules.yaml.
-# Severity policy and formats follow <SCRATCHPAD>/linter-conventions.md.
+# Severity policy and formats follow ../README.md#rule-naming-and-severities.
 #
 # Custom functions: none of the shared library functions (functions/README.md)
 # combine "operation parameters" with "responses" or scan header names across

@@ -3,7 +3,7 @@
 # Implements guide rules 5.1, 5.3, 5.4, 5.6, 5.9 (implemented) and 5.5
 # (partial-proxy). Strict-only siblings 5.2, 5.7, 5.8 live in
 # rulesets/s05-strict.yaml. Severity policy and formats follow
-# <SCRATCHPAD>/linter-conventions.md.
+# ../README.md#rule-naming-and-severities.
 functionsDir: "../functions"
 functions:
   - pathSegments

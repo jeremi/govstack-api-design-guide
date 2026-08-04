@@ -1,7 +1,7 @@
 # Rules for §13 authentication and authorisation — generated from the guide.
 #
 # Implements 13.1, 13.5 (implemented) and 13.2, 13.3, 13.4, 13.6 (partial-proxy).
-# Source text: ../../rules.yaml. Severity/formats per <SCRATCHPAD>/linter-conventions.md.
+# Source text: ../../rules.yaml. Severity/formats per ../README.md#rule-naming-and-severities.
 #
 # Surface note: §13 rules are "Universal", but the mechanical checks here target
 # the OpenAPI surface (formats [oas3_1]). AsyncAPI security coverage/schemes are

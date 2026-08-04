@@ -1,7 +1,7 @@
 # Rules for §10 data types and formats — generated from the guide; see coverage.yaml
 #
 # Implements guide rules 10.1-10.11. Source text: ../../rules.yaml.
-# Severity policy and formats follow <SCRATCHPAD>/linter-conventions.md.
+# Severity policy and formats follow ../README.md#rule-naming-and-severities.
 #
 # Rules 10.1-10.10 are bucket-B PROXIES: the guide's `surface` for every 10.x
 # rule is "Universal" (OpenAPI request/response bodies AND AsyncAPI message

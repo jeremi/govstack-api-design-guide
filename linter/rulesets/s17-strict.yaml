@@ -1,6 +1,6 @@
 # STRICT-only rules for §17 — ships only via ../strict.yaml (opt-in), at warn.
 #
-# Source text: ../../rules.yaml (§17.3). See <SCRATCHPAD>/linter-conventions.md.
+# Source text: ../../rules.yaml (§17.3). See ../README.md#rule-naming-and-severities.
 functionsDir: "../functions"
 functions:
   - valuePattern

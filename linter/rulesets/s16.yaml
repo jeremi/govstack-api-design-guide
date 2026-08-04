@@ -2,7 +2,7 @@
 #
 # Implements guide rules 16.1, 16.2, 16.3, 16.4, 16.6, 16.11. Source text:
 # ../../rules.yaml. Severity policy and formats follow
-# <SCRATCHPAD>/linter-conventions.md.
+# ../README.md#rule-naming-and-severities.
 #
 # Scope note: §16 spans both the OpenAPI/webhooks and the AsyncAPI surfaces.
 # These rules target the OpenAPI document (formats: [oas3_1]); the AsyncAPI

@@ -1,7 +1,7 @@
 # Rules for §18 compatibility and lifecycle — generated from the guide; see coverage.yaml.
 #
 # Implements guide rules 18.1, 18.2, 18.5, 18.7. Source text: ../../rules.yaml.
-# Severity policy and formats follow <SCRATCHPAD>/linter-conventions.md.
+# Severity policy and formats follow ../README.md#rule-naming-and-severities.
 # 18.3/18.4 (backward-/breaking-change diffing against a previous version) and
 # 18.6 (informative) are out of scope for this fragment.
 #

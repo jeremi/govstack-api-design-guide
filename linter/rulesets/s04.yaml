@@ -1,7 +1,7 @@
 # Rules for §4 documentation and descriptions — generated from the guide; see coverage.yaml
 #
 # Implements guide rules 4.1, 4.2, 4.3. Source text: ../../rules.yaml.
-# Severity policy and formats follow <SCRATCHPAD>/linter-conventions.md.
+# Severity policy and formats follow ../README.md#rule-naming-and-severities.
 # 4.4 is STRICT-ONLY and lives in s04-strict.yaml instead.
 #
 # §4 surface is "Universal": every rule here fires on both OpenAPI and

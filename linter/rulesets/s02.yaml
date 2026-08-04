@@ -1,7 +1,7 @@
 # Rules for §2 OpenAPI document standards — proof-of-concept section.
 #
 # Implements guide rules 2.1, 2.5, 2.6, 2.7. Source text: ../../rules.yaml.
-# Severity policy and formats follow <SCRATCHPAD>/linter-conventions.md.
+# Severity policy and formats follow ../README.md#rule-naming-and-severities.
 #
 # Custom functions: this fragment declares functionsDir + functions so the
 # bundler (programmatic) and the CLI both resolve valuePattern from

@@ -1,7 +1,7 @@
 # GovStack API Design Guide — Spectral ruleset (entry point)
 # ============================================================
 # This ruleset mechanically enforces the GovStack Cross-BB API Design Guide.
-#   Guide version implemented: 0.2.0
+#   Guide version implemented: 0.2.0-draft
 #   Rule catalogue (source of truth): ../rules.yaml
 #   Coverage contract (rule -> status -> spectral rules): ./coverage.yaml
 #
@@ -16,10 +16,9 @@
 #   npx spectral lint -r strict.yaml  path/to/openapi.yaml      # + opt-in strict heuristics
 #   npm test                                                    # fixtures + unit + harness
 #
-# Fragment status: s02 is implemented (proof-of-concept). s03–s20 are valid
-# empty skeletons, populated by the per-section work. ALL fragments are listed
-# below already so the bundle loads today and section agents never edit this
-# file.
+# Fragment sNN.yaml carries the machine-checkable rules for guide section NN.
+# Not every guide rule has one: coverage.yaml records, per guide rule, whether
+# it is enforced directly, enforced by proxy, or left to human review.
 extends:
   - ./rulesets/s02.yaml
   - ./rulesets/s03.yaml

@@ -1,7 +1,7 @@
 # Rules for §17 event-driven APIs (AsyncAPI channel documentation).
 #
 # Source text: ../../rules.yaml (§17). Severity policy, formats (aas3) and the
-# proxy/notch conventions follow <SCRATCHPAD>/linter-conventions.md and
+# proxy/notch conventions follow ../README.md#rule-naming-and-severities and
 # ../coverage.yaml. AsyncAPI-surface rules gate on `formats: [aas3]`.
 #
 # Custom functions live in ../functions; every function referenced below is

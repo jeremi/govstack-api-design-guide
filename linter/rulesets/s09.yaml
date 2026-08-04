@@ -2,7 +2,7 @@
 #
 # Implements guide rules 9.1-9.5, 9.7-9.9, 9.11 (9.6 and 9.10 are STRICT-only,
 # in rulesets/s09-strict.yaml). Source text: ../../rules.yaml. Severity and
-# formats follow <SCRATCHPAD>/linter-conventions.md.
+# formats follow ../README.md#rule-naming-and-severities.
 #
 # Bucket-B proxies (9.1, 9.3, 9.4, 9.7, 9.9, 9.11) run one severity notch below
 # the rule's strength and each carry a comment saying what they do NOT verify.

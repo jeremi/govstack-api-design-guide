@@ -1,7 +1,7 @@
 # Rules for §3 AsyncAPI document standards — generated from the guide; see coverage.yaml.
 #
 # Implements guide rules 3.1, 3.5, 3.6, 3.7 (implemented) and 3.9 (partial-proxy).
-# Source text: ../../rules.yaml. Severity + formats policy: <SCRATCHPAD>/linter-conventions.md.
+# Source text: ../../rules.yaml. Severity + formats policy: ../README.md#rule-naming-and-severities.
 # 3.2/3.3/3.4 are driver-status (file-tree/validator) and 3.8 is needs-context — not here.
 #
 # Custom functions: this fragment declares functionsDir + functions so both the

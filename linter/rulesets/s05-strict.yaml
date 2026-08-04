@@ -1,6 +1,6 @@
 # STRICT-only rules for §5 — noisy lexical heuristics, opt-in via
 # ../strict.yaml. All at severity `warn` per
-# <SCRATCHPAD>/linter-conventions.md, regardless of the guide rule's own
+# ../README.md#rule-naming-and-severities, regardless of the guide rule's own
 # strength. Source text: ../../rules.yaml.
 functionsDir: "../functions"
 functions:
