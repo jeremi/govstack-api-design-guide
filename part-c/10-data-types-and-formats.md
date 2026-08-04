@@ -16,7 +16,7 @@ description: "Canonical representations for identifiers, dates, money, phone num
 
 ## 10.2 RFC 3339 timestamps <a href="#102-rfc-3339-timestamps" id="102-rfc-3339-timestamps"></a>
 
-**[M]** Timestamps **MUST** be RFC 3339 with timezone, declared as `format: date-time`.
+**[M]** Timestamps **MUST** be RFC 3339 in UTC, serialized with the `Z` designator and declared as `format: date-time`. A non-UTC offset **MUST NOT** be used in an API payload; where a local time zone is significant to the consumer, it is carried in a separate field alongside the UTC value. UTC-only is inherited from `govstack-cfr-data#req-2` and cannot be relaxed by a BB specification.
 
 ## 10.3 RFC 3339 calendar dates <a href="#103-rfc-3339-calendar-dates" id="103-rfc-3339-calendar-dates"></a>
 
@@ -49,3 +49,7 @@ description: "Canonical representations for identifiers, dates, money, phone num
 ## 10.10 ISO 4217 currency codes <a href="#1010-iso-4217-currency-codes" id="1010-iso-4217-currency-codes"></a>
 
 **[M+R]** Currency codes **MUST** be ISO 4217.
+
+## 10.11 UTF-8 text encoding <a href="#1011-utf-8-text-encoding" id="1011-utf-8-text-encoding"></a>
+
+**[M]** Text in API payloads **MUST** be UTF-8. A media type declared anywhere in the specification **MUST NOT** carry a `charset` parameter naming any other encoding. `charset=utf-8` **MAY** be stated explicitly, though it is redundant on JSON media types, whose encoding RFC 8259 already fixes at UTF-8. This is inherited from `govstack-cfr-data#req-1` and cannot be relaxed by a BB specification.

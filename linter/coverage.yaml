@@ -454,6 +454,11 @@ rules:
     status: partial-proxy
     spectral_rules: [govstack-10.10]
     note: "proxy: currency fields match ^[A-Z]{3}$"
+  - id: "10.11"
+    class: "M"
+    status: implemented
+    spectral_rules: [govstack-10.11-openapi, govstack-10.11-asyncapi]
+    note: "no declared media type or contentType sets charset to an encoding other than UTF-8. Payload bytes themselves are outside a document linter's reach."
   - id: "11.1"
     class: "M"
     status: implemented
@@ -578,7 +583,7 @@ rules:
     class: "M+R"
     status: human
     spectral_rules: []
-    note: "externally reachable surface classification, equivalent AsyncAPI transport protection, and deployment TLS configuration require protocol and runtime review; §2.6 separately checks declared OpenAPI server URLs"
+    note: "externally reachable surface classification, equivalent AsyncAPI transport protection, negotiated TLS version, and deployment TLS configuration require protocol and runtime review; §2.6 separately checks declared OpenAPI server URLs"
   - id: "14.1"
     class: "M+R"
     status: partial-proxy

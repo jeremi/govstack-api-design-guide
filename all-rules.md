@@ -138,6 +138,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [10.8](part-c/10-data-types-and-formats.md#108-iso-3166-1-country-codes) | M+R | MUST | Universal | ISO 3166-1 country codes |
 | [10.9](part-c/10-data-types-and-formats.md#109-bcp-47-language-codes) | M+R | MUST | Universal | BCP 47 language codes |
 | [10.10](part-c/10-data-types-and-formats.md#1010-iso-4217-currency-codes) | M+R | MUST | Universal | ISO 4217 currency codes |
+| [10.11](part-c/10-data-types-and-formats.md#1011-utf-8-text-encoding) | M | MUST | Universal | UTF-8 text encoding |
 
 ## 11. Errors
 

@@ -49,7 +49,9 @@ A BB MAY additionally expose surfaces under other industry standards (for exampl
 
 ## 1.3 Relationship to existing GovStack documents <a href="#13-relationship-to-existing-govstack-documents" id="13-relationship-to-existing-govstack-documents"></a>
 
-Where this guide overlaps with existing GovStack requirements or BB-specific conventions, precedence must be settled through ratification and reconciliation with the existing GovStack Specification Framework and CFR compliance model. A full reconciliation matrix will accompany v1.0.
+This guide is a GovStack specification that extends the Cross-Functional Requirements. Under the GovStack Specification Framework an extending specification may tighten or elaborate a cross-functional requirement but **MUST NOT** contradict or weaken one, and a requirement classified IMMUTABLE cannot be altered at all. Where a rule here inherits a cross-functional requirement it cites the requirement identifier, for example `govstack-cfr-data#req-2` in [§10.2](part-c/10-data-types-and-formats.md#102-rfc-3339-timestamps), so that the inheritance and its immutability are visible at the point of use.
+
+Where this guide overlaps with existing GovStack requirements or BB-specific conventions in ways that rule does not settle, precedence must be settled through ratification and reconciliation with the existing GovStack Specification Framework and CFR compliance model. A full reconciliation matrix will accompany v1.0.
 
 ## 1.4 Audience <a href="#14-audience" id="14-audience"></a>
 

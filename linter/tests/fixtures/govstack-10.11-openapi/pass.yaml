@@ -1,0 +1,19 @@
+openapi: 3.1.0
+info:
+  title: Section 10.11 pass
+  version: 1.0.0
+paths:
+  /v1/records:
+    get:
+      operationId: listRecords
+      responses:
+        '200':
+          description: A page of records.
+          content:
+            # No charset parameter, and an explicit utf-8 one: both allowed.
+            application/json:
+              schema:
+                type: object
+            text/csv; charset=utf-8:
+              schema:
+                type: string

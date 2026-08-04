@@ -1,9 +1,9 @@
 # Rules for §10 data types and formats — generated from the guide; see coverage.yaml
 #
-# Implements guide rules 10.1-10.10. Source text: ../../rules.yaml.
+# Implements guide rules 10.1-10.11. Source text: ../../rules.yaml.
 # Severity policy and formats follow <SCRATCHPAD>/linter-conventions.md.
 #
-# All ten rules here are bucket-B PROXIES: the guide's `surface` for every 10.x
+# Rules 10.1-10.10 are bucket-B PROXIES: the guide's `surface` for every 10.x
 # rule is "Universal" (OpenAPI request/response bodies AND AsyncAPI message
 # payloads), but a linter can only see property NAMES and their declared JSON
 # Schema keywords, not what the field actually means or what data flows through
@@ -12,6 +12,10 @@
 # the mechanically-checkable part of the guide's MUST. Per the severity policy,
 # every proxy here runs one notch below its class's strength: all ten rules are
 # MUST-strength in rules.yaml, so all run at `warn` (not `error`).
+#
+# 10.11 is NOT a proxy and is not covered by that paragraph: a charset parameter
+# on a declared media type is specification text a linter can read directly, so
+# it is checked exactly and runs at `error`.
 #
 # Shared `given`: every rule scans the same set of schema-bearing locations,
 # via the `DataSchemas` alias below — components.schemas / inline OpenAPI
@@ -22,6 +26,7 @@
 functionsDir: "../functions"
 functions:
   - schemaFieldFormat
+  - mediaTypeExpected
 aliases:
   DataSchemas:
     description: "Every JSON Schema node that may declare data-type fields: OpenAPI reusable/inline body schemas, or AsyncAPI message payloads."
@@ -249,3 +254,43 @@ rules:
       functionOptions:
         namePattern: '(^currency|Currency)'
         require: { type: string, pattern: '^[A-Z]{3}$' }
+
+  # 10.11 [M] — OpenAPI half. No declared media type may carry a charset
+  # parameter naming an encoding other than UTF-8. The character classes spell
+  # the match case-insensitively because functionOptions patterns take no flags.
+  # Payload bytes are a runtime property and are not checked here; this rule
+  # catches only the declared contract.
+  govstack-10.11-openapi:
+    description: "No declared media type may set charset to an encoding other than UTF-8 (guide 10.11, [M])."
+    message: "[10.11][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#1011-utf-8-text-encoding
+    severity: error
+    formats: [oas3_1]
+    given:
+      - $.paths[*][get,put,post,delete,options,head,patch,trace].requestBody.content
+      - $.paths[*][get,put,post,delete,options,head,patch,trace].responses[*].content
+      - $.webhooks[*][get,put,post,delete,options,head,patch,trace].requestBody.content
+      - $.webhooks[*][get,put,post,delete,options,head,patch,trace].responses[*].content
+      - $.components.requestBodies[*].content
+      - $.components.responses[*].content
+    then:
+      function: mediaTypeExpected
+      functionOptions:
+        forbid: '[Cc][Hh][Aa][Rr][Ss][Ee][Tt]\s*=\s*"?(?![Uu][Tt][Ff]-8)'
+
+  # 10.11 [M] — AsyncAPI half. Same constraint on the contentType strings, which
+  # are plain values rather than map keys.
+  govstack-10.11-asyncapi:
+    description: "No declared contentType may set charset to an encoding other than UTF-8 (guide 10.11, [M])."
+    message: "[10.11][M] contentType must not set charset to an encoding other than UTF-8 (§10.11)."
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#1011-utf-8-text-encoding
+    severity: error
+    formats: [aas3]
+    given:
+      - $.defaultContentType
+      - $.components.messages[*].contentType
+      - $.channels[*].messages[*].contentType
+    then:
+      function: pattern
+      functionOptions:
+        notMatch: '[Cc][Hh][Aa][Rr][Ss][Ee][Tt]\s*=\s*"?(?![Uu][Tt][Ff]-8)'
