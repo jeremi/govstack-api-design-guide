@@ -221,7 +221,7 @@ rules:
   surface: OpenAPI
   page: part-b/5-url-structure-and-versioning.md
   anchor: 51-major-version-in-the-path
-  text: "Major version **MUST** appear in the URL path as `/v{N}/...` (e.g., `/v1/policies`). `[OPEN-4-A]`"
+  text: "Major version **MUST** appear in the URL path as `/v{N}/...` (e.g., `/v1/policies`). The unversioned operational endpoints of §5.9 (`/health`, and `/ready` where exposed) are the only exception. `[OPEN-4-A]`"
   open_questions: ["OPEN-4-A"]
 - id: "5.2"
   title: "Plural noun resources"
@@ -1436,7 +1436,7 @@ rules:
   surface: Universal
   page: part-d/18-compatibility-and-lifecycle.md
   anchor: 182-major-version-in-path-or-channel
-  text: "A major version increment **MUST** be reflected in every OpenAPI path key (`/v2/`) and **MUST NOT** be duplicated in the OpenAPI `servers` URL. On AsyncAPI, the major version **MUST** appear in the logical channel ID defined by §17.2 or in an equivalent machine-readable version field defined by `govstack-asyncapi-common.yaml`; protocol-native channel addresses **MUST NOT** be rewritten solely to carry it."
+  text: "A major version increment **MUST** be reflected in every versioned OpenAPI path key (`/v2/`) and **MUST NOT** be duplicated in the OpenAPI `servers` URL. The unversioned operational endpoints of §5.9 carry no major version and are unaffected by an increment. On AsyncAPI, the major version **MUST** appear in the logical channel ID defined by §17.2 or in an equivalent machine-readable version field defined by `govstack-asyncapi-common.yaml`; protocol-native channel addresses **MUST NOT** be rewritten solely to carry it."
   open_questions: []
 - id: "18.3"
   title: "Backward-compatible minor changes"

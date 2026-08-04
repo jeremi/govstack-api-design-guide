@@ -12,7 +12,7 @@ description: "Rules governing URL path structure, resource naming, and version p
 
 ## 5.1 Major version in the path <a href="#51-major-version-in-the-path" id="51-major-version-in-the-path"></a>
 
-**[M]** Major version **MUST** appear in the URL path as `/v{N}/...` (e.g., `/v1/policies`). [`[OPEN-4-A]`](../appendix/b-open-questions.md)
+**[M]** Major version **MUST** appear in the URL path as `/v{N}/...` (e.g., `/v1/policies`). The unversioned operational endpoints of [§5.9](#59-unversioned-health-endpoint) (`/health`, and `/ready` where exposed) are the only exception. [`[OPEN-4-A]`](../appendix/b-open-questions.md)
 
 ## 5.2 Plural noun resources <a href="#52-plural-noun-resources" id="52-plural-noun-resources"></a>
 

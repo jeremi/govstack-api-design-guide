@@ -16,7 +16,7 @@ description: "Rules governing SemVer versioning, backward-compatible and breakin
 
 ## 18.2 Major version in path or channel <a href="#182-major-version-in-path-or-channel" id="182-major-version-in-path-or-channel"></a>
 
-**[M]** A major version increment **MUST** be reflected in every OpenAPI path key (`/v2/`) and **MUST NOT** be duplicated in the OpenAPI `servers` URL. On AsyncAPI, the major version **MUST** appear in the logical channel ID defined by [§17.2](../part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses) or in an equivalent machine-readable version field defined by `govstack-asyncapi-common.yaml`; protocol-native channel addresses **MUST NOT** be rewritten solely to carry it.
+**[M]** A major version increment **MUST** be reflected in every versioned OpenAPI path key (`/v2/`) and **MUST NOT** be duplicated in the OpenAPI `servers` URL. The unversioned operational endpoints of [§5.9](../part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint) carry no major version and are unaffected by an increment. On AsyncAPI, the major version **MUST** appear in the logical channel ID defined by [§17.2](../part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses) or in an equivalent machine-readable version field defined by `govstack-asyncapi-common.yaml`; protocol-native channel addresses **MUST NOT** be rewritten solely to carry it.
 
 ## 18.3 Backward-compatible minor changes <a href="#183-backward-compatible-minor-changes" id="183-backward-compatible-minor-changes"></a>
 
