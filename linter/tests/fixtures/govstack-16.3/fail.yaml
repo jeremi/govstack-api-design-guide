@@ -25,7 +25,7 @@ webhooks:
                   type: string
                 type:
                   type: string
-                  const: "org.govstack.payments.v1.payment.completed"
+                  const: "global.govstack.payments.v1.payment.completed"
                 data:
                   type: object
       responses:

@@ -26,7 +26,7 @@ webhooks:
                   const: "urn:govstack:bb:payments"
                 type:
                   type: string
-                  const: "org.govstack.payments.payment.completed"
+                  const: "global.govstack.payments.payment.completed"
                 time:
                   type: string
                   format: date-time

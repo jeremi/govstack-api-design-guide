@@ -9,7 +9,7 @@ servers:
     # 17.10: no server-level security, and the operation declares none either.
 channels:
   personCreated:
-    address: org.govstack.reg.v1.person.created
+    address: global.govstack.reg.v1.person.created
     messages:
       evt:
         $ref: '#/components/messages/PersonCreated'

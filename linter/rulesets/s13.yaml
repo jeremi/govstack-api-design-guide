@@ -106,7 +106,7 @@ rules:
         label: "the GovStack scope naming convention"
         patterns:
           - '^bb:[a-z][a-z0-9-]*:[A-Za-z0-9-]+:[A-Za-z0-9-]+$'
-          - '^org\.govstack\.[a-z][a-z0-9-]*\.[A-Za-z0-9-]+\.[A-Za-z0-9-]+$'
+          - '^global\.govstack\.[a-z][a-z0-9-]*\.[A-Za-z0-9-]+\.[A-Za-z0-9-]+$'
           - '^[A-Za-z0-9-]+\.[A-Za-z0-9-]+$'
 
   # 13.5 [M+R] — credentials MUST NOT be declared in query parameters or

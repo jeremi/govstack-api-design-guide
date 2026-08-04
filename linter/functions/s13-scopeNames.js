@@ -7,7 +7,7 @@ import { isObject, toRegExp } from './lib/util.js';
  *
  * This is a proxy: it validates the *shape* of each scope string against the
  * default `bb:{bb-code}:{resource}:{action}` and its two documented
- * alternatives (reverse-DNS `org.govstack.{bb-code}.{resource}.{action}` and
+ * alternatives (reverse-DNS `global.govstack.{bb-code}.{resource}.{action}` and
  * `resource.action`). It does NOT verify that `{bb-code}` is the BB's actual
  * registered code (§9.11), that scopes are unique ecosystem-wide, that a single
  * convention is used consistently, or that every operation documents its scopes.

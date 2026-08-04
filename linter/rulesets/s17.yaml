@@ -40,10 +40,10 @@ rules:
               enum: [send, receive]
 
   # 17.2 [M+R] — logical channel IDs (the keys under `channels`) MUST follow
-  # reverse-DNS org.govstack.{bb-code}.v{major}.{resource}.{event}. Channel
+  # reverse-DNS global.govstack.{bb-code}.v{major}.{resource}.{event}. Channel
   # Object addresses intentionally retain protocol-native destination syntax.
   govstack-17.2:
-    description: "Logical channel IDs must follow reverse-DNS org.govstack.{bb-code}.v{major}.{resource}.{event} (guide 17.2, [M+R])."
+    description: "Logical channel IDs must follow reverse-DNS global.govstack.{bb-code}.v{major}.{resource}.{event} (guide 17.2, [M+R])."
     message: "[17.2][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses
     severity: error

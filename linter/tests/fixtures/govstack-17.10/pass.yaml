@@ -10,7 +10,7 @@ servers:
       - $ref: '#/components/securitySchemes/userToken'
 channels:
   personCreated:
-    address: org.govstack.reg.v1.person.created
+    address: global.govstack.reg.v1.person.created
     messages:
       evt:
         $ref: '#/components/messages/PersonCreated'

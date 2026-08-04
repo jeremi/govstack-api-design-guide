@@ -8,10 +8,10 @@ servers:
     protocol: kafka
 channels:
   personCreated:
-    address: org.govstack.reg.v1.person.created
+    address: global.govstack.reg.v1.person.created
     bindings:
       kafka:
-        topic: org.govstack.reg.v1.person.created
+        topic: global.govstack.reg.v1.person.created
         bindingVersion: '0.5.0'
     messages:
       evt:

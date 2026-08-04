@@ -27,7 +27,7 @@ webhooks:
                     - "https://pay-prod-eu1.internal:8443/events"
                 type:
                   type: string
-                  const: "org.govstack.payments.payment.completed"
+                  const: "global.govstack.payments.payment.completed"
                 data:
                   type: object
       responses:

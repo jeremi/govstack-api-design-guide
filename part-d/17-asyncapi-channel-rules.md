@@ -16,7 +16,7 @@ description: "Rules governing AsyncAPI channel addressing, payload structure, me
 
 ## 17.2 Stable logical channel IDs and native addresses <a href="#172-stable-logical-channel-ids-and-native-addresses" id="172-stable-logical-channel-ids-and-native-addresses"></a>
 
-**[M+R]** Each entry under AsyncAPI `channels` **MUST** use a stable logical channel ID with reverse-DNS shape `org.govstack.{bb-code}.v{major}.{resource}.{event}`. The `{bb-code}` segment **MUST** be the registered code from [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The Channel Object `address` **MUST** use the chosen protocol's native destination syntax, such as an MQTT topic, AMQP routing key, Kafka topic, or WebSocket/SSE path, and **MUST NOT** be forced into reverse-DNS form when that would change protocol semantics. Protocol bindings **MUST** document the mapping from logical ID to native address.
+**[M+R]** Each entry under AsyncAPI `channels` **MUST** use a stable logical channel ID with reverse-DNS shape `global.govstack.{bb-code}.v{major}.{resource}.{event}`. The `{bb-code}` segment **MUST** be the registered code from [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The Channel Object `address` **MUST** use the chosen protocol's native destination syntax, such as an MQTT topic, AMQP routing key, Kafka topic, or WebSocket/SSE path, and **MUST NOT** be forced into reverse-DNS form when that would change protocol semantics. Protocol bindings **MUST** document the mapping from logical ID to native address.
 
 ## 17.3 No personal data in channels <a href="#173-no-personal-data-in-channels" id="173-no-personal-data-in-channels"></a>
 

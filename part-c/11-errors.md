@@ -16,7 +16,7 @@ description: "One RFC 9457 problem-details error envelope, GovStack extension fi
 
 ## 11.2 Standard problem fields present <a href="#112-standard-problem-fields-present" id="112-standard-problem-fields-present"></a>
 
-**[M+R]** Standard RFC 9457 fields `type`, `title`, and `status` **MUST** be present in every GovStack HTTP problem. `type` **MUST** be a stable absolute URI that identifies the problem type and **SHOULD** dereference to human-readable documentation, for example `https://docs.govstack.org/errors/{bb-code}/{error-name}`. `status` **MUST** equal the actual HTTP response status. `detail` and `instance` **SHOULD** be present when they add diagnostic value. The spec **MUST** declare that these fields carry no personal data and no system-internal details such as stack traces, hostnames, or query fragments.
+**[M+R]** Standard RFC 9457 fields `type`, `title`, and `status` **MUST** be present in every GovStack HTTP problem. `type` **MUST** be a stable absolute URI that identifies the problem type and **SHOULD** dereference to human-readable documentation, for example `https://docs.govstack.global/errors/{bb-code}/{error-name}`. `status` **MUST** equal the actual HTTP response status. `detail` and `instance` **SHOULD** be present when they add diagnostic value. The spec **MUST** declare that these fields carry no personal data and no system-internal details such as stack traces, hostnames, or query fragments.
 
 ## 11.3 GovStack error extension fields <a href="#113-govstack-error-extension-fields" id="113-govstack-error-extension-fields"></a>
 
@@ -30,23 +30,23 @@ description: "One RFC 9457 problem-details error envelope, GovStack extension fi
 
 ```json
 {
-  "type": "https://docs.govstack.org/errors/registration/validationFailed",
+  "type": "https://docs.govstack.global/errors/registration/validationFailed",
   "title": "Request validation failed",
   "status": 422,
   "detail": "Two request fields failed validation.",
   "instance": "/v1/applications/3f6c0e63-9f7e-4d51-a3ce-58b2c7d0f3a1",
-  "code": "org.govstack.registration.validationFailed",
+  "code": "global.govstack.registration.validationFailed",
   "traceId": "6f1c3f0e2a9b4c8d7e6f5a4b3c2d1e0f",
   "timestamp": "2026-07-10T08:30:00Z",
   "errors": [
     {
       "pointer": "/applicant/phoneNumber",
-      "code": "org.govstack.registration.invalidPhoneNumber",
+      "code": "global.govstack.registration.invalidPhoneNumber",
       "message": "Phone number must be an E.164 string."
     },
     {
       "pointer": "/applicant/birthDate",
-      "code": "org.govstack.registration.invalidDate",
+      "code": "global.govstack.registration.invalidDate",
       "message": "Date must be an RFC 3339 calendar date."
     }
   ]
@@ -55,7 +55,7 @@ description: "One RFC 9457 problem-details error envelope, GovStack extension fi
 
 ## 11.5 Namespaced stable error codes <a href="#115-namespaced-stable-error-codes" id="115-namespaced-stable-error-codes"></a>
 
-**[M+R]** Error codes **MUST** be stable, machine-readable identifiers, namespaced by BB so that integrators can disambiguate identical codes from different BBs. The `code` field is an identifier, not a URL; the problem-type URI belongs in `type` ([§11.2](#112-standard-problem-fields-present)). The default shape is reverse-DNS: `org.govstack.{bb-code}.{error-name}`. The `{bb-code}` segment is the BB's single registered code per [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The `{error-name}` segment **MUST** use lowerCamelCase, for example `org.govstack.identity.personNotFound`. Numeric suffixes **MAY** be used where a BB already maintains a numbered error catalogue, for example `org.govstack.{bb-code}.{number}`. [`[OPEN-10-A]`](../appendix/b-open-questions.md)
+**[M+R]** Error codes **MUST** be stable, machine-readable identifiers, namespaced by BB so that integrators can disambiguate identical codes from different BBs. The `code` field is an identifier, not a URL; the problem-type URI belongs in `type` ([§11.2](#112-standard-problem-fields-present)). The default shape is reverse-DNS: `global.govstack.{bb-code}.{error-name}`. The `{bb-code}` segment is the BB's single registered code per [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The `{error-name}` segment **MUST** use lowerCamelCase, for example `global.govstack.identity.personNotFound`. Numeric suffixes **MAY** be used where a BB already maintains a numbered error catalogue, for example `global.govstack.{bb-code}.{number}`. [`[OPEN-10-A]`](../appendix/b-open-questions.md)
 
 ## 11.6 Stable codes across languages <a href="#116-stable-codes-across-languages" id="116-stable-codes-across-languages"></a>
 
@@ -63,7 +63,7 @@ description: "One RFC 9457 problem-details error envelope, GovStack extension fi
 
 ## 11.7 Common error catalogue <a href="#117-common-error-catalogue" id="117-common-error-catalogue"></a>
 
-**[M+R]** A small set of cross-BB common errors **MUST** be defined in `govstack-openapi-common.yaml` and reused. The starting set is modelled on `google.rpc.Code` (gRPC canonical error codes) but uses the GovStack reverse-DNS error-code convention: `org.govstack.common.unauthenticated`, `org.govstack.common.permissionDenied`, `org.govstack.common.notFound`, `org.govstack.common.invalidArgument`, `org.govstack.common.alreadyExists`, `org.govstack.common.aborted`, `org.govstack.common.resourceExhausted`, `org.govstack.common.internal`, `org.govstack.common.unimplemented`. The final list is [`[OPEN-10-B]`](../appendix/b-open-questions.md).
+**[M+R]** A small set of cross-BB common errors **MUST** be defined in `govstack-openapi-common.yaml` and reused. The starting set is modelled on `google.rpc.Code` (gRPC canonical error codes) but uses the GovStack reverse-DNS error-code convention: `global.govstack.common.unauthenticated`, `global.govstack.common.permissionDenied`, `global.govstack.common.notFound`, `global.govstack.common.invalidArgument`, `global.govstack.common.alreadyExists`, `global.govstack.common.aborted`, `global.govstack.common.resourceExhausted`, `global.govstack.common.internal`, `global.govstack.common.unimplemented`. The final list is [`[OPEN-10-B]`](../appendix/b-open-questions.md).
 
 ## 11.8 Transport-neutral asynchronous errors <a href="#118-transport-neutral-asynchronous-errors" id="118-transport-neutral-asynchronous-errors"></a>
 

@@ -478,7 +478,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-11.5-enum, govstack-11.5-example]
-    note: "proxy: where code enum/examples exist, match org.govstack.{bb-code}.{lowerCamel}. OpenAPI surface only."
+    note: "proxy: where code enum/examples exist, match global.govstack.{bb-code}.{lowerCamel}. OpenAPI surface only."
   - id: "11.6"
     class: "R"
     status: runtime
@@ -658,7 +658,7 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-16.3]
-    note: "event type const matches reverse-DNS org.govstack.{bb-code}.{resource}.{action}, no version"
+    note: "event type const matches reverse-DNS global.govstack.{bb-code}.{resource}.{action}, no version"
   - id: "16.4"
     class: "M+R"
     status: partial-proxy
@@ -708,7 +708,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-17.2]
-    note: "logical channel keys match org.govstack.{bb-code}.v{major}.{resource}.{event}; native address syntax and binding mapping require protocol-aware review"
+    note: "logical channel keys match global.govstack.{bb-code}.v{major}.{resource}.{event}; native address syntax and binding mapping require protocol-aware review"
   - id: "17.3"
     class: "R"
     status: strict-only

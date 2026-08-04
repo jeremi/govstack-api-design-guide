@@ -815,7 +815,7 @@ rules:
   surface: Universal
   page: part-c/11-errors.md
   anchor: 112-standard-problem-fields-present
-  text: "Standard RFC 9457 fields `type`, `title`, and `status` **MUST** be present in every GovStack HTTP problem. `type` **MUST** be a stable absolute URI that identifies the problem type and **SHOULD** dereference to human-readable documentation, for example `https://docs.govstack.org/errors/{bb-code}/{error-name}`. `status` **MUST** equal the actual HTTP response status. `detail` and `instance` **SHOULD** be present when they add diagnostic value. The spec **MUST** declare that these fields carry no personal data and no system-internal details such as stack traces, hostnames, or query fragments."
+  text: "Standard RFC 9457 fields `type`, `title`, and `status` **MUST** be present in every GovStack HTTP problem. `type` **MUST** be a stable absolute URI that identifies the problem type and **SHOULD** dereference to human-readable documentation, for example `https://docs.govstack.global/errors/{bb-code}/{error-name}`. `status` **MUST** equal the actual HTTP response status. `detail` and `instance` **SHOULD** be present when they add diagnostic value. The spec **MUST** declare that these fields carry no personal data and no system-internal details such as stack traces, hostnames, or query fragments."
   open_questions: []
 - id: "11.3"
   title: "GovStack error extension fields"
@@ -842,7 +842,7 @@ rules:
   surface: Universal
   page: part-c/11-errors.md
   anchor: 115-namespaced-stable-error-codes
-  text: "Error codes **MUST** be stable, machine-readable identifiers, namespaced by BB so that integrators can disambiguate identical codes from different BBs. The `code` field is an identifier, not a URL; the problem-type URI belongs in `type` (§11.2). The default shape is reverse-DNS: `org.govstack.{bb-code}.{error-name}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The `{error-name}` segment **MUST** use lowerCamelCase, for example `org.govstack.identity.personNotFound`. Numeric suffixes **MAY** be used where a BB already maintains a numbered error catalogue, for example `org.govstack.{bb-code}.{number}`. `[OPEN-10-A]`"
+  text: "Error codes **MUST** be stable, machine-readable identifiers, namespaced by BB so that integrators can disambiguate identical codes from different BBs. The `code` field is an identifier, not a URL; the problem-type URI belongs in `type` (§11.2). The default shape is reverse-DNS: `global.govstack.{bb-code}.{error-name}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The `{error-name}` segment **MUST** use lowerCamelCase, for example `global.govstack.identity.personNotFound`. Numeric suffixes **MAY** be used where a BB already maintains a numbered error catalogue, for example `global.govstack.{bb-code}.{number}`. `[OPEN-10-A]`"
   open_questions: ["OPEN-10-A"]
 - id: "11.6"
   title: "Stable codes across languages"
@@ -860,7 +860,7 @@ rules:
   surface: Universal
   page: part-c/11-errors.md
   anchor: 117-common-error-catalogue
-  text: "A small set of cross-BB common errors **MUST** be defined in `govstack-openapi-common.yaml` and reused. The starting set is modelled on `google.rpc.Code` (gRPC canonical error codes) but uses the GovStack reverse-DNS error-code convention: `org.govstack.common.unauthenticated`, `org.govstack.common.permissionDenied`, `org.govstack.common.notFound`, `org.govstack.common.invalidArgument`, `org.govstack.common.alreadyExists`, `org.govstack.common.aborted`, `org.govstack.common.resourceExhausted`, `org.govstack.common.internal`, `org.govstack.common.unimplemented`. The final list is `[OPEN-10-B]`."
+  text: "A small set of cross-BB common errors **MUST** be defined in `govstack-openapi-common.yaml` and reused. The starting set is modelled on `google.rpc.Code` (gRPC canonical error codes) but uses the GovStack reverse-DNS error-code convention: `global.govstack.common.unauthenticated`, `global.govstack.common.permissionDenied`, `global.govstack.common.notFound`, `global.govstack.common.invalidArgument`, `global.govstack.common.alreadyExists`, `global.govstack.common.aborted`, `global.govstack.common.resourceExhausted`, `global.govstack.common.internal`, `global.govstack.common.unimplemented`. The final list is `[OPEN-10-B]`."
   open_questions: ["OPEN-10-B"]
 - id: "11.8"
   title: "Transport-neutral asynchronous errors"
@@ -995,7 +995,7 @@ rules:
   surface: Universal
   page: part-d/13-authentication-and-authorisation.md
   anchor: 134-namespaced-oauth-scopes
-  text: "OAuth scope strings **MUST** be documented per operation, and **MUST** follow a single ecosystem-wide naming convention so that one BB's scope does not collide with another's. The default shape is `bb:{bb-code}:{resource}:{action}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The `bb:` prefix is retained for OAuth scopes because colon-separated scope strings are widely supported and readable in OAuth tooling; reverse-DNS (`org.govstack.{bb-code}.{resource}.{action}`) and `resource.action` are alternatives. `[OPEN-12-A]`"
+  text: "OAuth scope strings **MUST** be documented per operation, and **MUST** follow a single ecosystem-wide naming convention so that one BB's scope does not collide with another's. The default shape is `bb:{bb-code}:{resource}:{action}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The `bb:` prefix is retained for OAuth scopes because colon-separated scope strings are widely supported and readable in OAuth tooling; reverse-DNS (`global.govstack.{bb-code}.{resource}.{action}`) and `resource.action` are alternatives. `[OPEN-12-A]`"
   open_questions: ["OPEN-12-A"]
 - id: "13.5"
   title: "Authorization is the credential channel"
@@ -1166,7 +1166,7 @@ rules:
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 163-reverse-dns-event-types
-  text: "Event `type` names **MUST** follow a single ecosystem-wide convention. The default shape is reverse-DNS: `org.govstack.{bb-code}.{resource}.{action}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The event type identifies the semantic event kind and **MUST NOT** include the major API version; the versioned transport contract is carried by the AsyncAPI logical channel ID or equivalent version metadata (§18.2). `[OPEN-15-B]`"
+  text: "Event `type` names **MUST** follow a single ecosystem-wide convention. The default shape is reverse-DNS: `global.govstack.{bb-code}.{resource}.{action}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The event type identifies the semantic event kind and **MUST NOT** include the major API version; the versioned transport contract is carried by the AsyncAPI logical channel ID or equivalent version metadata (§18.2). `[OPEN-15-B]`"
   open_questions: ["OPEN-15-B"]
 - id: "16.4"
   title: "Stable CloudEvents source"
@@ -1256,7 +1256,7 @@ rules:
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
   anchor: 172-stable-logical-channel-ids-and-native-addresses
-  text: "Each entry under AsyncAPI `channels` **MUST** use a stable logical channel ID with reverse-DNS shape `org.govstack.{bb-code}.v{major}.{resource}.{event}`. The `{bb-code}` segment **MUST** be the registered code from §9.11. The Channel Object `address` **MUST** use the chosen protocol's native destination syntax, such as an MQTT topic, AMQP routing key, Kafka topic, or WebSocket/SSE path, and **MUST NOT** be forced into reverse-DNS form when that would change protocol semantics. Protocol bindings **MUST** document the mapping from logical ID to native address."
+  text: "Each entry under AsyncAPI `channels` **MUST** use a stable logical channel ID with reverse-DNS shape `global.govstack.{bb-code}.v{major}.{resource}.{event}`. The `{bb-code}` segment **MUST** be the registered code from §9.11. The Channel Object `address` **MUST** use the chosen protocol's native destination syntax, such as an MQTT topic, AMQP routing key, Kafka topic, or WebSocket/SSE path, and **MUST NOT** be forced into reverse-DNS form when that would change protocol semantics. Protocol bindings **MUST** document the mapping from logical ID to native address."
   open_questions: []
 - id: "17.3"
   title: "No personal data in channels"

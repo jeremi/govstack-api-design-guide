@@ -12,7 +12,7 @@ import { isObject } from './lib/util.js';
  * Extraction runs over every object key and string value (skipping free-text
  * prose keys) using the two documented shapes:
  *   - OAuth scope:   `bb:{bb-code}:{resource}:{action}`
- *   - reverse-DNS:   `org.govstack.{bb-code}....` (error codes, event types,
+ *   - reverse-DNS:   `global.govstack.{bb-code}....` (error codes, event types,
  *                    logical channel IDs, problem-type URIs)
  * The segment `common` is reserved (§11.7) and excluded from the identity check.
  *
@@ -31,7 +31,7 @@ import { isObject } from './lib/util.js';
  * @returns {{message:string, path:(string|number)[]}[]|undefined}
  */
 const SCOPE_RE = /^bb:([^:\s]+):/;
-const RDNS_RE = /org\.govstack\.([^.\s]+)\./gi;
+const RDNS_RE = /global\.govstack\.([^.\s]+)\./gi;
 const BB_CODE_RE = /^[a-z][a-z0-9-]{1,30}$/;
 const RESERVED = 'common';
 const DEFAULT_SKIP_KEYS = ['description', 'summary', 'title', 'externalDocs', 'address'];

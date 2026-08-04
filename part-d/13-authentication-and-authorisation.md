@@ -24,7 +24,7 @@ description: "Rules for how BB API specs declare security schemes, OAuth scopes,
 
 ## 13.4 Namespaced OAuth scopes <a href="#134-namespaced-oauth-scopes" id="134-namespaced-oauth-scopes"></a>
 
-**[M]** OAuth scope strings **MUST** be documented per operation, and **MUST** follow a single ecosystem-wide naming convention so that one BB's scope does not collide with another's. The default shape is `bb:{bb-code}:{resource}:{action}`. The `{bb-code}` segment is the BB's single registered code per [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The `bb:` prefix is retained for OAuth scopes because colon-separated scope strings are widely supported and readable in OAuth tooling; reverse-DNS (`org.govstack.{bb-code}.{resource}.{action}`) and `resource.action` are alternatives. [`[OPEN-12-A]`](../appendix/b-open-questions.md)
+**[M]** OAuth scope strings **MUST** be documented per operation, and **MUST** follow a single ecosystem-wide naming convention so that one BB's scope does not collide with another's. The default shape is `bb:{bb-code}:{resource}:{action}`. The `{bb-code}` segment is the BB's single registered code per [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The `bb:` prefix is retained for OAuth scopes because colon-separated scope strings are widely supported and readable in OAuth tooling; reverse-DNS (`global.govstack.{bb-code}.{resource}.{action}`) and `resource.action` are alternatives. [`[OPEN-12-A]`](../appendix/b-open-questions.md)
 
 ## 13.5 Authorization is the credential channel <a href="#135-authorization-is-the-credential-channel" id="135-authorization-is-the-credential-channel"></a>
 

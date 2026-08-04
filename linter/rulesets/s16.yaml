@@ -64,11 +64,11 @@ rules:
           datacontenttype: {}
 
   # 16.3 [M] — the pinned event `type` value MUST follow reverse-DNS
-  # org.govstack.{bb-code}.{resource}.{action} and MUST NOT carry a version
+  # global.govstack.{bb-code}.{resource}.{action} and MUST NOT carry a version
   # segment. Only pinned const/enum values are checked (a free-form `type` is a
   # 16.2 presence concern, not verifiable here).
   govstack-16.3:
-    description: "event type must be reverse-DNS org.govstack.{bb-code}.{resource}.{action} with no version (guide 16.3, [M])."
+    description: "event type must be reverse-DNS global.govstack.{bb-code}.{resource}.{action} with no version (guide 16.3, [M])."
     message: "[16.3][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types
     severity: error
@@ -79,8 +79,8 @@ rules:
       functionOptions:
         property: type
         name: event type
-        expected: "reverse-DNS org.govstack.{bb-code}.{resource}.{action} with no major-version segment"
-        match: '^org\.govstack\.[a-z][a-z0-9-]{1,30}(?:\.[a-z][a-zA-Z0-9]*){2,}$'
+        expected: "reverse-DNS global.govstack.{bb-code}.{resource}.{action} with no major-version segment"
+        match: '^global\.govstack\.[a-z][a-z0-9-]{1,30}(?:\.[a-z][a-zA-Z0-9]*){2,}$'
         forbidSegments: '^v[0-9]+$'
 
   # 16.4 [M+R] — PROXY (bucket B), notched MUST/MUST NOT -> warn.

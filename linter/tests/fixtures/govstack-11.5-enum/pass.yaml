@@ -35,6 +35,6 @@ paths:
                   status: { type: integer }
                   code:
                     type: string
-                    enum: [org.govstack.identity.personNotFound]
+                    enum: [global.govstack.identity.personNotFound]
                   traceId: { type: string }
                   timestamp: { type: string, format: date-time }

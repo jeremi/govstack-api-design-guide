@@ -16,7 +16,7 @@ servers:
       brokerHost:
         default: broker.example.org
 channels:
-  org.govstack.identity.v1.user.signedup:
+  global.govstack.identity.v1.user.signedup:
     address: users/signed-up
     messages:
       userSignedUp:
@@ -29,9 +29,9 @@ operations:
     tags:
       - name: user
     channel:
-      $ref: '#/channels/org.govstack.identity.v1.user.signedup'
+      $ref: '#/channels/global.govstack.identity.v1.user.signedup'
     messages:
-      - $ref: '#/channels/org.govstack.identity.v1.user.signedup/messages/userSignedUp'
+      - $ref: '#/channels/global.govstack.identity.v1.user.signedup/messages/userSignedUp'
 components:
   messages:
     UserSignedUp:

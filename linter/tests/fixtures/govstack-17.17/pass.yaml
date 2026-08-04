@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 channels:
   personQuery:
-    address: org.govstack.reg.v1.person.query
+    address: global.govstack.reg.v1.person.query
     messages:
       cmd:
         payload:
@@ -13,7 +13,7 @@ channels:
           - name: q
             payload: {}
   personQueryReply:
-    address: org.govstack.reg.v1.person.query-reply
+    address: global.govstack.reg.v1.person.query-reply
     messages:
       res:
         correlationId:

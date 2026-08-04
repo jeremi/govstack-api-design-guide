@@ -84,7 +84,7 @@ rules:
               requiredProperties: [pointer, code, message]
 
   # 11.5 [M+R] — PROXY (bucket B, MUST -> warn). Error codes MUST be
-  # namespaced reverse-DNS `org.govstack.{bb-code}.{error-name}`, bb-code
+  # namespaced reverse-DNS `global.govstack.{bb-code}.{error-name}`, bb-code
   # matching the §9.11 pattern `^[a-z][a-z0-9-]{1,30}$`, error-name either
   # lowerCamelCase or (per the guide's numeric-catalogue MAY) a plain integer.
   # Only checks literal `code` values that appear as a schema `enum` member or
@@ -95,7 +95,7 @@ rules:
   # nested inside an `allOf` branch (only the schema's own direct
   # properties.code are inspected).
   govstack-11.5-enum:
-    description: "problem+json code enum values must match org.govstack.{bb-code}.{error-name} (guide 11.5, [M+R], proxy)."
+    description: "problem+json code enum values must match global.govstack.{bb-code}.{error-name} (guide 11.5, [M+R], proxy)."
     message: "[11.5][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#115-namespaced-stable-error-codes
     severity: warn
@@ -105,10 +105,10 @@ rules:
       function: valuePattern
       functionOptions:
         name: "code"
-        match: '^org\.govstack\.[a-z][a-z0-9-]{1,30}\.([a-z][a-zA-Z0-9]*|\d+)$'
+        match: '^global\.govstack\.[a-z][a-z0-9-]{1,30}\.([a-z][a-zA-Z0-9]*|\d+)$'
 
   govstack-11.5-example:
-    description: "problem+json code example must match org.govstack.{bb-code}.{error-name} (guide 11.5, [M+R], proxy)."
+    description: "problem+json code example must match global.govstack.{bb-code}.{error-name} (guide 11.5, [M+R], proxy)."
     message: "[11.5][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#115-namespaced-stable-error-codes
     severity: warn
@@ -118,4 +118,4 @@ rules:
       function: valuePattern
       functionOptions:
         name: "code"
-        match: '^org\.govstack\.[a-z][a-z0-9-]{1,30}\.([a-z][a-zA-Z0-9]*|\d+)$'
+        match: '^global\.govstack\.[a-z][a-z0-9-]{1,30}\.([a-z][a-zA-Z0-9]*|\d+)$'

@@ -33,7 +33,7 @@ info:
       - rule: "5.2"
         scope: /paths/~1v1~1status/get
         rationale: Legacy statutory endpoint name cannot change before v2.
-        record: https://docs.govstack.org/api-exceptions/registration-2026-004
+        record: https://docs.govstack.global/api-exceptions/registration-2026-004
         reviewedBy: GovStack API Working Group
         reviewedAt: "2026-07-10"
         expiresAt: "2027-01-31"

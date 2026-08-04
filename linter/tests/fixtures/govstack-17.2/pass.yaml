@@ -3,7 +3,7 @@ info:
   title: Registry events
   version: 1.0.0
 channels:
-  org.govstack.reg.v1.person.created:
+  global.govstack.reg.v1.person.created:
     address: registrants/{tenant}/created
     messages:
       evt:
@@ -12,9 +12,9 @@ operations:
   onPersonCreated:
     action: receive
     channel:
-      $ref: '#/channels/org.govstack.reg.v1.person.created'
+      $ref: '#/channels/global.govstack.reg.v1.person.created'
     messages:
-      - $ref: '#/channels/org.govstack.reg.v1.person.created/messages/evt'
+      - $ref: '#/channels/global.govstack.reg.v1.person.created/messages/evt'
 components:
   messages:
     PersonCreated:

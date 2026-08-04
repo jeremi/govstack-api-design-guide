@@ -4,7 +4,7 @@ info:
   version: 1.0.0
 channels:
   personCreated:
-    address: org.govstack.reg.v1.person.created
+    address: global.govstack.reg.v1.person.created
     parameters:
       tenant:
         description: tenant routing key

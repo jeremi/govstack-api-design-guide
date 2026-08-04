@@ -47,7 +47,7 @@ servers:
       - $ref: '#/components/securitySchemes/registryOAuth'
 defaultContentType: application/json
 channels:
-  org.govstack.registry.v1.registrant.registered:
+  global.govstack.registry.v1.registrant.registered:
     address: registry.registrant.registered
     description: Registrant lifecycle events published by the Registry BB.
     servers:
@@ -58,7 +58,7 @@ channels:
     bindings:
       kafka:
         bindingVersion: '0.5.0'
-  org.govstack.registry.v1.registrant.commands:
+  global.govstack.registry.v1.registrant.commands:
     address: registry.registrant.{registrantId}.commands
     description: Commands directed at a specific registrant, consumed by the Registry BB.
     parameters:
@@ -72,7 +72,7 @@ channels:
     bindings:
       kafka:
         bindingVersion: '0.5.0'
-  org.govstack.registry.v1.registrant.command-replies:
+  global.govstack.registry.v1.registrant.command-replies:
     address: registry.registrant.command-replies
     description: Replies and rejections for registrant commands.
     servers:
@@ -96,9 +96,9 @@ operations:
     tags:
       - name: Registrants
     channel:
-      $ref: '#/channels/org.govstack.registry.v1.registrant.registered'
+      $ref: '#/channels/global.govstack.registry.v1.registrant.registered'
     messages:
-      - $ref: '#/channels/org.govstack.registry.v1.registrant.registered/messages/registered'
+      - $ref: '#/channels/global.govstack.registry.v1.registrant.registered/messages/registered'
     x-govstack-delivery: atLeastOnce
     x-govstack-ordering:
       scope: partitionKey
@@ -118,14 +118,14 @@ operations:
     tags:
       - name: Registrants
     channel:
-      $ref: '#/channels/org.govstack.registry.v1.registrant.commands'
+      $ref: '#/channels/global.govstack.registry.v1.registrant.commands'
     messages:
-      - $ref: '#/channels/org.govstack.registry.v1.registrant.commands/messages/deregister'
+      - $ref: '#/channels/global.govstack.registry.v1.registrant.commands/messages/deregister'
     reply:
       channel:
-        $ref: '#/channels/org.govstack.registry.v1.registrant.command-replies'
+        $ref: '#/channels/global.govstack.registry.v1.registrant.command-replies'
       messages:
-        - $ref: '#/channels/org.govstack.registry.v1.registrant.command-replies/messages/result'
+        - $ref: '#/channels/global.govstack.registry.v1.registrant.command-replies/messages/result'
     x-govstack-delivery: atLeastOnce
     x-govstack-ordering:
       scope: partitionKey
@@ -144,9 +144,9 @@ operations:
     tags:
       - name: Registrants
     channel:
-      $ref: '#/channels/org.govstack.registry.v1.registrant.command-replies'
+      $ref: '#/channels/global.govstack.registry.v1.registrant.command-replies'
     messages:
-      - $ref: '#/channels/org.govstack.registry.v1.registrant.command-replies/messages/rejected'
+      - $ref: '#/channels/global.govstack.registry.v1.registrant.command-replies/messages/rejected'
     x-govstack-delivery: atLeastOnce
     x-govstack-ordering: none
     x-govstack-redelivery: supported
@@ -200,7 +200,7 @@ components:
           type:
             type: string
             description: Reverse-DNS event type carrying no version segment.
-            const: org.govstack.registry.registrant.registered
+            const: global.govstack.registry.registrant.registered
           time:
             type: string
             format: date-time
@@ -239,7 +239,7 @@ components:
             specversion: '1.0'
             id: 0b8c1d2e-3f4a-5b6c-7d8e-9f0a1b2c3d4e
             source: /govstack/registry
-            type: org.govstack.registry.registrant.registered
+            type: global.govstack.registry.registrant.registered
             time: '2026-07-10T12:34:56Z'
             datacontenttype: application/json
             subject: 6f9619ff-8b86-d011-b42d-00cf4fc964ff
@@ -286,7 +286,7 @@ components:
           type:
             type: string
             description: Reverse-DNS command type carrying no version segment.
-            const: org.govstack.registry.registrant.deregisterRequested
+            const: global.govstack.registry.registrant.deregisterRequested
           time:
             type: string
             format: date-time
@@ -317,7 +317,7 @@ components:
             specversion: '1.0'
             id: 2c3d4e5f-6a7b-8c9d-0e1f-2a3b4c5d6e7f
             source: /govstack/registry
-            type: org.govstack.registry.registrant.deregisterRequested
+            type: global.govstack.registry.registrant.deregisterRequested
             time: '2026-07-10T12:40:00Z'
             datacontenttype: application/json
             data:
@@ -358,7 +358,7 @@ components:
           type:
             type: string
             description: Reverse-DNS event type carrying no version segment.
-            const: org.govstack.registry.registrant.deregistered
+            const: global.govstack.registry.registrant.deregistered
           time:
             type: string
             format: date-time
@@ -389,7 +389,7 @@ components:
             specversion: '1.0'
             id: 3d4e5f6a-7b8c-9d0e-1f2a-3b4c5d6e7f80
             source: /govstack/registry
-            type: org.govstack.registry.registrant.deregistered
+            type: global.govstack.registry.registrant.deregistered
             time: '2026-07-10T12:41:00Z'
             datacontenttype: application/json
             data:
@@ -451,6 +451,6 @@ components:
             title: Deregistration rejected
             status: 409
             detail: The registrant has an active obligation and cannot be deregistered.
-            code: org.govstack.registry.deregistrationRejected
+            code: global.govstack.registry.deregistrationRejected
             traceId: 9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c
             timestamp: '2026-07-10T12:41:05Z'

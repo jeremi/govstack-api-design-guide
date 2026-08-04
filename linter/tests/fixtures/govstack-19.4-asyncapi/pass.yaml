@@ -15,7 +15,7 @@ servers:
         default: broker.example.org
 channels:
   userSignedUp:
-    address: org.govstack.identity.v1.user.signedup
+    address: global.govstack.identity.v1.user.signedup
     messages:
       requestMessage:
         name: RequestMessage

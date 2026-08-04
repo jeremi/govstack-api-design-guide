@@ -1,7 +1,7 @@
 import { isObject } from './lib/util.js';
 
 const LOGICAL_CHANNEL_ID_RE =
-  /^org\.govstack\.[a-z][a-z0-9-]{1,30}\.v[0-9]+(?:\.(?:[a-z][a-zA-Z0-9-]*|\{[a-zA-Z0-9_]+\})){2,}$/;
+  /^global\.govstack\.[a-z][a-z0-9-]{1,30}\.v[0-9]+(?:\.(?:[a-z][a-zA-Z0-9-]*|\{[a-zA-Z0-9_]+\})){2,}$/;
 
 /**
  * Validate the stable logical IDs used as keys of an AsyncAPI channels map.
@@ -25,7 +25,7 @@ export default function channelIds(targetVal, _options, context) {
     results.push({
       message:
         `logical channel ID "${logicalId}" must match ` +
-        'org.govstack.{bb-code}.v{major}.{resource}.{event}',
+        'global.govstack.{bb-code}.v{major}.{resource}.{event}',
       path: [...base, logicalId],
     });
   }

@@ -5,7 +5,7 @@ info:
 channels:
   personCreated:
     # 17.5: environment token "prod" belongs in servers, not the channel address.
-    address: org.govstack.reg.v1.prod.person.created
+    address: global.govstack.reg.v1.prod.person.created
     messages:
       evt:
         $ref: '#/components/messages/PersonCreated'

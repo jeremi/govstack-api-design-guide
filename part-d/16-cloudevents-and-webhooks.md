@@ -22,7 +22,7 @@ description: "Rules governing the CloudEvents envelope, event-type and source na
 
 ## 16.3 Reverse-DNS event types <a href="#163-reverse-dns-event-types" id="163-reverse-dns-event-types"></a>
 
-**[M]** Event `type` names **MUST** follow a single ecosystem-wide convention. The default shape is reverse-DNS: `org.govstack.{bb-code}.{resource}.{action}`. The `{bb-code}` segment is the BB's single registered code per [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The event type identifies the semantic event kind and **MUST NOT** include the major API version; the versioned transport contract is carried by the AsyncAPI logical channel ID or equivalent version metadata ([§18.2](../part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel)). [`[OPEN-15-B]`](../appendix/b-open-questions.md)
+**[M]** Event `type` names **MUST** follow a single ecosystem-wide convention. The default shape is reverse-DNS: `global.govstack.{bb-code}.{resource}.{action}`. The `{bb-code}` segment is the BB's single registered code per [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The event type identifies the semantic event kind and **MUST NOT** include the major API version; the versioned transport contract is carried by the AsyncAPI logical channel ID or equivalent version metadata ([§18.2](../part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel)). [`[OPEN-15-B]`](../appendix/b-open-questions.md)
 
 ## 16.4 Stable CloudEvents source <a href="#164-stable-cloudevents-source" id="164-stable-cloudevents-source"></a>
 
@@ -35,7 +35,7 @@ description: "Rules governing the CloudEvents envelope, event-type and source na
   "specversion": "1.0",
   "id": "5e0c63c2-2b8a-4d3f-9a51-7c6b0d9e8f21",
   "source": "urn:govstack:bb:registration",
-  "type": "org.govstack.registration.application.approved",
+  "type": "global.govstack.registration.application.approved",
   "time": "2026-07-10T08:30:00Z",
   "datacontenttype": "application/json",
   "traceparent": "00-6f1c3f0e2a9b4c8d7e6f5a4b3c2d1e0f-5b1e4d7ca8f01e2d-01",
