@@ -5,16 +5,16 @@
 # The same `#anchor` fragment resolves on both GitHub and GitBook.
 guide: GovStack Cross-BB API Design Guide
 version: 0.2.0-draft
-rule_count: 166
+rule_count: 171
 rules:
 - id: "2.1"
-  title: "OpenAPI 3.1.0 required"
+  title: "OpenAPI 3.1 required"
   class: M
   strengths: ["MUST NOT", "MUST"]
   surface: OpenAPI
   page: part-a/2-openapi-document-standards.md
-  anchor: 21-openapi-310-required
-  text: "The spec **MUST** declare `openapi: 3.1.0`. Earlier versions **MUST NOT** be used."
+  anchor: 21-openapi-31-required
+  text: "The spec **MUST** declare an explicit, published OpenAPI 3.1 patch version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.2.0-draft` qualify `openapi: 3.1.0`, `3.1.1`, and `3.1.2`; tooling **MUST** treat those patches as the same OAS 3.1 feature set. OpenAPI 3.0 and earlier **MUST NOT** be used. A later OpenAPI minor version, including 3.2, **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it."
   open_questions: []
 - id: "2.2"
   title: "One canonical OpenAPI entrypoint"
@@ -23,7 +23,7 @@ rules:
   surface: OpenAPI
   page: part-a/2-openapi-document-standards.md
   anchor: 22-one-canonical-openapi-entrypoint
-  text: "The canonical OpenAPI entrypoint **MUST** be located at `api/openapi.yaml`, in YAML. (The audit found these files predominantly at `api/swagger.yaml`/`api/swagger.json`; renaming to `api/openapi.yaml` is part of conformance.) It **MAY** `$ref`-compose other files in the repository, provided every reference resolves and there is exactly one entrypoint. A BB with genuinely independent API surfaces that version on independent cadences **MAY** instead ship one canonical file per surface, each at a documented path and all enumerated in `api/index.yaml` (which then serves as the single registry of canonical files). Either way there **MUST** be exactly one canonical artifact per surface and no divergent copies."
+  text: "In the absence of `api/index.yaml`, the canonical OpenAPI entrypoint **MUST** be located at `api/openapi.yaml`, in YAML. It **MAY** `$ref`-compose other repository files provided every reference resolves. A BB with a custom canonical path or multiple independently versioned API surfaces **MUST** enumerate every surface in `api/index.yaml` using §4.5. Either discovery form **MUST** identify exactly one canonical artifact per surface. The audit's legacy `api/swagger.yaml` and `api/swagger.json` names are not canonical under this guide."
   open_questions: []
 - id: "2.3"
   title: "No divergent OpenAPI copies"
@@ -32,7 +32,7 @@ rules:
   surface: OpenAPI
   page: part-a/2-openapi-document-standards.md
   anchor: 23-no-divergent-openapi-copies
-  text: "Other locations (`spec/.gitbook/assets/`, alternative filenames, JSON copies) **MUST NOT** contain divergent copies. OpenAPI snippets in markdown documentation **MUST** load by reference from a canonical file, not duplicate it."
+  text: "Other locations (`spec/.gitbook/assets/`, alternative filenames, JSON copies) **MUST NOT** contain divergent copies. OpenAPI snippets in markdown documentation **MUST** load by reference from a canonical file, not duplicate it.\nAn operation-free shared component library under `api/common/` is referenced support material, not a canonical API surface or a divergent copy."
   open_questions: []
 - id: "2.4"
   title: "Passes openapi-spec-validator"
@@ -41,7 +41,7 @@ rules:
   surface: OpenAPI
   page: part-a/2-openapi-document-standards.md
   anchor: 24-passes-openapi-spec-validator
-  text: "The file **MUST** pass `openapi-spec-validator` against the 3.1.0 schema."
+  text: "The canonical entrypoint **MUST** pass `openapi-spec-validator` for its declared OpenAPI 3.1 patch version, with every local reference resolved. Referenced JSON Schema fragments **MUST** validate against their declared dialect but are not required to be standalone OpenAPI documents."
   open_questions: []
 - id: "2.5"
   title: "Complete info block"
@@ -59,7 +59,7 @@ rules:
   surface: OpenAPI
   page: part-a/2-openapi-document-standards.md
   anchor: 26-meaningful-servers-block
-  text: "The `servers` block **MUST** be non-empty and **MUST** describe the intended deployment base URL pattern for the API. Reference specifications that are not tied to a live implementation **SHOULD** use parameterised template URLs with documented variables (for example, `https://{gatewayHost}/{bbCode}/v1`). Server URLs **MUST NOT** point to `localhost`, personal developer machines, undocumented placeholders, or fake production domains. Reserved documentation domains (for example, `example.org`) **MAY** be used only as variable defaults or examples, and **MUST** be labelled as non-production."
+  text: "The `servers` block **MUST** be non-empty and **MUST** describe the intended deployment base URL pattern for the API. Every non-local server URL **MUST** use `https`. Reference specifications that are not tied to a live implementation **SHOULD** use parameterised template URLs with documented variables (for example, `https://{gatewayHost}/{bbCode}`). Because §5.1 places `/v{N}` in each OpenAPI path key, a server URL **MUST NOT** repeat that version segment. Server URLs **MUST NOT** point to `localhost`, personal developer machines, undocumented placeholders, or fake production domains. Reserved documentation domains (for example, `example.org`) **MAY** be used only as variable defaults or examples and **MUST** be labelled as non-production."
   open_questions: []
 - id: "2.7"
   title: "Complete operation metadata"
@@ -77,7 +77,7 @@ rules:
   surface: OpenAPI
   page: part-a/2-openapi-document-standards.md
   anchor: 28-pinned-vendored-common-components
-  text: "Shared components (security scheme, error schema, pagination, common headers, Operation resource) **MUST** be referenced from a pinned version of `govstack-openapi-common.yaml`. The file **MUST** be vendored locally in each BB repository at the pinned version, and the pinned version **MUST** be explicit.\nVendoring is required because GovStack BBs are deployed in air-gapped or limited-connectivity environments where remote `$ref` resolution is unreliable."
+  text: "Shared components (security scheme, error schema, pagination, common headers, Operation resource) **MUST** be referenced from a pinned version of `govstack-openapi-common.yaml`. The file **MUST** be vendored locally at `api/common/govstack-openapi-common.yaml` in each BB repository, and the pinned version **MUST** be explicit.\nVendoring is required because GovStack BBs are deployed in air-gapped or limited-connectivity environments where remote `$ref` resolution is unreliable."
   open_questions: []
 - id: "3.1"
   title: "AsyncAPI 3.0.0 required"
@@ -95,7 +95,7 @@ rules:
   surface: AsyncAPI
   page: part-a/3-asyncapi-document-standards.md
   anchor: 32-one-canonical-asyncapi-entrypoint
-  text: "The canonical AsyncAPI entrypoint **MUST** be located at `api/asyncapi.yaml`, in YAML. It **MAY** `$ref`-compose other files in the repository, provided every reference resolves and there is exactly one entrypoint. A BB with genuinely independent event-driven surfaces **MAY** instead ship one canonical file per surface, each at a documented path and all enumerated in `api/index.yaml`."
+  text: "In the absence of `api/index.yaml`, the canonical AsyncAPI entrypoint **MUST** be located at `api/asyncapi.yaml`, in YAML. It **MAY** `$ref`-compose other repository files provided every reference resolves. A BB with a custom canonical path or multiple independently versioned event-driven surfaces **MUST** enumerate every surface in `api/index.yaml` using §4.5. Either discovery form **MUST** identify exactly one canonical artifact per surface."
   open_questions: []
 - id: "3.3"
   title: "No divergent AsyncAPI copies"
@@ -104,7 +104,7 @@ rules:
   surface: AsyncAPI
   page: part-a/3-asyncapi-document-standards.md
   anchor: 33-no-divergent-asyncapi-copies
-  text: "Other locations (`spec/.gitbook/assets/`, alternative filenames, JSON copies) **MUST NOT** contain divergent AsyncAPI copies. Event snippets in markdown documentation **MUST** load by reference from a canonical file, not duplicate it."
+  text: "Other locations (`spec/.gitbook/assets/`, alternative filenames, JSON copies) **MUST NOT** contain divergent AsyncAPI copies. Event snippets in markdown documentation **MUST** load by reference from a canonical file, not duplicate it.\nAn operation-free shared component library under `api/common/` is referenced support material, not a canonical API surface or a divergent copy."
   open_questions: []
 - id: "3.4"
   title: "Passes an AsyncAPI validator"
@@ -149,7 +149,7 @@ rules:
   surface: AsyncAPI
   page: part-a/3-asyncapi-document-standards.md
   anchor: 38-pinned-vendored-asyncapi-components
-  text: "Shared event documentation components (CloudEvents message schema, common message headers, common error message, signing metadata, security schemes, delivery-semantics extensions) **MUST** be referenced from a pinned version of `govstack-asyncapi-common.yaml`. The file **MUST** be vendored locally in each BB repository at the pinned version, and the pinned version **MUST** be explicit."
+  text: "Shared event documentation components (CloudEvents message schema, common message headers, common error message, signing metadata, security schemes, delivery-semantics extensions) **MUST** be referenced from a pinned version of `govstack-asyncapi-common.yaml`. The file **MUST** be vendored locally at `api/common/govstack-asyncapi-common.yaml` in each BB repository, and the pinned version **MUST** be explicit."
   open_questions: []
 - id: "3.9"
   title: "JSON Schema payload conventions"
@@ -195,6 +195,24 @@ rules:
   page: part-a/4-documentation-requirements.md
   anchor: 44-accurate-operation-descriptions
   text: "Operation `description` **MUST** describe what the operation actually does. (The audit found at least 9 BBs with cross-endpoint description mismatches from copy-paste.)"
+  open_questions: []
+- id: "4.5"
+  title: "API surface inventory"
+  class: M+R
+  strengths: ["MUST NOT", "MUST", "MAY"]
+  surface: Universal
+  page: part-a/4-documentation-requirements.md
+  anchor: 45-api-surface-inventory
+  text: "A BB that uses only `api/openapi.yaml`, only `api/asyncapi.yaml`, or both default canonical paths **MAY** omit `api/index.yaml`. If neither default file exists, the BB **MUST** provide `api/index.yaml`. The index **MUST** contain `version: 1` and exactly one of: a non-empty `apis` list, or `noApi: true` together with a non-empty `reason`. Each `apis` entry **MUST** contain only the discovery fields needed here: `type` (`openapi` or `asyncapi`) and `path` (a unique, repository-relative YAML path inside `api/`). Every listed path **MUST** resolve to a canonical specification of the declared type. `apis` and `noApi` **MUST NOT** coexist. A repository with neither a discoverable canonical specification nor an explicit `noApi` declaration is non-conformant."
+  open_questions: []
+- id: "4.6"
+  title: "Functional-requirement traceability"
+  class: M+R
+  strengths: ["MUST NOT", "MUST"]
+  surface: Universal
+  page: part-a/4-documentation-requirements.md
+  anchor: 46-functional-requirement-traceability
+  text: "Every normative functional requirement in `spec/**/*.md` **MUST** use the exact list-item marker `- **<stable-ID>** **REQUIRED|RECOMMENDED|OPTIONAL**: <text>`, with a stable ID unique across the BB. Every BB that declares at least one API **MUST** provide `api/coverage.yaml` with `version: 1`, and its requirement entries **MUST** match that marker-derived ID set exactly: no missing or extra IDs. A repository that uses `noApi: true` under §4.5 **MUST NOT** contain `api/coverage.yaml`.\nEach coverage entry **MUST** select exactly one disposition and only its compatible companion field: `operation` with a non-empty `operations` list; `message` with a non-empty `messages` list; `external` with an HTTP(S) `reference`; `not-applicable` with a non-empty `rationale`; or `planned` with an HTTP(S) `issue`. A disposition-incompatible companion field **MUST NOT** be present. Values in `operations` and `messages` **MUST** be bare operation or message IDs, and those IDs **MUST** be unique across all canonical surfaces declared by the BB. A `planned` disposition records an API gap and **MUST NOT** be interpreted as coverage; the presence of any `planned` entry **MUST** make full conformance fail until the requirement is implemented and its disposition is updated.\nA requirement marked **REQUIRED** **MUST NOT** use the `not-applicable` disposition. If it does not belong in the BB contract, the specification **MUST** change its requirement strength or scope through the normal specification review process instead of bypassing it in the coverage file."
   open_questions: []
 - id: "5.1"
   title: "Major version in the path"
@@ -289,11 +307,11 @@ rules:
 - id: "6.2"
   title: "POST creates or performs actions"
   class: R
-  strengths: []
+  strengths: ["MUST", "MAY"]
   surface: OpenAPI
   page: part-b/6-http-methods.md
   anchor: 62-post-creates-or-performs-actions
-  text: "`POST` creates a resource or performs a non-idempotent action."
+  text: "`POST` **MUST** be used to create a server-assigned resource or to perform an action that is not expressed by another HTTP method. A creation completed during the request **MUST** return `201 Created`; work accepted but not completed **MUST** return `202 Accepted` with an Operation resource; a completed non-creation action **MUST** return `200 OK` with a result or `204 No Content` without one. A POST action **MAY** be naturally idempotent or made retry-safe under §14."
   open_questions: []
 - id: "6.3"
   title: "PUT replaces the entire resource"
@@ -343,119 +361,119 @@ rules:
 - id: "7.1"
   title: "200 for successful reads"
   class: R
-  strengths: []
+  strengths: ["MUST"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 71-200-for-successful-reads
-  text: "`200 OK`: successful read or non-creation action."
+  text: "A successful read or completed non-creation action that returns a representation **MUST** use `200 OK`."
   open_questions: []
 - id: "7.2"
   title: "201 Created with Location"
   class: M
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 72-201-created-with-location
-  text: "`201 Created`: resource creation. Response **MUST** include a `Location` header pointing to the created resource."
+  text: "A resource creation that completes during the request **MUST** use `201 Created`. The response **MUST** include a `Location` header pointing to the created resource. An operation that has only been accepted for later processing **MUST NOT** return `201`; it **MUST** use `202` under §7.3."
   open_questions: []
 - id: "7.3"
   title: "202 Accepted for async operations"
   class: M+R
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 73-202-accepted-for-async-operations
-  text: "`202 Accepted`: async operation. Response **MUST** include a `Location` header pointing to an Operation resource (see §15)."
+  text: "Work accepted but not completed during the request **MUST** use `202 Accepted`. The response **MUST** include a `Location` header pointing to an Operation resource and **MUST** return that Operation representation using the shared schema in §15. `202` **MUST NOT** claim that the requested work succeeded."
   open_questions: []
 - id: "7.4"
   title: "204 for void responses"
   class: R
-  strengths: []
+  strengths: ["MUST NOT", "MUST"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 74-204-for-void-responses
-  text: "`204 No Content`: successful DELETE or void response."
+  text: "A successful synchronous DELETE or other successful operation with no response representation **MUST** use `204 No Content` and **MUST NOT** include a response body."
   open_questions: []
 - id: "7.5"
   title: "400 for malformed requests"
   class: R
-  strengths: []
+  strengths: ["MUST"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 75-400-for-malformed-requests
-  text: "`400 Bad Request`: request is malformed or unparseable."
+  text: "An operation that accepts path, query, header, or body input **MUST** declare `400 Bad Request` for malformed, unparseable, or structurally invalid input. Well-formed input that violates domain semantics **MUST** use `422` under §7.11."
   open_questions: []
 - id: "7.6"
   title: "401 with WWW-Authenticate"
   class: M+R
-  strengths: ["MUST", "SHOULD"]
+  strengths: ["MUST", "SHOULD NOT", "SHOULD"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 76-401-with-www-authenticate
-  text: "`401 Unauthorized`: missing or invalid authentication. The response **MUST** include a `WWW-Authenticate` header (RFC 9110). For OAuth 2.0 bearer schemes (§13.2) it **SHOULD** carry the RFC 6750 challenge with an `error` value such as `invalid_token`."
+  text: "Every operation requiring authentication **MUST** declare `401 Unauthorized` for missing or invalid authentication. The response **MUST** include a `WWW-Authenticate` header (RFC 9110). For an OAuth 2.0 bearer scheme (§13.2), a challenge for an invalid token **SHOULD** carry the RFC 6750 `invalid_token` error; a challenge for a request containing no authentication credentials **SHOULD NOT** include an OAuth error code."
   open_questions: []
 - id: "7.7"
   title: "403 when not authorised"
   class: R
-  strengths: []
+  strengths: ["MUST", "MAY"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 77-403-when-not-authorised
-  text: "`403 Forbidden`: authenticated but not authorised."
+  text: "Every secured operation that can reject an authenticated caller for insufficient permission **MUST** declare `403 Forbidden`. A BB **MAY** return `404` instead when concealing the existence of a forbidden resource is part of its documented security contract, as allowed by RFC 9110."
   open_questions: []
 - id: "7.8"
   title: "404 for missing resources"
   class: R
-  strengths: []
+  strengths: ["MUST"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 78-404-for-missing-resources
-  text: "`404 Not Found`: resource does not exist."
+  text: "Every operation that addresses a specific resource **MUST** declare `404 Not Found` for an absent resource or for a resource whose existence is intentionally concealed under §7.7. An empty collection **MUST** return `200` with an empty `items` array, not `404`."
   open_questions: []
 - id: "7.9"
   title: "409 for state conflicts"
   class: R
-  strengths: []
+  strengths: ["MUST"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 79-409-for-state-conflicts
-  text: "`409 Conflict`: a conflict with the current state of the resource that is not expressed as a failed precondition (e.g., creating a duplicate of a uniquely-keyed resource, an illegal state transition, or a concurrent in-flight idempotency retry per §14.5). A failed conditional precondition is `412` (7.15), not `409`."
+  text: "An operation that creates a uniquely keyed resource, performs a state transition, or supports idempotent retry **MUST** declare `409 Conflict` when it can conflict with current resource or processing state, including an illegal transition or concurrent in-flight retry under §14.5. A failed conditional request precondition **MUST** use `412` (§7.15), not `409`."
   open_questions: []
 - id: "7.10"
   title: "410 for permanent removal"
   class: R
-  strengths: []
+  strengths: ["MUST"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 710-410-for-permanent-removal
-  text: "`410 Gone`: resource permanently removed; deprecated endpoint past sunset."
+  text: "A server **MUST** use `410 Gone` only when it knows that a resource or endpoint has been permanently removed; otherwise it **MUST** use `404`."
   open_questions: []
 - id: "7.11"
   title: "422 for semantic errors"
   class: R
-  strengths: []
+  strengths: ["MUST"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 711-422-for-semantic-errors
-  text: "`422 Unprocessable Content` (RFC 9110; formerly \"Unprocessable Entity\"): request is well-formed but semantically invalid. The idempotency-fingerprint use of `422` is in §14.5. `[OPEN-6-A]`"
+  text: "A well-formed request that violates domain validation or other semantic constraints **MUST** use `422 Unprocessable Content` (RFC 9110; formerly \"Unprocessable Entity\"). The idempotency-fingerprint use of `422` is in §14.5. `[OPEN-6-A]`"
   open_questions: ["OPEN-6-A"]
 - id: "7.12"
   title: "429 for rate limits"
   class: R
-  strengths: []
+  strengths: ["MUST"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 712-429-for-rate-limits
-  text: "`429 Too Many Requests`: client exceeded rate limit."
+  text: "An operation that enforces a caller-visible rate limit **MUST** declare `429 Too Many Requests` and the headers required by §8.7."
   open_questions: []
 - id: "7.13"
   title: "Server errors documented"
   class: M
-  strengths: ["MUST"]
+  strengths: ["MUST", "SHOULD"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 713-server-errors-documented
-  text: "`500`, `502`, `503`, `504`: server errors. Specs **MUST** document `500` at minimum."
+  text: "Every operation **MUST** declare `500 Internal Server Error`. Operations exposed through a gateway or dependent service **SHOULD** additionally declare the applicable `502`, `503`, and `504` responses."
   open_questions: []
 - id: "7.14"
   title: "All status codes declared"
@@ -469,29 +487,29 @@ rules:
 - id: "7.15"
   title: "412 for failed preconditions"
   class: R
-  strengths: []
+  strengths: ["MUST"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 715-412-for-failed-preconditions
-  text: "`412 Precondition Failed`: conditional request precondition (e.g., `If-Match`) was not satisfied."
+  text: "A failed conditional request precondition such as `If-Match` **MUST** use `412 Precondition Failed`."
   open_questions: []
 - id: "7.16"
   title: "ETag and If-None-Match"
   class: M+R
-  strengths: ["SHOULD", "MAY"]
+  strengths: ["MUST", "SHOULD", "MAY"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 716-etag-and-if-none-match
-  text: "Endpoints that return resources **SHOULD** advertise an `ETag` response header derived from the resource state. `GET` clients **MAY** send `If-None-Match` to receive `304 Not Modified` on no change."
+  text: "Endpoints that return resources **SHOULD** advertise an `ETag` response header derived from the selected representation. `GET` clients **MAY** send `If-None-Match` to receive `304 Not Modified` on no change. An endpoint using ETags for write concurrency **MUST** provide a strong validator suitable for the strong comparison required by `If-Match`."
   open_questions: []
 - id: "7.17"
   title: "Optimistic concurrency with If-Match"
   class: M+R
-  strengths: ["SHOULD"]
+  strengths: ["MUST", "SHOULD"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 717-optimistic-concurrency-with-if-match
-  text: "`PUT` and `PATCH` endpoints **SHOULD** support optimistic concurrency: clients send `If-Match: <etag>` and the server returns `412 Precondition Failed` (7.15) if the resource has changed since that ETag. A failed `If-Match` precondition is `412`, not `409`; `409` (7.9) is reserved for state or uniqueness conflicts that are not expressed as a conditional precondition."
+  text: "`PUT` and `PATCH` endpoints **SHOULD** support optimistic concurrency: clients send `If-Match: <strong-etag>` and the server returns `412 Precondition Failed` (§7.15) if the resource has changed. An endpoint that requires a conditional write **SHOULD** return `428 Precondition Required` when `If-Match` is absent. A failed `If-Match` precondition **MUST** use `412`, not `409`; `409` (§7.9) is reserved for conflicts not expressed by a conditional precondition."
   open_questions: []
 - id: "7.18"
   title: "405 with Allow header"
@@ -520,6 +538,15 @@ rules:
   anchor: 720-no-store-on-error-responses
   text: "Error responses (`application/problem+json`) and Operation-status responses (§15) **SHOULD** declare `Cache-Control: no-store`, so a shared cache cannot replay a transient failure or stale operation state. Broader caching behaviour is operational and out of scope (§1.2)."
   open_questions: []
+- id: "7.21"
+  title: "Schemas for successful response bodies"
+  class: M
+  strengths: ["MUST NOT", "MUST"]
+  surface: OpenAPI
+  page: part-b/7-http-status-codes.md
+  anchor: 721-schemas-for-successful-response-bodies
+  text: "Every declared `2xx` response that carries a body **MUST** declare at least one concrete media type and a response schema for each declared media type. An empty schema or description without a schema **MUST NOT** stand in for a response contract. Responses whose HTTP semantics prohibit a body, including `204`, **MUST NOT** declare response content."
+  open_questions: []
 - id: "8.1"
   title: "Credentials in Authorization header"
   class: M+R
@@ -536,7 +563,7 @@ rules:
   surface: OpenAPI
   page: part-b/8-headers.md
   anchor: 82-accept-language-and-content-language
-  text: "Localisation requests **MUST** use `Accept-Language`; responses **MUST** echo via `Content-Language`."
+  text: "Localisation requests **MUST** use `Accept-Language`; a localised response **MUST** identify the language actually selected using `Content-Language`, which is not necessarily the request's first preference. A cacheable response selected using `Accept-Language` **MUST** declare `Vary: Accept-Language`."
   open_questions: []
 - id: "8.3"
   title: "Idempotency-Key header accepted"
@@ -548,23 +575,23 @@ rules:
   text: "POST endpoints that require idempotency under §14 **MUST** accept an `Idempotency-Key` header, unless §14.6 applies."
   open_questions: []
 - id: "8.4"
-  title: "X-Request-Id correlation"
+  title: "W3C Trace Context correlation"
   class: M+R
-  strengths: ["MUST", "SHOULD", "MAY"]
+  strengths: ["MUST NOT", "MUST", "MAY"]
   surface: OpenAPI
   page: part-b/8-headers.md
-  anchor: 84-x-request-id-correlation
-  text: "Every request **SHOULD** carry an `X-Request-Id` header for correlation. The server **MUST** echo this header in the response (or generate one if absent). This correlation identifier is distinct from the error-envelope `traceId` (§11.3); a BB **MAY** reuse the same value but is not required to, and any propagation between them is operational and out of scope (§1.2)."
+  anchor: 84-w3c-trace-context-correlation
+  text: "Every cross-service HTTP operation **MUST** declare the W3C Trace Context `traceparent` request header and **MAY** declare `tracestate`. A conforming implementation **MUST** propagate a valid received trace context on downstream calls and **MUST** create a valid new context when none is present or the received value is invalid. `tracestate` **MUST NOT** contain personal data. The RFC 9457 `traceId` extension in §11.3 **MUST** equal the 32-hex-digit trace-id component of the request's effective `traceparent`. A separate business or support correlation identifier **MAY** be defined, but **MUST NOT** replace Trace Context."
   open_questions: []
 - id: "8.5"
   title: "No new X- prefixed headers"
   class: M
-  strengths: ["MUST NOT"]
+  strengths: ["MUST NOT", "MAY"]
   surface: OpenAPI
   page: part-b/8-headers.md
   anchor: 85-no-new-x--prefixed-headers
-  text: "New custom headers introduced by this guide or by BBs **MUST NOT** use the `X-` prefix (per RFC 6648), except for the legacy correlation header explicitly allowed in §8.4 pending `[OPEN-7-A]`."
-  open_questions: ["OPEN-7-A"]
+  text: "New custom headers introduced by this guide or by BBs **MUST NOT** use the `X-` prefix, per RFC 6648. Existing private `X-` headers **MAY** remain only on an unchanged legacy major version and **MUST NOT** be introduced on a new surface or new major version."
+  open_questions: []
 - id: "8.6"
   title: "No personal data in addressable locations"
   class: R
@@ -577,12 +604,12 @@ rules:
 - id: "8.7"
   title: "Rate-limit headers declared"
   class: M+R
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST", "MAY"]
   surface: OpenAPI
   page: part-b/8-headers.md
   anchor: 87-rate-limit-headers-declared
-  text: "Endpoints rate-limited by the BB itself **MUST** declare rate-limit response headers per `draft-ietf-httpapi-ratelimit-headers` (an active, still-evolving Internet-Draft, not yet an RFC); where rate limiting is delegated to an API gateway or interoperability mediator, the spec **MUST** state that, rather than declaring headers the BB does not emit. The default v0.1 form is the three-header variant: `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset`, chosen deliberately for its current deployment ubiquity over the draft's newer structured-field form. `429` responses **MUST** additionally declare `Retry-After`. `[OPEN-7-B]`"
-  open_questions: ["OPEN-7-B"]
+  text: "An endpoint rate-limited by the BB itself **MUST** document the quota scope and **MUST** declare the `RateLimit` response header using the Structured Field syntax pinned from `draft-ietf-httpapi-ratelimit-headers-11`. A BB that advertises quota-policy details **MUST** use `RateLimit-Policy`. The server **MAY** omit these advisory headers on individual responses as allowed by the draft, but a `429` response **MUST** declare `Retry-After`; when `Retry-After` and `RateLimit` are both present, clients **MUST** treat `Retry-After` as authoritative. Where an API gateway or interoperability mediator owns rate limiting, the BB specification **MUST** state that fact instead of claiming to emit headers it does not control. The legacy `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` fields **MUST NOT** be described as conforming to the pinned draft."
+  open_questions: []
 - id: "9.1"
   title: "JSON as default media type"
   class: M+R
@@ -653,7 +680,7 @@ rules:
   surface: Universal
   page: part-c/9-json-conventions-and-naming.md
   anchor: 98-forward-compatible-schemas
-  text: "Schemas **MUST** be designed for forward-compatibility: unknown fields and unknown enum values must be safely ignorable by conforming clients. Schemas **MUST NOT** rely on `additionalProperties: false` at the top level of resource bodies, since that prevents adding fields without a breaking change. Conforming client behaviour (ignoring unknowns) is documented in §18.6 as a non-normative reader expectation."
+  text: "Schemas **MUST** be designed for forward-compatibility: unknown fields and unknown enum values **MUST** be safely ignorable by conforming clients. Schemas **MUST NOT** rely on `additionalProperties: false` at the top level of resource bodies, since that prevents adding fields without a breaking change. Conforming client behaviour (ignoring unknowns) is documented in §18.6 as a non-normative reader expectation."
   open_questions: []
 - id: "9.9"
   title: "No closed enums for growing sets"
@@ -680,7 +707,7 @@ rules:
   surface: Universal
   page: part-c/9-json-conventions-and-naming.md
   anchor: 911-single-registered-bb-code
-  text: "Every namespace that embeds a BB code (error codes §11.5, problem-type URLs §11.2, OAuth scopes §13.4, event types §16.3, channel addresses §17.2) **MUST** use the BB's single registered code, identically in all of them. BB codes **MUST** match `^[a-z][a-z0-9-]{1,30}$` and **MUST** be unique across the ecosystem. The segment `common` is reserved for ecosystem-wide artifacts (§11.7). The BB-code register is proposed for the Lifecycle & Governance companion (Appendix A); until it exists, codes **SHOULD** be agreed through the API Working Group. `[OPEN-9-A]`"
+  text: "Every namespace that embeds a BB code (error codes §11.5, problem-type URLs §11.2, OAuth scopes §13.4, event types §16.3, logical channel IDs §17.2) **MUST** use the BB's single registered code, identically in all of them. BB codes **MUST** match `^[a-z][a-z0-9-]{1,30}$` and **MUST** be unique across the ecosystem. The segment `common` is reserved for ecosystem-wide artifacts (§11.7). The BB-code register is proposed for the Lifecycle & Governance companion (Appendix A); until it exists, codes **SHOULD** be agreed through the API Working Group. `[OPEN-9-A]`"
   open_questions: ["OPEN-9-A"]
 - id: "10.1"
   title: "Opaque server-generated identifiers"
@@ -775,20 +802,20 @@ rules:
 - id: "11.1"
   title: "RFC 9457 problem details"
   class: M
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: Universal
   page: part-c/11-errors.md
   anchor: 111-rfc-9457-problem-details
-  text: "Error responses **MUST** use media type `application/problem+json` per RFC 9457 (which obsoletes RFC 7807 and retains the `application/problem+json` media type). The standard provides broad client and tooling support and removes the burden of maintaining a custom envelope."
+  text: "HTTP `4xx` and `5xx` responses **MUST** use media type `application/problem+json` and the RFC 9457 Problem Details model (RFC 9457 obsoletes RFC 7807 and retains this media type). This rule **MUST NOT** be represented as an RFC 9457 requirement on a non-HTTP message; §11.8 defines that mapping."
   open_questions: []
 - id: "11.2"
   title: "Standard problem fields present"
   class: M+R
-  strengths: ["MUST", "SHOULD", "MAY"]
+  strengths: ["MUST", "SHOULD"]
   surface: Universal
   page: part-c/11-errors.md
   anchor: 112-standard-problem-fields-present
-  text: "Standard RFC 9457 fields `type`, `title`, `status` **MUST** be present. `type` **SHOULD** be a stable URI for the problem type and **MAY** be a dereferenceable documentation URL, for example `https://docs.govstack.org/errors/{bb-code}/{error-name}`. `detail` and `instance` **SHOULD** be present when they add diagnostic value. The spec **MUST** declare that these fields carry no personal data and no system-internal details (stack traces, hostnames, query fragments)."
+  text: "Standard RFC 9457 fields `type`, `title`, and `status` **MUST** be present in every GovStack HTTP problem. `type` **MUST** be a stable absolute URI that identifies the problem type and **SHOULD** dereference to human-readable documentation, for example `https://docs.govstack.org/errors/{bb-code}/{error-name}`. `status` **MUST** equal the actual HTTP response status. `detail` and `instance` **SHOULD** be present when they add diagnostic value. The spec **MUST** declare that these fields carry no personal data and no system-internal details such as stack traces, hostnames, or query fragments."
   open_questions: []
 - id: "11.3"
   title: "GovStack error extension fields"
@@ -797,7 +824,7 @@ rules:
   surface: Universal
   page: part-c/11-errors.md
   anchor: 113-govstack-error-extension-fields
-  text: "GovStack extensions **MUST** include `code` (machine-stable error code), `traceId` (correlation), and `timestamp`."
+  text: "GovStack HTTP problems and asynchronous errors **MUST** include `code` (machine-stable error code), `traceId` (the W3C trace-id defined by §8.4), and `timestamp` (an RFC 3339 `date-time`)."
   open_questions: []
 - id: "11.4"
   title: "Field-level errors array"
@@ -835,6 +862,15 @@ rules:
   anchor: 117-common-error-catalogue
   text: "A small set of cross-BB common errors **MUST** be defined in `govstack-openapi-common.yaml` and reused. The starting set is modelled on `google.rpc.Code` (gRPC canonical error codes) but uses the GovStack reverse-DNS error-code convention: `org.govstack.common.unauthenticated`, `org.govstack.common.permissionDenied`, `org.govstack.common.notFound`, `org.govstack.common.invalidArgument`, `org.govstack.common.alreadyExists`, `org.govstack.common.aborted`, `org.govstack.common.resourceExhausted`, `org.govstack.common.internal`, `org.govstack.common.unimplemented`. The final list is `[OPEN-10-B]`."
   open_questions: ["OPEN-10-B"]
+- id: "11.8"
+  title: "Transport-neutral asynchronous errors"
+  class: M+R
+  strengths: ["MUST NOT", "MUST", "MAY"]
+  surface: Universal
+  page: part-c/11-errors.md
+  anchor: 118-transport-neutral-asynchronous-errors
+  text: "An asynchronous command rejection or processing failure **MUST** use the shared `GovStackAsyncError` schema from `govstack-asyncapi-common.yaml`, with message `contentType: application/json`. The schema **MUST** contain `type` (a stable absolute problem-type URI), `title`, `code`, `traceId`, and `timestamp`, and **MAY** contain `detail` and `errors` with the semantics in §11.4. When carried as a structured CloudEvent, this object **MUST** be the event `data`. It **MUST NOT** contain RFC 9457 `status` merely to simulate an HTTP response; a protocol-specific rejection code **MUST** be declared in the applicable binding or as a separately named field whose semantics the BB defines."
+  open_questions: []
 - id: "12.1"
   title: "Collections must paginate"
   class: M+R
@@ -851,7 +887,7 @@ rules:
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 122-cursor-pagination-by-default
-  text: "Default pagination **MUST** be cursor-based, modelled on Google AIP-158, with query parameters `pageSize` and `cursor`. The `cursor` name is used in place of AIP-158's `pageToken` to align with the wider non-Google ecosystem (GraphQL Relay Connections, GitHub, Twitter). The cursor **MUST** be opaque to clients (server-encoded, typically base64 of an internal representation); clients **MUST NOT** parse or construct cursor values."
+  text: "Default pagination **MUST** be cursor-based, modelled on Google AIP-158, with optional query parameters `pageSize` and `cursor`. The `cursor` name is used in place of AIP-158's `pageToken`. A cursor **MUST** be URL-safe, opaque, and integrity-protected; base64 encoding of a transparent internal value is not sufficient. It **MUST NOT** contain personal data, grant authority, or bypass authorization on a later request. Clients **MUST NOT** parse or construct cursor values, and servers **MUST** re-authorize every page request. Except for `pageSize`, the filter and sort arguments on a follow-up request **MUST** equal those that produced the cursor; a mismatch, malformed cursor, or expired cursor **MUST** return `400` with a stable problem code. The specification **MUST** document cursor expiry and a deterministic default order with a unique tie-breaker so concurrent records do not create ambiguous page boundaries."
   open_questions: []
 - id: "12.3"
   title: "Cursor pagination envelope"
@@ -860,7 +896,7 @@ rules:
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 123-cursor-pagination-envelope
-  text: "Pagination response envelope **MUST** be `{ items: [...], pageInfo: { nextCursor, hasMore, total? } }`. The `pageInfo` wrapper is inspired by the GraphQL Relay Connections specification but deliberately simplified: it uses a flat `items` array rather than Relay's `edges`/`node`, and `nextCursor`/`hasMore` rather than Relay's `endCursor`/`hasNextPage`."
+  text: "The cursor-pagination response envelope **MUST** be `{ items: [...], pageInfo: { nextCursor, hasMore, total? } }`. `nextCursor` **MUST** be a non-empty string when `hasMore` is `true` and **MUST** be `null` when `hasMore` is `false`; its schema therefore **MUST** declare explicit nullability. `total`, when present, **MUST** state whether it is exact or estimated and whether it reflects the first-page snapshot or the current collection. The `pageInfo` wrapper is inspired by GraphQL Relay Connections but deliberately uses flat `items` and simplified continuation fields."
   open_questions: []
 - id: "12.4"
   title: "Documented pageSize bounds"
@@ -901,11 +937,11 @@ rules:
 - id: "12.8"
   title: "Simple equality filtering"
   class: M+R
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 128-simple-equality-filtering
-  text: "Simple filtering **MUST** use one query parameter per field, equality only."
+  text: "Simple equality filtering on non-personal, non-secret fields **MUST** use one query parameter per field. A filter containing personal data or another value prohibited from URLs by §8.6 **MUST NOT** use a query parameter and **MUST** use the body-based search pattern in §12.9."
   open_questions: []
 - id: "12.9"
   title: "Complex filtering via search"
@@ -914,7 +950,7 @@ rules:
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 129-complex-filtering-via-search
-  text: "Complex filtering **MUST** use `POST /v1/{collection}/search` per §6.6. For this endpoint, pagination parameters (`pageSize`, `cursor`) **MUST** be carried in the request body, and the response **MUST** use the §12.3 envelope."
+  text: "Complex filtering and any filtering that contains personal data **MUST** use `POST /v1/{collection}/search` per §6.6. Pagination parameters (`pageSize`, `cursor`) **MUST** be carried in the request body, and the response **MUST** use the §12.3 envelope. A follow-up request **MUST** retain the same search criteria and sort values as the request that produced its cursor."
   open_questions: []
 - id: "12.10"
   title: "Sparse fieldsets out of scope"
@@ -937,20 +973,20 @@ rules:
 - id: "13.2"
   title: "OAuth and OIDC for citizen operations"
   class: M+R
-  strengths: ["MUST", "MAY"]
+  strengths: ["MUST NOT", "MUST", "MAY"]
   surface: Universal
   page: part-d/13-authentication-and-authorisation.md
   anchor: 132-oauth-and-oidc-for-citizen-operations
-  text: "Citizen-facing operations **MUST** declare an OAuth 2.0 + OIDC security requirement. On the OpenAPI surface this is either a `type: openIdConnect` scheme carrying `openIdConnectUrl` (the OIDC discovery document) or a `type: oauth2` scheme declaring the relevant `flows`. (A `type: oauth2` scheme does not carry a discovery URL; the discovery URL belongs to the `openIdConnect` scheme type.) Reference specifications that are not tied to a live identity provider **MAY** use documented deployment variables or reserved documentation domains for discovery, authorisation, token, and JWKS URLs. Adopter-specific identity-provider endpoints belong in implementation profiles."
+  text: "Citizen-facing protected operations **MUST** declare OAuth 2.0 authorization backed by an OpenID Connect provider. On OpenAPI this is either `type: openIdConnect` with `openIdConnectUrl`, or `type: oauth2` with an `authorizationCode` flow. The security-scheme description **MUST** state that the API accepts access tokens and **MUST NOT** treat an OIDC ID Token as an API access token. Authorization-code clients **MUST** use PKCE with `S256` as required by the RFC 9700 security baseline; the resource-owner password grant **MUST NOT** be declared, and the implicit grant **MUST NOT** be declared for a new surface. Reference specifications not tied to a live provider **MAY** use a reserved documentation-domain discovery URL; adopter-specific discovery, authorisation, token, and JWKS endpoints belong in implementation profiles."
   open_questions: []
 - id: "13.3"
   title: "Distinct scheme for BB-to-BB calls"
   class: M+R
-  strengths: ["MUST"]
+  strengths: ["MUST", "SHOULD"]
   surface: Universal
   page: part-d/13-authentication-and-authorisation.md
   anchor: 133-distinct-scheme-for-bb-to-bb-calls
-  text: "BB-to-BB operations crossing a service-to-service trust boundary, whether routed directly or through an interoperability mediator, **MUST** declare a distinct security scheme appropriate for service-to-service auth. On OpenAPI this is typically `type: mutualTLS` or OAuth client credentials; on AsyncAPI this is typically `type: X509`, OAuth client credentials, or a protocol-specific scheme such as SASL where the broker requires it. The spec **MUST** make clear which operations are citizen-facing vs inter-BB."
+  text: "BB-to-BB operations crossing a service-to-service trust boundary, whether routed directly or through an interoperability mediator, **MUST** declare a distinct security scheme appropriate for service-to-service authentication. On OpenAPI this **MUST** be `type: mutualTLS` or an OAuth client-credentials scheme using confidential-client authentication; on AsyncAPI it **MUST** be `type: X509`, OAuth client credentials, or a documented protocol-specific scheme such as SASL. OAuth access tokens **MUST** be audience-restricted to the intended BB and scope-restricted to the operation. Sender-constrained access tokens under RFC 8705 or RFC 9449 **SHOULD** be used across an inter-BB trust boundary. The spec **MUST** distinguish citizen-facing from inter-BB operations."
   open_questions: []
 - id: "13.4"
   title: "Namespaced OAuth scopes"
@@ -979,6 +1015,15 @@ rules:
   anchor: 136-api-keys-only-for-operational-endpoints
   text: "API keys **MAY** be declared on operational endpoints (`/health` and similar per §5.9). They **MUST NOT** be declared on operations that read or write personal data."
   open_questions: []
+- id: "13.7"
+  title: "Protected transport"
+  class: M+R
+  strengths: ["MUST NOT", "MUST"]
+  surface: Universal
+  page: part-d/13-authentication-and-authorisation.md
+  anchor: 137-protected-transport
+  text: "Every externally reachable OpenAPI server URL and HTTP webhook callback URL **MUST** use `https`. Every AsyncAPI server **MUST** declare a TLS-protected transport or a protocol security binding that provides equivalent confidentiality, integrity, and server authentication. Cleartext transport **MUST NOT** carry credentials, personal data, or GovStack domain events. TLS deployment configuration **MUST** follow RFC 9325 or its successor; concrete certificate trust and cipher configuration remain in the Security & Operations companion."
+  open_questions: []
 - id: "14.1"
   title: "Idempotency-Key on non-idempotent POSTs"
   class: M+R
@@ -986,7 +1031,7 @@ rules:
   surface: Universal
   page: part-d/14-idempotency.md
   anchor: 141-idempotency-key-on-non-idempotent-posts
-  text: "Except where §14.6 applies (a naturally idempotent design), POST endpoints that create resources, move value, submit irreversible requests, send messages, create subscriptions, start long-running jobs, or trigger other non-idempotent processing **MUST** accept an `Idempotency-Key` header. Other mutating POST actions **SHOULD** support idempotency unless the operation is naturally idempotent by contract and documents its duplicate-handling semantics. Read-like POSTs, such as complex search endpoints, **MAY** support idempotency but are not required to. The header follows the convention established by Stripe and is being standardized in the IETF httpapi working group as `draft-ietf-httpapi-idempotency-key-header` (an Internet-Draft, not yet an RFC)."
+  text: "Except where §14.6 applies, POST endpoints that create resources, move value, submit irreversible requests, send messages, create subscriptions, start long-running jobs, or trigger other non-idempotent processing **MUST** require and accept an `Idempotency-Key` header. Other mutating POST actions **SHOULD** support it unless their naturally idempotent contract documents duplicate handling. Read-like POSTs such as search **MAY** support it. GovStack pins the header syntax and error semantics from `draft-ietf-httpapi-idempotency-key-header-07`; this guide is the stable GovStack profile if that work-in-progress draft changes or expires."
   open_questions: []
 - id: "14.2"
   title: "Opaque client-generated keys"
@@ -995,16 +1040,16 @@ rules:
   surface: Universal
   page: part-d/14-idempotency.md
   anchor: 142-opaque-client-generated-keys
-  text: "The key **MUST** be an opaque, client-generated string and **SHOULD** be a UUID. (The cited draft RECOMMENDS a UUID rather than requiring one; per §1.7 the guide does not specify past the adopted standard by mandating a particular UUID version.)"
+  text: "The key **MUST** be an opaque, client-generated, high-entropy value and **SHOULD** be a UUID. On the wire it **MUST** use the Structured Field String syntax pinned from draft revision 07, including the required quotation marks. The specification **MUST** document the accepted syntax and maximum length, and the server **MUST** reject a malformed, missing-required, or oversized key with `400 Bad Request` before processing the operation."
   open_questions: []
 - id: "14.3"
   title: "Documented replay window"
   class: R
-  strengths: ["MUST", "SHOULD"]
+  strengths: ["MUST", "MAY"]
   surface: Universal
   page: part-d/14-idempotency.md
   anchor: 143-documented-replay-window
-  text: "The spec **MUST** document the idempotency replay-window contract. A reference specification **SHOULD** state the required minimum replay window or the configuration parameter that controls it. Concrete replay-window values belong in implementation profiles."
+  text: "The spec **MUST** document the idempotency replay-window contract, the required minimum replay window or controlling configuration parameter, and what happens after expiry. Within the documented window the key **MUST** retain the semantics in §14.4 and §14.5; after expiry the server **MAY** process the same key as a new request only if that behaviour is stated explicitly. Concrete retention values belong in implementation profiles."
   open_questions: []
 - id: "14.4"
   title: "Replay returns original response"
@@ -1013,16 +1058,16 @@ rules:
   surface: Universal
   page: part-d/14-idempotency.md
   anchor: 144-replay-returns-original-response
-  text: "A repeated request with the same key within the documented window **MUST** return the original response (status, body, headers)."
+  text: "A completed repeated request with the same lookup scope, key, and fingerprint within the documented window **MUST** return the original operation result: the same status, body, and result-defining representation headers such as `Content-Type` and `Location`. Per-attempt, temporal, security, tracing, rate-limit, retry, and hop-by-hop headers **MUST** be regenerated or omitted rather than replayed; this includes `Date`, `traceparent`, `tracestate`, `RateLimit`, `Retry-After`, and `Set-Cookie`."
   open_questions: []
 - id: "14.5"
   title: "Key reuse and fingerprint mismatch"
   class: R
-  strengths: ["MUST", "MAY"]
+  strengths: ["MUST", "SHOULD"]
   surface: Universal
   page: part-d/14-idempotency.md
   anchor: 145-key-reuse-and-fingerprint-mismatch
-  text: "A repeated request reusing the same key with a *different* request body **MUST** return `422 Unprocessable Content` (the request fingerprint does not match the original), per the cited draft. A repeated request that arrives while the original is still being processed (a concurrent in-flight retry) **MUST** return `409 Conflict`. The request fingerprint **MUST** be computed over at least the canonicalised request body; a BB **MAY** additionally include the method and target. The spec **MUST** document a maximum accepted key length so oversized keys are rejected deterministically."
+  text: "The server's idempotency lookup scope **MUST** include the effective HTTP method, canonical target URI, key, and, for authenticated operations, the authenticated client and tenant or equivalent authorization partition. The request fingerprint **MUST** include the method, canonical target URI, request content type, canonicalised body, and every documented header that changes operation semantics. Reusing a key in the same lookup scope with a different fingerprint **MUST** return `422 Unprocessable Content`; a matching retry received while the original remains in flight **MUST** return `409 Conflict`. These are GovStack **MUST** requirements even though draft revision 07 expresses the status-code choices as **SHOULD**."
   open_questions: []
 - id: "14.6"
   title: "Naturally idempotent designs"
@@ -1040,7 +1085,7 @@ rules:
   surface: OpenAPI
   page: part-d/15-asynchronous-operations.md
   anchor: 151-202-with-operation-location
-  text: "Operations that cannot complete synchronously **MUST** return `202 Accepted` with a `Location` header pointing to an Operation resource."
+  text: "Operations that cannot complete synchronously **MUST** return `202 Accepted` with a `Location` header pointing to an Operation resource and **MUST** return the current Operation representation in the response body."
   open_questions: []
 - id: "15.2"
   title: "Shared Operation resource shape"
@@ -1063,11 +1108,11 @@ rules:
 - id: "15.4"
   title: "Polling the Operation resource"
   class: M+R
-  strengths: []
+  strengths: ["MUST", "SHOULD"]
   surface: OpenAPI
   page: part-d/15-asynchronous-operations.md
   anchor: 154-polling-the-operation-resource
-  text: "Clients poll via `GET /v1/operations/{operationId}`."
+  text: "A BB exposing an Operation resource **MUST** expose polling via `GET /v{major}/operations/{operationId}`. A non-terminal polling response **SHOULD** include `Retry-After` when the server can advise a useful minimum polling interval."
   open_questions: []
 - id: "15.5"
   title: "Cancellation via cancel sub-resource"
@@ -1076,7 +1121,7 @@ rules:
   surface: OpenAPI
   page: part-d/15-asynchronous-operations.md
   anchor: 155-cancellation-via-cancel-sub-resource
-  text: "Cancellation, when supported, **MUST** be `POST /v1/operations/{operationId}/cancel`."
+  text: "Cancellation, when supported, **MUST** be `POST /v{major}/operations/{operationId}/cancel`."
   open_questions: []
 - id: "15.6"
   title: "Webhook completion notification"
@@ -1117,20 +1162,20 @@ rules:
 - id: "16.3"
   title: "Reverse-DNS event types"
   class: M
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 163-reverse-dns-event-types
-  text: "Event `type` names **MUST** follow a single ecosystem-wide convention. The default shape is reverse-DNS: `org.govstack.{bb-code}.{resource}.{action}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The event type identifies the semantic event kind and does not include the major version; the versioned transport contract is carried in the channel address or equivalent AsyncAPI version metadata (§18.2). `[OPEN-15-B]`"
+  text: "Event `type` names **MUST** follow a single ecosystem-wide convention. The default shape is reverse-DNS: `org.govstack.{bb-code}.{resource}.{action}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The event type identifies the semantic event kind and **MUST NOT** include the major API version; the versioned transport contract is carried by the AsyncAPI logical channel ID or equivalent version metadata (§18.2). `[OPEN-15-B]`"
   open_questions: ["OPEN-15-B"]
 - id: "16.4"
   title: "Stable CloudEvents source"
   class: M+R
-  strengths: ["MUST NOT", "MUST"]
+  strengths: ["MUST NOT", "MUST", "SHOULD"]
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 164-stable-cloudevents-source
-  text: "The CloudEvents `source` field **MUST** identify the publishing BB or BB surface in a stable way. It **MUST NOT** identify a specific deployment host, pod, broker, queue, or environment."
+  text: "The CloudEvents `source` field **MUST** be a stable, non-empty URI-reference identifying the publishing BB or BB surface; an absolute URI or URN **SHOULD** be used. It **MUST NOT** identify a specific deployment host, pod, broker, queue, or environment."
   open_questions: []
 - id: "16.5"
   title: "Signed event delivery"
@@ -1139,17 +1184,17 @@ rules:
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 165-signed-event-delivery
-  text: "Event delivery **MUST** be signed using the GovStack event-signature profile defined in `govstack-openapi-common.yaml` and `govstack-asyncapi-common.yaml`. `[OPEN-15-A]`"
-  open_questions: ["OPEN-15-A"]
+  text: "Event delivery **MUST** be signed using the GovStack event-signature profile defined in `govstack-openapi-common.yaml` and `govstack-asyncapi-common.yaml`."
+  open_questions: []
 - id: "16.6"
   title: "GovStack-Signature header"
   class: M+R
-  strengths: ["MUST"]
+  strengths: ["MUST", "SHOULD"]
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 166-govstack-signature-header
-  text: "On the OpenAPI/webhooks surface the signature **MUST** travel in a single ecosystem-wide HTTP header named `GovStack-Signature` (modelled on Stripe's `Stripe-Signature` and GitHub's `X-Hub-Signature-256`). On the AsyncAPI surface the signature **MUST** travel in the transport's message-metadata channel under the same field name unless the chosen protocol binding defines a more precise field. `[OPEN-15-C]`"
-  open_questions: ["OPEN-15-C"]
+  text: "On the OpenAPI/webhooks surface the signature **MUST** travel in the ecosystem-wide HTTP header `GovStack-Signature`. On the AsyncAPI surface, a GovStack-owned transport/application metadata field **MUST** be named `govstackSignature` so it satisfies §17.8; when a protocol binding defines a standard signature field, that field **SHOULD** be used and the mapping **MUST** be documented."
+  open_questions: []
 - id: "16.7"
   title: "Replay-detectable signed material"
   class: R
@@ -1162,12 +1207,12 @@ rules:
 - id: "16.8"
   title: "Pinned signature profile"
   class: R
-  strengths: ["MUST", "MAY"]
+  strengths: ["MUST NOT", "MUST"]
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 168-pinned-signature-profile
-  text: "`govstack-openapi-common.yaml` and `govstack-asyncapi-common.yaml` **MUST** pin the exact bytes that are signed (the canonicalisation: which fields, in which order, with which serialisation), the signing algorithm and its identifier, and the signature verification inputs, so that two independently-built BBs can verify each other's signatures. The default signature scheme is detached JWS over a canonicalised structured CloudEvents JSON payload. HMAC-SHA256 **MAY** be used only where shared-key distribution is explicitly governed. The event-signature profile is required for v1.0 publication because §16.5 is not mechanically enforceable without it. `[OPEN-15-A]`"
-  open_questions: ["OPEN-15-A"]
+  text: "`govstack-openapi-common.yaml` and `govstack-asyncapi-common.yaml` **MUST** declare the GovStack event-signature profile as detached JWS using `ES256`. The JWS payload **MUST** be the UTF-8 bytes of the complete structured CloudEvent JSON object after JSON Canonicalization Scheme processing defined by RFC 8785. The serialized JWS **MUST** omit its payload using the detached-content procedure in RFC 7515 Appendix F; verifiers **MUST** reconstruct that payload from the received, RFC 8785-canonicalized event body. The protected JWS `kid` **MUST** select the publisher's verification key. Implementations **MUST NOT** use RFC 7797 unencoded-payload JWS unless a future guide version explicitly adopts it."
+  open_questions: []
 - id: "16.9"
   title: "Operational signing concerns out of scope"
   class: informative
@@ -1193,7 +1238,7 @@ rules:
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 1611-subscription-management-interfaces
-  text: "Subscription management **MUST** expose documented interfaces to create, list, rotate the signing secret, and delete a subscription. HTTP subscription management uses OpenAPI endpoints; brokered or stream-based subscription management **MAY** use message-based commands documented in AsyncAPI if that is the BB's chosen control plane."
+  text: "Subscription management **MUST** expose documented interfaces to create, list, rotate the signing secret or verification key material used by the selected profile, and delete a subscription. HTTP subscription management uses OpenAPI endpoints; brokered or stream-based subscription management **MAY** use message-based commands documented in AsyncAPI if that is the BB's chosen control plane."
   open_questions: []
 - id: "17.1"
   title: "Send and receive perspective"
@@ -1205,14 +1250,14 @@ rules:
   text: "Each AsyncAPI document **MUST** define the BB's perspective. An operation with `action: send` means the BB publishes that message to the channel. An operation with `action: receive` means the BB consumes that message from the channel."
   open_questions: []
 - id: "17.2"
-  title: "Reverse-DNS channel addresses"
-  class: M
-  strengths: ["MUST"]
+  title: "Stable logical channel IDs and native addresses"
+  class: M+R
+  strengths: ["MUST NOT", "MUST"]
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
-  anchor: 172-reverse-dns-channel-addresses
-  text: "Channel addresses **MUST** follow one ecosystem-wide naming convention. The default shape is reverse-DNS: `org.govstack.{bb-code}.v{major}.{resource}.{event}`. The `{bb-code}` segment is the BB's single registered code per §9.11. `[OPEN-15-D]`"
-  open_questions: ["OPEN-15-D"]
+  anchor: 172-stable-logical-channel-ids-and-native-addresses
+  text: "Each entry under AsyncAPI `channels` **MUST** use a stable logical channel ID with reverse-DNS shape `org.govstack.{bb-code}.v{major}.{resource}.{event}`. The `{bb-code}` segment **MUST** be the registered code from §9.11. The Channel Object `address` **MUST** use the chosen protocol's native destination syntax, such as an MQTT topic, AMQP routing key, Kafka topic, or WebSocket/SSE path, and **MUST NOT** be forced into reverse-DNS form when that would change protocol semantics. Protocol bindings **MUST** document the mapping from logical ID to native address."
+  open_questions: []
 - id: "17.3"
   title: "No personal data in channels"
   class: R
@@ -1220,7 +1265,7 @@ rules:
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
   anchor: 173-no-personal-data-in-channels
-  text: "Channel addresses, topic names, queue names, routing keys, and channel parameters **MUST NOT** contain personal data, secrets, access tokens, phone numbers, email addresses, national identifiers, names, dates of birth, exact addresses, or other directly identifying attributes. Use opaque IDs or claim-protected payload fields instead."
+  text: "Logical channel IDs, native addresses, topic names, queue names, routing keys, and channel parameters **MUST NOT** contain personal data, secrets, access tokens, phone numbers, email addresses, national identifiers, names, dates of birth, exact addresses, or other directly identifying attributes. Use opaque IDs or claim-protected payload fields instead."
   open_questions: []
 - id: "17.4"
   title: "Declared channel parameters"
@@ -1261,11 +1306,11 @@ rules:
 - id: "17.8"
   title: "Message headers and idempotency metadata"
   class: M+R
-  strengths: ["MUST NOT", "MUST", "SHOULD", "MAY"]
+  strengths: ["MUST NOT", "MUST", "MAY"]
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
   anchor: 178-message-headers-and-idempotency-metadata
-  text: "GovStack-owned transport/application message headers **MUST** use camelCase and **MUST NOT** use the `X-` prefix. For structured CloudEvents messages, trace and workflow metadata **SHOULD** be carried as CloudEvents extension attributes: `traceid`, `correlationid`, and `causationid`. These names are lowercase because CloudEvents requires lowercase extension-attribute names; the same concepts use camelCase in GovStack-owned JSON bodies and transport/application headers. Transport/application headers **MAY** mirror these values where broker tooling requires header-level metadata, but the CloudEvent remains the normative event envelope. Command-like messages that create resources, move value, or trigger non-idempotent processing **MUST** carry an idempotency key. For structured CloudEvents command messages, the key **MUST** be the CloudEvents extension attribute `idempotencykey`; for non-CloudEvents command messages, it **MUST** be the message header `idempotencyKey`."
+  text: "GovStack-owned transport/application message headers **MUST** use camelCase and **MUST NOT** use the `X-` prefix. Structured CloudEvents messages that participate in a distributed trace **MUST** carry the standard CloudEvents distributed-tracing extension attribute `traceparent` and **MAY** carry `tracestate`; workflow metadata **MAY** use the extension attributes `correlationid` and `causationid`. CloudEvents extension names are lowercase; equivalent GovStack-owned transport/application headers are camelCase. Transport headers **MAY** mirror these values where broker tooling requires it, but the CloudEvent remains normative. The event-signature metadata name **MUST** follow §16.6. Command-like messages that create resources, move value, or trigger non-idempotent processing **MUST** carry an idempotency key: structured CloudEvents commands **MUST** use `idempotencykey`, while non-CloudEvents commands **MUST** use `idempotencyKey`."
   open_questions: []
 - id: "17.9"
   title: "Message localisation headers"
@@ -1337,7 +1382,7 @@ rules:
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
   anchor: 1716-async-rejection-error-messages
-  text: "Command-like messages that can be rejected asynchronously **MUST** define a rejection or failure message using the common GovStack error envelope from §11. The error message **MUST** be correlated to the original message using the correlation metadata rules in §17.8 or an equivalent protocol binding."
+  text: "Command-like messages that can be rejected asynchronously **MUST** define a rejection or failure message using `GovStackAsyncError` from §11.8, not an artificial RFC 9457 HTTP `status`. The error message **MUST** be correlated to the original message using §17.8 or an equivalent protocol binding."
   open_questions: []
 - id: "17.17"
   title: "Declared request-reply correlation"
@@ -1382,25 +1427,25 @@ rules:
   surface: Universal
   page: part-d/18-compatibility-and-lifecycle.md
   anchor: 181-semver-versioning
-  text: "`info.version` **MUST** follow SemVer."
+  text: "`info.version` **MUST** follow SemVer. As a GovStack convention, it is the version of that surface's published API contract and its canonical description together; the major component **MUST** match the major version exposed under §18.2."
   open_questions: []
 - id: "18.2"
   title: "Major version in path or channel"
   class: M
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: Universal
   page: part-d/18-compatibility-and-lifecycle.md
   anchor: 182-major-version-in-path-or-channel
-  text: "Major version increments **MUST** be reflected in the OpenAPI URL path (`/v2/`). AsyncAPI channels **MUST** include the major version in the channel address or an equivalent machine-readable version field documented in `govstack-asyncapi-common.yaml`."
+  text: "A major version increment **MUST** be reflected in every OpenAPI path key (`/v2/`) and **MUST NOT** be duplicated in the OpenAPI `servers` URL. On AsyncAPI, the major version **MUST** appear in the logical channel ID defined by §17.2 or in an equivalent machine-readable version field defined by `govstack-asyncapi-common.yaml`; protocol-native channel addresses **MUST NOT** be rewritten solely to carry it."
   open_questions: []
 - id: "18.3"
   title: "Backward-compatible minor changes"
   class: M+R
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST", "MAY"]
   surface: Universal
   page: part-d/18-compatibility-and-lifecycle.md
   anchor: 183-backward-compatible-minor-changes
-  text: "Minor and patch increments **MUST** be backward-compatible. Adding optional fields, adding endpoints, adding enum values (for fields declared extensibly per §9.9), and relaxing constraints are non-breaking."
+  text: "Compatibility **MUST** be evaluated as an existing client communicating with a newer server, separately for input and output. A patch increment **MUST** be limited to a backward-compatible correction that does not add public functionality. A minor increment **MAY** add an endpoint; add an optional request field whose absence preserves the old behaviour; broaden values accepted in a request; or add a response field that conforming clients ignore under §9.8. A response enum value **MAY** be added only when the field was declared extensibly under §9.9. For messaging, the same test **MUST** be applied from publisher to existing consumer for sent messages and from existing publisher to consumer for received messages. Additive syntax **MUST NOT** be called compatible when it changes defaults, pagination boundaries, ordering, authorization, delivery guarantees, or other observable semantics."
   open_questions: []
 - id: "18.4"
   title: "Breaking changes bump major version"
@@ -1409,16 +1454,16 @@ rules:
   surface: Universal
   page: part-d/18-compatibility-and-lifecycle.md
   anchor: 184-breaking-changes-bump-major-version
-  text: "Breaking changes (removing endpoints, removing fields, narrowing types, narrowing enums, tightening required, changing semantic meaning) **MUST** be released as a new major version."
+  text: "A breaking change **MUST** be released as a new major version. Breaking changes include removing or renaming an endpoint, operation, message, field, or enum value; adding a required request field; rejecting a previously accepted request; widening the type, length, format, or closed-enum values a server may emit beyond the old response schema; ceasing to emit a required response field; changing a success status, media type, default, identifier construction, field presence, pagination or sort behaviour, error-code meaning, idempotency behaviour, security requirement or scope, event meaning, delivery guarantee, or ordering guarantee. Moving a contract component in a way that breaks generated-client references **MUST** also be treated as breaking even when the serialized wire shape is unchanged."
   open_questions: []
 - id: "18.5"
   title: "Deprecation and Sunset headers"
   class: M+R
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: Universal
   page: part-d/18-compatibility-and-lifecycle.md
   anchor: 185-deprecation-and-sunset-headers
-  text: "Deprecated endpoints **MUST** return a `Deprecation` header per RFC 9745 (a structured-field date carrying the deprecation timestamp, e.g. `Deprecation: @1735689600`) and a `Sunset` header per RFC 8594 indicating planned removal. The minimum deprecation window between announcement and sunset, and the maximum number of concurrent major versions a BB can keep in production, are operational policy and are proposed for the Lifecycle & Governance companion, not here."
+  text: "Deprecated HTTP endpoints **MUST** return a `Deprecation` header per RFC 9745 (a Structured Field date carrying the deprecation timestamp, for example `Deprecation: @1735689600`) and a `Link` with relation `deprecation` pointing to migration documentation. When removal is planned, they **MUST** additionally return a `Sunset` header per RFC 8594; its timestamp **MUST NOT** precede the deprecation timestamp. The minimum deprecation window and maximum concurrent major versions remain policy for the Lifecycle & Governance companion."
   open_questions: []
 - id: "18.6"
   title: "Clients ignore unknown fields"
@@ -1477,27 +1522,27 @@ rules:
 - id: "20.1"
   title: "Every file passes validation"
   class: M
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: Universal
   page: part-e/20-conformance-and-validation.md
   anchor: 201-every-file-passes-validation
-  text: "Every BB OpenAPI file **MUST** pass `openapi-spec-validator`. Every BB AsyncAPI file **MUST** pass an equivalent AsyncAPI parser/validator (e.g., `asyncapi/parser`)."
+  text: "Every canonical OpenAPI entrypoint **MUST** pass `openapi-spec-validator` for its declared qualified 3.1 patch, with local references resolved. Every canonical AsyncAPI entrypoint **MUST** pass an AsyncAPI 3.0 parser/validator such as `@asyncapi/parser`. A referenced schema fragment **MUST** validate against its own declared schema dialect and **MUST NOT** be rejected merely because it is not a standalone OpenAPI or AsyncAPI document."
   open_questions: []
 - id: "20.2"
   title: "Passes the GovStack Spectral ruleset"
   class: M
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: Universal
   page: part-e/20-conformance-and-validation.md
   anchor: 202-passes-the-govstack-spectral-ruleset
-  text: "Every BB API spec **MUST** pass the GovStack Spectral ruleset for the machine-checkable rules applicable to its surface. The machine-checkable rules are those tagged `[M]`, together with the mechanical portion of rules tagged `[M+R]` (§1.9). The v0.1 ruleset **MUST** include the OpenAPI rules, CloudEvents event rules, and AsyncAPI documentation rules from §3, §16, and §17. Future protocol profiles may add deeper Kafka, MQTT, AMQP, WebSocket, or SSE rules."
+  text: "Every BB API spec **MUST** pass the exact GovStack Spectral ruleset version declared under §20.3 for the machine-checkable rules applicable to its surface. The machine-checkable rules are those tagged `[M]`, together with the mechanical portion of `[M+R]` rules (§1.9). Ruleset `0.2.0-draft` **MUST** cover the OpenAPI, CloudEvents, and AsyncAPI documentation rules recorded in its coverage manifest. Validation **MUST** fail when the declared ruleset artifact is unavailable or differs from the exact declared version; tooling **MUST NOT** select “latest” or fall back by major/minor compatibility."
   open_questions: []
 - id: "20.3"
   title: "Declared guide conformance version"
   class: M
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: Universal
   page: part-e/20-conformance-and-validation.md
   anchor: 203-declared-guide-conformance-version
-  text: "Each canonical specification file **MUST** declare the guide version it conforms to via the `info`-level extension `x-govstack-api-guide`: an object with `version` (the guide version targeted, SemVer) and optional `exceptions` (a list of rule IDs, each with a reference to its approved exception record per §1.6). Validation tooling (§20.2) selects the matching ruleset version from this declaration. `[OPEN-20-A]`"
-  open_questions: ["OPEN-20-A"]
+  text: "Each canonical specification file **MUST** declare the exact guide and ruleset versions it targets in the `info`-level `x-govstack-api-guide` object using `version` and `rulesetVersion`, each an exact SemVer value rather than a range. For this draft both values **MUST** be `0.2.0-draft`. An optional `exceptions` array **MUST** contain objects with exactly these fields: `rule` (guide rule ID), `scope` (RFC 6901 JSON Pointer into this canonical document), `rationale` (non-empty explanation), `record` (absolute HTTPS URI for the approved public record), `reviewedBy` (non-empty approving authority), `reviewedAt` (calendar date `YYYY-MM-DD`), and `expiresAt` (calendar date `YYYY-MM-DD`). An exception **MUST** suppress only its named rule at or below its declared scope. An expired entry, invalid field, or exception not approved under §1.6 **MUST** fail validation rather than suppress the rule. Offline validation **MUST NOT** require dereferencing the record URI."
+  open_questions: []

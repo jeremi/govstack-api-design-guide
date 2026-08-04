@@ -10,7 +10,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 
 | Rule | Class | Strength | Surface | Title |
 | --- | --- | --- | --- | --- |
-| [2.1](part-a/2-openapi-document-standards.md#21-openapi-310-required) | M | MUST | OpenAPI | OpenAPI 3.1.0 required |
+| [2.1](part-a/2-openapi-document-standards.md#21-openapi-31-required) | M | MUST | OpenAPI | OpenAPI 3.1 required |
 | [2.2](part-a/2-openapi-document-standards.md#22-one-canonical-openapi-entrypoint) | M+R | MUST | OpenAPI | One canonical OpenAPI entrypoint |
 | [2.3](part-a/2-openapi-document-standards.md#23-no-divergent-openapi-copies) | R | MUST | OpenAPI | No divergent OpenAPI copies |
 | [2.4](part-a/2-openapi-document-standards.md#24-passes-openapi-spec-validator) | M | MUST | OpenAPI | Passes openapi-spec-validator |
@@ -41,6 +41,8 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [4.2](part-a/4-documentation-requirements.md#42-examples-for-bodies-and-enums) | M+R | MUST | Universal | Examples for bodies and enums |
 | [4.3](part-a/4-documentation-requirements.md#43-no-placeholder-text) | M+R | MUST | Universal | No placeholder text |
 | [4.4](part-a/4-documentation-requirements.md#44-accurate-operation-descriptions) | R | MUST | Universal | Accurate operation descriptions |
+| [4.5](part-a/4-documentation-requirements.md#45-api-surface-inventory) | M+R | MUST | Universal | API surface inventory |
+| [4.6](part-a/4-documentation-requirements.md#46-functional-requirement-traceability) | M+R | MUST | Universal | Functional-requirement traceability |
 
 ## 5. URL structure and versioning
 
@@ -61,7 +63,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | Rule | Class | Strength | Surface | Title |
 | --- | --- | --- | --- | --- |
 | [6.1](part-b/6-http-methods.md#61-get-is-safe-and-idempotent) | M+R | MUST | OpenAPI | GET is safe and idempotent |
-| [6.2](part-b/6-http-methods.md#62-post-creates-or-performs-actions) | R | — | OpenAPI | POST creates or performs actions |
+| [6.2](part-b/6-http-methods.md#62-post-creates-or-performs-actions) | R | MUST | OpenAPI | POST creates or performs actions |
 | [6.3](part-b/6-http-methods.md#63-put-replaces-the-entire-resource) | R | MUST | OpenAPI | PUT replaces the entire resource |
 | [6.4](part-b/6-http-methods.md#64-patch-uses-json-merge-patch) | M+R | MUST | OpenAPI | PATCH uses JSON Merge Patch |
 | [6.5](part-b/6-http-methods.md#65-delete-response-semantics) | M+R | MUST | OpenAPI | DELETE response semantics |
@@ -72,26 +74,27 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 
 | Rule | Class | Strength | Surface | Title |
 | --- | --- | --- | --- | --- |
-| [7.1](part-b/7-http-status-codes.md#71-200-for-successful-reads) | R | — | OpenAPI | 200 for successful reads |
+| [7.1](part-b/7-http-status-codes.md#71-200-for-successful-reads) | R | MUST | OpenAPI | 200 for successful reads |
 | [7.2](part-b/7-http-status-codes.md#72-201-created-with-location) | M | MUST | OpenAPI | 201 Created with Location |
 | [7.3](part-b/7-http-status-codes.md#73-202-accepted-for-async-operations) | M+R | MUST | OpenAPI | 202 Accepted for async operations |
-| [7.4](part-b/7-http-status-codes.md#74-204-for-void-responses) | R | — | OpenAPI | 204 for void responses |
-| [7.5](part-b/7-http-status-codes.md#75-400-for-malformed-requests) | R | — | OpenAPI | 400 for malformed requests |
+| [7.4](part-b/7-http-status-codes.md#74-204-for-void-responses) | R | MUST | OpenAPI | 204 for void responses |
+| [7.5](part-b/7-http-status-codes.md#75-400-for-malformed-requests) | R | MUST | OpenAPI | 400 for malformed requests |
 | [7.6](part-b/7-http-status-codes.md#76-401-with-www-authenticate) | M+R | MUST | OpenAPI | 401 with WWW-Authenticate |
-| [7.7](part-b/7-http-status-codes.md#77-403-when-not-authorised) | R | — | OpenAPI | 403 when not authorised |
-| [7.8](part-b/7-http-status-codes.md#78-404-for-missing-resources) | R | — | OpenAPI | 404 for missing resources |
-| [7.9](part-b/7-http-status-codes.md#79-409-for-state-conflicts) | R | — | OpenAPI | 409 for state conflicts |
-| [7.10](part-b/7-http-status-codes.md#710-410-for-permanent-removal) | R | — | OpenAPI | 410 for permanent removal |
-| [7.11](part-b/7-http-status-codes.md#711-422-for-semantic-errors) | R | — | OpenAPI | 422 for semantic errors |
-| [7.12](part-b/7-http-status-codes.md#712-429-for-rate-limits) | R | — | OpenAPI | 429 for rate limits |
+| [7.7](part-b/7-http-status-codes.md#77-403-when-not-authorised) | R | MUST | OpenAPI | 403 when not authorised |
+| [7.8](part-b/7-http-status-codes.md#78-404-for-missing-resources) | R | MUST | OpenAPI | 404 for missing resources |
+| [7.9](part-b/7-http-status-codes.md#79-409-for-state-conflicts) | R | MUST | OpenAPI | 409 for state conflicts |
+| [7.10](part-b/7-http-status-codes.md#710-410-for-permanent-removal) | R | MUST | OpenAPI | 410 for permanent removal |
+| [7.11](part-b/7-http-status-codes.md#711-422-for-semantic-errors) | R | MUST | OpenAPI | 422 for semantic errors |
+| [7.12](part-b/7-http-status-codes.md#712-429-for-rate-limits) | R | MUST | OpenAPI | 429 for rate limits |
 | [7.13](part-b/7-http-status-codes.md#713-server-errors-documented) | M | MUST | OpenAPI | Server errors documented |
 | [7.14](part-b/7-http-status-codes.md#714-all-status-codes-declared) | M | MUST | OpenAPI | All status codes declared |
-| [7.15](part-b/7-http-status-codes.md#715-412-for-failed-preconditions) | R | — | OpenAPI | 412 for failed preconditions |
-| [7.16](part-b/7-http-status-codes.md#716-etag-and-if-none-match) | M+R | SHOULD | OpenAPI | ETag and If-None-Match |
-| [7.17](part-b/7-http-status-codes.md#717-optimistic-concurrency-with-if-match) | M+R | SHOULD | OpenAPI | Optimistic concurrency with If-Match |
+| [7.15](part-b/7-http-status-codes.md#715-412-for-failed-preconditions) | R | MUST | OpenAPI | 412 for failed preconditions |
+| [7.16](part-b/7-http-status-codes.md#716-etag-and-if-none-match) | M+R | MUST | OpenAPI | ETag and If-None-Match |
+| [7.17](part-b/7-http-status-codes.md#717-optimistic-concurrency-with-if-match) | M+R | MUST | OpenAPI | Optimistic concurrency with If-Match |
 | [7.18](part-b/7-http-status-codes.md#718-405-with-allow-header) | M | MUST | OpenAPI | 405 with Allow header |
 | [7.19](part-b/7-http-status-codes.md#719-415-for-unsupported-media-types) | M+R | MUST | OpenAPI | 415 for unsupported media types |
 | [7.20](part-b/7-http-status-codes.md#720-no-store-on-error-responses) | M | SHOULD | OpenAPI | No-store on error responses |
+| [7.21](part-b/7-http-status-codes.md#721-schemas-for-successful-response-bodies) | M | MUST | OpenAPI | Schemas for successful response bodies |
 
 ## 8. Headers
 
@@ -100,7 +103,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [8.1](part-b/8-headers.md#81-credentials-in-authorization-header) | M+R | MUST | OpenAPI | Credentials in Authorization header |
 | [8.2](part-b/8-headers.md#82-accept-language-and-content-language) | M+R | MUST | OpenAPI | Accept-Language and Content-Language |
 | [8.3](part-b/8-headers.md#83-idempotency-key-header-accepted) | M+R | MUST | OpenAPI | Idempotency-Key header accepted |
-| [8.4](part-b/8-headers.md#84-x-request-id-correlation) | M+R | MUST | OpenAPI | X-Request-Id correlation |
+| [8.4](part-b/8-headers.md#84-w3c-trace-context-correlation) | M+R | MUST | OpenAPI | W3C Trace Context correlation |
 | [8.5](part-b/8-headers.md#85-no-new-x--prefixed-headers) | M | MUST | OpenAPI | No new X- prefixed headers |
 | [8.6](part-b/8-headers.md#86-no-personal-data-in-addressable-locations) | R | MUST | OpenAPI | No personal data in addressable locations |
 | [8.7](part-b/8-headers.md#87-rate-limit-headers-declared) | M+R | MUST | OpenAPI | Rate-limit headers declared |
@@ -147,6 +150,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [11.5](part-c/11-errors.md#115-namespaced-stable-error-codes) | M+R | MUST | Universal | Namespaced stable error codes |
 | [11.6](part-c/11-errors.md#116-stable-codes-across-languages) | R | MUST | Universal | Stable codes across languages |
 | [11.7](part-c/11-errors.md#117-common-error-catalogue) | M+R | MUST | Universal | Common error catalogue |
+| [11.8](part-c/11-errors.md#118-transport-neutral-asynchronous-errors) | M+R | MUST | Universal | Transport-neutral asynchronous errors |
 
 ## 12. Pagination, filtering, sorting
 
@@ -173,6 +177,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [13.4](part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes) | M | MUST | Universal | Namespaced OAuth scopes |
 | [13.5](part-d/13-authentication-and-authorisation.md#135-authorization-is-the-credential-channel) | M+R | MUST | Universal | Authorization is the credential channel |
 | [13.6](part-d/13-authentication-and-authorisation.md#136-api-keys-only-for-operational-endpoints) | R | MUST | Universal | API keys only for operational endpoints |
+| [13.7](part-d/13-authentication-and-authorisation.md#137-protected-transport) | M+R | MUST | Universal | Protected transport |
 
 ## 14. Idempotency
 
@@ -192,7 +197,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [15.1](part-d/15-asynchronous-operations.md#151-202-with-operation-location) | M+R | MUST | OpenAPI | 202 with Operation Location |
 | [15.2](part-d/15-asynchronous-operations.md#152-shared-operation-resource-shape) | M | MUST | OpenAPI | Shared Operation resource shape |
 | [15.3](part-d/15-asynchronous-operations.md#153-fixed-operation-status-enum) | M | MUST | OpenAPI | Fixed Operation status enum |
-| [15.4](part-d/15-asynchronous-operations.md#154-polling-the-operation-resource) | M+R | — | OpenAPI | Polling the Operation resource |
+| [15.4](part-d/15-asynchronous-operations.md#154-polling-the-operation-resource) | M+R | MUST | OpenAPI | Polling the Operation resource |
 | [15.5](part-d/15-asynchronous-operations.md#155-cancellation-via-cancel-sub-resource) | M+R | MUST | OpenAPI | Cancellation via cancel sub-resource |
 | [15.6](part-d/15-asynchronous-operations.md#156-webhook-completion-notification) | R | SHOULD | OpenAPI | Webhook completion notification |
 | [15.7](part-d/15-asynchronous-operations.md#157-documented-result-retention) | R | MUST | OpenAPI | Documented result retention |
@@ -218,7 +223,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | Rule | Class | Strength | Surface | Title |
 | --- | --- | --- | --- | --- |
 | [17.1](part-d/17-asyncapi-channel-rules.md#171-send-and-receive-perspective) | M+R | MUST | AsyncAPI | Send and receive perspective |
-| [17.2](part-d/17-asyncapi-channel-rules.md#172-reverse-dns-channel-addresses) | M | MUST | AsyncAPI | Reverse-DNS channel addresses |
+| [17.2](part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses) | M+R | MUST | AsyncAPI | Stable logical channel IDs and native addresses |
 | [17.3](part-d/17-asyncapi-channel-rules.md#173-no-personal-data-in-channels) | R | MUST | AsyncAPI | No personal data in channels |
 | [17.4](part-d/17-asyncapi-channel-rules.md#174-declared-channel-parameters) | M+R | MUST | AsyncAPI | Declared channel parameters |
 | [17.5](part-d/17-asyncapi-channel-rules.md#175-no-environment-names-in-addresses) | M+R | SHOULD | AsyncAPI | No environment names in addresses |

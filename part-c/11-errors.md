@@ -7,20 +7,20 @@ description: "One RFC 9457 problem-details error envelope, GovStack extension fi
 {% hint style="info" %}
 **Intent.** One error format ecosystem-wide. A shared error schema lets integrators handle failures uniformly across BBs.
 
-**Applies to:** Universal at the envelope and code-catalogue level. HTTP status mapping ([§7](../part-b/7-http-status-codes.md)) is OpenAPI-specific; the AsyncAPI surface signals errors via transport-appropriate mechanisms using the same envelope.
+**Applies to:** Universal at the stable type, code, trace, and field-error level. RFC 9457 and its `status` member apply only to HTTP responses. AsyncAPI rejection and failure messages use the transport-neutral shape in [§11.8](#118-transport-neutral-asynchronous-errors).
 {% endhint %}
 
 ## 11.1 RFC 9457 problem details <a href="#111-rfc-9457-problem-details" id="111-rfc-9457-problem-details"></a>
 
-**[M]** Error responses **MUST** use media type `application/problem+json` per RFC 9457 (which obsoletes RFC 7807 and retains the `application/problem+json` media type). The standard provides broad client and tooling support and removes the burden of maintaining a custom envelope.
+**[M]** HTTP `4xx` and `5xx` responses **MUST** use media type `application/problem+json` and the RFC 9457 Problem Details model (RFC 9457 obsoletes RFC 7807 and retains this media type). This rule **MUST NOT** be represented as an RFC 9457 requirement on a non-HTTP message; [§11.8](#118-transport-neutral-asynchronous-errors) defines that mapping.
 
 ## 11.2 Standard problem fields present <a href="#112-standard-problem-fields-present" id="112-standard-problem-fields-present"></a>
 
-**[M+R]** Standard RFC 9457 fields `type`, `title`, `status` **MUST** be present. `type` **SHOULD** be a stable URI for the problem type and **MAY** be a dereferenceable documentation URL, for example `https://docs.govstack.org/errors/{bb-code}/{error-name}`. `detail` and `instance` **SHOULD** be present when they add diagnostic value. The spec **MUST** declare that these fields carry no personal data and no system-internal details (stack traces, hostnames, query fragments).
+**[M+R]** Standard RFC 9457 fields `type`, `title`, and `status` **MUST** be present in every GovStack HTTP problem. `type` **MUST** be a stable absolute URI that identifies the problem type and **SHOULD** dereference to human-readable documentation, for example `https://docs.govstack.org/errors/{bb-code}/{error-name}`. `status` **MUST** equal the actual HTTP response status. `detail` and `instance` **SHOULD** be present when they add diagnostic value. The spec **MUST** declare that these fields carry no personal data and no system-internal details such as stack traces, hostnames, or query fragments.
 
 ## 11.3 GovStack error extension fields <a href="#113-govstack-error-extension-fields" id="113-govstack-error-extension-fields"></a>
 
-**[M]** GovStack extensions **MUST** include `code` (machine-stable error code), `traceId` (correlation), and `timestamp`.
+**[M]** GovStack HTTP problems and asynchronous errors **MUST** include `code` (machine-stable error code), `traceId` (the W3C trace-id defined by [§8.4](../part-b/8-headers.md#84-w3c-trace-context-correlation)), and `timestamp` (an RFC 3339 `date-time`).
 
 ## 11.4 Field-level errors array <a href="#114-field-level-errors-array" id="114-field-level-errors-array"></a>
 
@@ -36,7 +36,7 @@ description: "One RFC 9457 problem-details error envelope, GovStack extension fi
   "detail": "Two request fields failed validation.",
   "instance": "/v1/applications/3f6c0e63-9f7e-4d51-a3ce-58b2c7d0f3a1",
   "code": "org.govstack.registration.validationFailed",
-  "traceId": "6f1c3f0e2a9b4c8d",
+  "traceId": "6f1c3f0e2a9b4c8d7e6f5a4b3c2d1e0f",
   "timestamp": "2026-07-10T08:30:00Z",
   "errors": [
     {
@@ -64,3 +64,7 @@ description: "One RFC 9457 problem-details error envelope, GovStack extension fi
 ## 11.7 Common error catalogue <a href="#117-common-error-catalogue" id="117-common-error-catalogue"></a>
 
 **[M+R]** A small set of cross-BB common errors **MUST** be defined in `govstack-openapi-common.yaml` and reused. The starting set is modelled on `google.rpc.Code` (gRPC canonical error codes) but uses the GovStack reverse-DNS error-code convention: `org.govstack.common.unauthenticated`, `org.govstack.common.permissionDenied`, `org.govstack.common.notFound`, `org.govstack.common.invalidArgument`, `org.govstack.common.alreadyExists`, `org.govstack.common.aborted`, `org.govstack.common.resourceExhausted`, `org.govstack.common.internal`, `org.govstack.common.unimplemented`. The final list is [`[OPEN-10-B]`](../appendix/b-open-questions.md).
+
+## 11.8 Transport-neutral asynchronous errors <a href="#118-transport-neutral-asynchronous-errors" id="118-transport-neutral-asynchronous-errors"></a>
+
+**[M+R]** An asynchronous command rejection or processing failure **MUST** use the shared `GovStackAsyncError` schema from `govstack-asyncapi-common.yaml`, with message `contentType: application/json`. The schema **MUST** contain `type` (a stable absolute problem-type URI), `title`, `code`, `traceId`, and `timestamp`, and **MAY** contain `detail` and `errors` with the semantics in [§11.4](#114-field-level-errors-array). When carried as a structured CloudEvent, this object **MUST** be the event `data`. It **MUST NOT** contain RFC 9457 `status` merely to simulate an HTTP response; a protocol-specific rejection code **MUST** be declared in the applicable binding or as a separately named field whose semantics the BB defines.

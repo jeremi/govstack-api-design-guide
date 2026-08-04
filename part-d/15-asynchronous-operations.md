@@ -12,7 +12,7 @@ description: "The shared Operation resource shape and polling pattern BBs use fo
 
 ## 15.1 202 with Operation Location <a href="#151-202-with-operation-location" id="151-202-with-operation-location"></a>
 
-**[M+R]** Operations that cannot complete synchronously **MUST** return `202 Accepted` with a `Location` header pointing to an Operation resource.
+**[M+R]** Operations that cannot complete synchronously **MUST** return `202 Accepted` with a `Location` header pointing to an Operation resource and **MUST** return the current Operation representation in the response body.
 
 ## 15.2 Shared Operation resource shape <a href="#152-shared-operation-resource-shape" id="152-shared-operation-resource-shape"></a>
 
@@ -36,11 +36,11 @@ description: "The shared Operation resource shape and polling pattern BBs use fo
 
 ## 15.4 Polling the Operation resource <a href="#154-polling-the-operation-resource" id="154-polling-the-operation-resource"></a>
 
-**[M+R]** Clients poll via `GET /v1/operations/{operationId}`.
+**[M+R]** A BB exposing an Operation resource **MUST** expose polling via `GET /v{major}/operations/{operationId}`. A non-terminal polling response **SHOULD** include `Retry-After` when the server can advise a useful minimum polling interval.
 
 ## 15.5 Cancellation via cancel sub-resource <a href="#155-cancellation-via-cancel-sub-resource" id="155-cancellation-via-cancel-sub-resource"></a>
 
-**[M+R]** Cancellation, when supported, **MUST** be `POST /v1/operations/{operationId}/cancel`.
+**[M+R]** Cancellation, when supported, **MUST** be `POST /v{major}/operations/{operationId}/cancel`.
 
 ## 15.6 Webhook completion notification <a href="#156-webhook-completion-notification" id="156-webhook-completion-notification"></a>
 

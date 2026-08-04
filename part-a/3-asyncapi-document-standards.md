@@ -16,11 +16,13 @@ description: "Rules governing the canonical AsyncAPI document: version, location
 
 ## 3.2 One canonical AsyncAPI entrypoint <a href="#32-one-canonical-asyncapi-entrypoint" id="32-one-canonical-asyncapi-entrypoint"></a>
 
-**[M+R]** The canonical AsyncAPI entrypoint **MUST** be located at `api/asyncapi.yaml`, in YAML. It **MAY** `$ref`-compose other files in the repository, provided every reference resolves and there is exactly one entrypoint. A BB with genuinely independent event-driven surfaces **MAY** instead ship one canonical file per surface, each at a documented path and all enumerated in `api/index.yaml`.
+**[M+R]** In the absence of `api/index.yaml`, the canonical AsyncAPI entrypoint **MUST** be located at `api/asyncapi.yaml`, in YAML. It **MAY** `$ref`-compose other repository files provided every reference resolves. A BB with a custom canonical path or multiple independently versioned event-driven surfaces **MUST** enumerate every surface in `api/index.yaml` using [§4.5](../part-a/4-documentation-requirements.md#45-api-surface-inventory). Either discovery form **MUST** identify exactly one canonical artifact per surface.
 
 ## 3.3 No divergent AsyncAPI copies <a href="#33-no-divergent-asyncapi-copies" id="33-no-divergent-asyncapi-copies"></a>
 
 **[R]** Other locations (`spec/.gitbook/assets/`, alternative filenames, JSON copies) **MUST NOT** contain divergent AsyncAPI copies. Event snippets in markdown documentation **MUST** load by reference from a canonical file, not duplicate it.
+
+An operation-free shared component library under `api/common/` is referenced support material, not a canonical API surface or a divergent copy.
 
 ## 3.4 Passes an AsyncAPI validator <a href="#34-passes-an-asyncapi-validator" id="34-passes-an-asyncapi-validator"></a>
 
@@ -40,7 +42,7 @@ description: "Rules governing the canonical AsyncAPI document: version, location
 
 ## 3.8 Pinned vendored AsyncAPI components <a href="#38-pinned-vendored-asyncapi-components" id="38-pinned-vendored-asyncapi-components"></a>
 
-**[M]** Shared event documentation components (CloudEvents message schema, common message headers, common error message, signing metadata, security schemes, delivery-semantics extensions) **MUST** be referenced from a pinned version of `govstack-asyncapi-common.yaml`. The file **MUST** be vendored locally in each BB repository at the pinned version, and the pinned version **MUST** be explicit.
+**[M]** Shared event documentation components (CloudEvents message schema, common message headers, common error message, signing metadata, security schemes, delivery-semantics extensions) **MUST** be referenced from a pinned version of `govstack-asyncapi-common.yaml`. The file **MUST** be vendored locally at `api/common/govstack-asyncapi-common.yaml` in each BB repository, and the pinned version **MUST** be explicit.
 
 ## 3.9 JSON Schema payload conventions <a href="#39-json-schema-payload-conventions" id="39-json-schema-payload-conventions"></a>
 

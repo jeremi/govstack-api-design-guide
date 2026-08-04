@@ -9,23 +9,23 @@ description: "The commands to run against a BB's OpenAPI or AsyncAPI file, and a
 Install the validator and run it against the canonical entrypoint:
 
 ```bash
-pip install openapi-spec-validator
+pip install openapi-spec-validator==0.9.0
 openapi-spec-validator api/openapi.yaml
 ```
 
-This checks that the file is a structurally valid OpenAPI 3.1.0 document. It is the mechanical check behind [2.4](../part-a/2-openapi-document-standards.md#24-passes-openapi-spec-validator) and [20.1](../part-e/20-conformance-and-validation.md#201-every-file-passes-validation).
+This checks that the entrypoint is structurally valid for its declared qualified OpenAPI 3.1 patch and that its references resolve. It is the mechanical check behind [2.4](../part-a/2-openapi-document-standards.md#24-passes-openapi-spec-validator) and [20.1](../part-e/20-conformance-and-validation.md#201-every-file-passes-validation).
 
 ## AsyncAPI
 
 ```bash
-npx @asyncapi/cli validate api/asyncapi.yaml
+npx @asyncapi/cli@6.0.2 validate api/asyncapi.yaml
 ```
 
 This checks that the file is a structurally valid AsyncAPI 3.0 document. It is the mechanical check behind [3.4](../part-a/3-asyncapi-document-standards.md#34-passes-an-asyncapi-validator).
 
 ## The GovStack Spectral ruleset
 
-The ruleset that encodes this guide's `[M]` rules ([20.2](../part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset)) ships in this repository at [`linter/`](../linter/README.md), as a draft of the v1.0 companion artifact tracked in [Appendix A](../appendix/a-companion-documents.md). The recommended entrypoint is the driver, which also runs the base validators above, the file-layout checks, and the [20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) exception handling:
+The exact `0.2.0-draft` ruleset that encodes this guide's `[M]` rules ([20.2](../part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset)) ships at [`linter/`](../linter/README.md). The recommended entrypoint is the driver, which discovers default canonical files or consumes `api/index.yaml`, validates `api/coverage.yaml`, runs the base validators and file-layout checks, and applies [20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) exception handling:
 
 ```bash
 cd api-design-guide/linter && npm ci
@@ -38,7 +38,7 @@ Or run Spectral directly against the ruleset:
 npx @stoplight/spectral-cli lint -r api-design-guide/linter/ruleset.yaml api/openapi.yaml
 ```
 
-Every finding is prefixed with the guide rule id it enforces (for example `[7.13][M]`) and links to the rule's section. Findings for rule ids declared in `info.x-govstack-api-guide.exceptions` are reported as suppressed rather than counted. An opt-in `strict.yaml` adds noisier heuristics; [`linter/coverage.yaml`](../linter/coverage.yaml) records, for every rule in this guide, whether and how the linter covers it. In CI, the same checks run via the composite GitHub Action in `linter/action.yml`.
+Every finding is prefixed with the guide rule ID it enforces (for example `[7.13][M]`) and links to the rule. Each canonical file must declare `info.x-govstack-api-guide.version: 0.2.0-draft` and `rulesetVersion: 0.2.0-draft`; a missing, unavailable, or different exact version is an error, not a request to use the latest rules. An exception suppresses only the declared `rule` at or below its JSON Pointer `scope`, and only when all governance fields required by [§20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) are valid and unexpired. Offline validation checks the HTTPS record URI syntax but does not dereference it. An opt-in `strict.yaml` adds noisier heuristics; [`linter/coverage.yaml`](../linter/coverage.yaml) records how each guide rule is covered. In CI, the same checks run through `linter/action.yml`.
 
 Running `npx @stoplight/spectral-cli lint api/openapi.yaml` *without* `-r` applies only Spectral's generic built-in rules: useful as a quick structural check, but it knows nothing about this guide.
 

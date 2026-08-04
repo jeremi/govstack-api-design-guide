@@ -16,11 +16,11 @@ description: "Mandatory pagination for collections, cursor and offset envelopes,
 
 ## 12.2 Cursor pagination by default <a href="#122-cursor-pagination-by-default" id="122-cursor-pagination-by-default"></a>
 
-**[M+R]** Default pagination **MUST** be cursor-based, modelled on Google AIP-158, with query parameters `pageSize` and `cursor`. The `cursor` name is used in place of AIP-158's `pageToken` to align with the wider non-Google ecosystem (GraphQL Relay Connections, GitHub, Twitter). The cursor **MUST** be opaque to clients (server-encoded, typically base64 of an internal representation); clients **MUST NOT** parse or construct cursor values.
+**[M+R]** Default pagination **MUST** be cursor-based, modelled on Google AIP-158, with optional query parameters `pageSize` and `cursor`. The `cursor` name is used in place of AIP-158's `pageToken`. A cursor **MUST** be URL-safe, opaque, and integrity-protected; base64 encoding of a transparent internal value is not sufficient. It **MUST NOT** contain personal data, grant authority, or bypass authorization on a later request. Clients **MUST NOT** parse or construct cursor values, and servers **MUST** re-authorize every page request. Except for `pageSize`, the filter and sort arguments on a follow-up request **MUST** equal those that produced the cursor; a mismatch, malformed cursor, or expired cursor **MUST** return `400` with a stable problem code. The specification **MUST** document cursor expiry and a deterministic default order with a unique tie-breaker so concurrent records do not create ambiguous page boundaries.
 
 ## 12.3 Cursor pagination envelope <a href="#123-cursor-pagination-envelope" id="123-cursor-pagination-envelope"></a>
 
-**[M]** Pagination response envelope **MUST** be `{ items: [...], pageInfo: { nextCursor, hasMore, total? } }`. The `pageInfo` wrapper is inspired by the GraphQL Relay Connections specification but deliberately simplified: it uses a flat `items` array rather than Relay's `edges`/`node`, and `nextCursor`/`hasMore` rather than Relay's `endCursor`/`hasNextPage`.
+**[M]** The cursor-pagination response envelope **MUST** be `{ items: [...], pageInfo: { nextCursor, hasMore, total? } }`. `nextCursor` **MUST** be a non-empty string when `hasMore` is `true` and **MUST** be `null` when `hasMore` is `false`; its schema therefore **MUST** declare explicit nullability. `total`, when present, **MUST** state whether it is exact or estimated and whether it reflects the first-page snapshot or the current collection. The `pageInfo` wrapper is inspired by GraphQL Relay Connections but deliberately uses flat `items` and simplified continuation fields.
 
 **Example (informative).** A cursor-paginated collection response (`total` omitted per [§12.5](#125-optional-total-count)):
 
@@ -31,7 +31,7 @@ description: "Mandatory pagination for collections, cursor and offset envelopes,
     { "id": "8a1f9c2b-7e64-4f0d-8a3b-2c5d9e0f1b47", "status": "PENDING_REVIEW" }
   ],
   "pageInfo": {
-    "nextCursor": "eyJvZmZzZXQiOjQyfQ",
+    "nextCursor": "pgn_7JpQ9m2W4xK8fR3cT6vN1",
     "hasMore": true
   }
 }
@@ -68,11 +68,11 @@ description: "Mandatory pagination for collections, cursor and offset envelopes,
 
 ## 12.8 Simple equality filtering <a href="#128-simple-equality-filtering" id="128-simple-equality-filtering"></a>
 
-**[M+R]** Simple filtering **MUST** use one query parameter per field, equality only.
+**[M+R]** Simple equality filtering on non-personal, non-secret fields **MUST** use one query parameter per field. A filter containing personal data or another value prohibited from URLs by [§8.6](../part-b/8-headers.md#86-no-personal-data-in-addressable-locations) **MUST NOT** use a query parameter and **MUST** use the body-based search pattern in [§12.9](#129-complex-filtering-via-search).
 
 ## 12.9 Complex filtering via search <a href="#129-complex-filtering-via-search" id="129-complex-filtering-via-search"></a>
 
-**[M+R]** Complex filtering **MUST** use `POST /v1/{collection}/search` per [§6.6](../part-b/6-http-methods.md#66-post-search-for-complex-queries). For this endpoint, pagination parameters (`pageSize`, `cursor`) **MUST** be carried in the request body, and the response **MUST** use the [§12.3](#123-cursor-pagination-envelope) envelope.
+**[M+R]** Complex filtering and any filtering that contains personal data **MUST** use `POST /v1/{collection}/search` per [§6.6](../part-b/6-http-methods.md#66-post-search-for-complex-queries). Pagination parameters (`pageSize`, `cursor`) **MUST** be carried in the request body, and the response **MUST** use the [§12.3](#123-cursor-pagination-envelope) envelope. A follow-up request **MUST** retain the same search criteria and sort values as the request that produced its cursor.
 
 ## 12.10 Sparse fieldsets out of scope <a href="#1210-sparse-fieldsets-out-of-scope" id="1210-sparse-fieldsets-out-of-scope"></a>
 

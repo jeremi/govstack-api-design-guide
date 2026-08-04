@@ -9,7 +9,7 @@ description: "Rules governing the CloudEvents envelope, event-type and source na
 
 **Applies to:** Event-driven. CloudEvents rules apply to HTTP webhooks, brokered event channels, and event streams. OpenAPI and AsyncAPI are documentation formats for those surfaces, not alternative event-envelope standards.
 
-**Layer ([§1.8](../1-introduction.md#18-layering-what-this-guide-constrains)).** [§16.1](#161-event-surfaces-documented), [§16.3](#163-reverse-dns-event-types), [§16.4](#164-stable-cloudevents-source), [§16.6](#166-govstack-signature-header), [§16.10](#1610-documented-delivery-failure-contract), and [§16.11](#1611-subscription-management-interfaces) constrain the specification (documentation and declaration). [§16.5](#165-signed-event-delivery) and [§16.7](#167-replay-detectable-signed-material) are behavioural-contract rules, verified by the conformance test pack once the event-signature profile ([§16.8](#168-pinned-signature-profile), [`[OPEN-15-A]`](../appendix/b-open-questions.md)) exists; that profile is a v1.0 prerequisite. [§16.9](#169-operational-signing-concerns-out-of-scope) keeps replay enforcement and signing-key rotation in the Security & Operations companion.
+**Layer ([§1.8](../1-introduction.md#18-layering-what-this-guide-constrains)).** [§16.1](#161-event-surfaces-documented), [§16.3](#163-reverse-dns-event-types), [§16.4](#164-stable-cloudevents-source), [§16.6](#166-govstack-signature-header), [§16.10](#1610-documented-delivery-failure-contract), and [§16.11](#1611-subscription-management-interfaces) constrain the specification (documentation and declaration). [§16.5](#165-signed-event-delivery) and [§16.7](#167-replay-detectable-signed-material) are behavioural-contract rules verified by the conformance test pack against the event-signature profile in [§16.8](#168-pinned-signature-profile). [§16.9](#169-operational-signing-concerns-out-of-scope) keeps replay enforcement and signing-key rotation in the Security & Operations companion.
 {% endhint %}
 
 ## 16.1 Event surfaces documented <a href="#161-event-surfaces-documented" id="161-event-surfaces-documented"></a>
@@ -22,11 +22,11 @@ description: "Rules governing the CloudEvents envelope, event-type and source na
 
 ## 16.3 Reverse-DNS event types <a href="#163-reverse-dns-event-types" id="163-reverse-dns-event-types"></a>
 
-**[M]** Event `type` names **MUST** follow a single ecosystem-wide convention. The default shape is reverse-DNS: `org.govstack.{bb-code}.{resource}.{action}`. The `{bb-code}` segment is the BB's single registered code per [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The event type identifies the semantic event kind and does not include the major version; the versioned transport contract is carried in the channel address or equivalent AsyncAPI version metadata ([§18.2](../part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel)). [`[OPEN-15-B]`](../appendix/b-open-questions.md)
+**[M]** Event `type` names **MUST** follow a single ecosystem-wide convention. The default shape is reverse-DNS: `org.govstack.{bb-code}.{resource}.{action}`. The `{bb-code}` segment is the BB's single registered code per [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The event type identifies the semantic event kind and **MUST NOT** include the major API version; the versioned transport contract is carried by the AsyncAPI logical channel ID or equivalent version metadata ([§18.2](../part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel)). [`[OPEN-15-B]`](../appendix/b-open-questions.md)
 
 ## 16.4 Stable CloudEvents source <a href="#164-stable-cloudevents-source" id="164-stable-cloudevents-source"></a>
 
-**[M+R]** The CloudEvents `source` field **MUST** identify the publishing BB or BB surface in a stable way. It **MUST NOT** identify a specific deployment host, pod, broker, queue, or environment.
+**[M+R]** The CloudEvents `source` field **MUST** be a stable, non-empty URI-reference identifying the publishing BB or BB surface; an absolute URI or URN **SHOULD** be used. It **MUST NOT** identify a specific deployment host, pod, broker, queue, or environment.
 
 **Example (informative).** A structured CloudEvents JSON event with a GovStack trace extension attribute:
 
@@ -34,11 +34,11 @@ description: "Rules governing the CloudEvents envelope, event-type and source na
 {
   "specversion": "1.0",
   "id": "5e0c63c2-2b8a-4d3f-9a51-7c6b0d9e8f21",
-  "source": "org.govstack.registration",
+  "source": "urn:govstack:bb:registration",
   "type": "org.govstack.registration.application.approved",
   "time": "2026-07-10T08:30:00Z",
   "datacontenttype": "application/json",
-  "traceid": "6f1c3f0e2a9b4c8d",
+  "traceparent": "00-6f1c3f0e2a9b4c8d7e6f5a4b3c2d1e0f-5b1e4d7ca8f01e2d-01",
   "data": {
     "applicationId": "3f6c0e63-9f7e-4d51-a3ce-58b2c7d0f3a1",
     "approvedAt": "2026-07-10T08:29:58Z"
@@ -48,11 +48,11 @@ description: "Rules governing the CloudEvents envelope, event-type and source na
 
 ## 16.5 Signed event delivery <a href="#165-signed-event-delivery" id="165-signed-event-delivery"></a>
 
-**[R]** Event delivery **MUST** be signed using the GovStack event-signature profile defined in `govstack-openapi-common.yaml` and `govstack-asyncapi-common.yaml`. [`[OPEN-15-A]`](../appendix/b-open-questions.md)
+**[R]** Event delivery **MUST** be signed using the GovStack event-signature profile defined in `govstack-openapi-common.yaml` and `govstack-asyncapi-common.yaml`.
 
 ## 16.6 GovStack-Signature header <a href="#166-govstack-signature-header" id="166-govstack-signature-header"></a>
 
-**[M+R]** On the OpenAPI/webhooks surface the signature **MUST** travel in a single ecosystem-wide HTTP header named `GovStack-Signature` (modelled on Stripe's `Stripe-Signature` and GitHub's `X-Hub-Signature-256`). On the AsyncAPI surface the signature **MUST** travel in the transport's message-metadata channel under the same field name unless the chosen protocol binding defines a more precise field. [`[OPEN-15-C]`](../appendix/b-open-questions.md)
+**[M+R]** On the OpenAPI/webhooks surface the signature **MUST** travel in the ecosystem-wide HTTP header `GovStack-Signature`. On the AsyncAPI surface, a GovStack-owned transport/application metadata field **MUST** be named `govstackSignature` so it satisfies [§17.8](../part-d/17-asyncapi-channel-rules.md#178-message-headers-and-idempotency-metadata); when a protocol binding defines a standard signature field, that field **SHOULD** be used and the mapping **MUST** be documented.
 
 ## 16.7 Replay-detectable signed material <a href="#167-replay-detectable-signed-material" id="167-replay-detectable-signed-material"></a>
 
@@ -60,7 +60,7 @@ description: "Rules governing the CloudEvents envelope, event-type and source na
 
 ## 16.8 Pinned signature profile <a href="#168-pinned-signature-profile" id="168-pinned-signature-profile"></a>
 
-**[R]** `govstack-openapi-common.yaml` and `govstack-asyncapi-common.yaml` **MUST** pin the exact bytes that are signed (the canonicalisation: which fields, in which order, with which serialisation), the signing algorithm and its identifier, and the signature verification inputs, so that two independently-built BBs can verify each other's signatures. The default signature scheme is detached JWS over a canonicalised structured CloudEvents JSON payload. HMAC-SHA256 **MAY** be used only where shared-key distribution is explicitly governed. The event-signature profile is required for v1.0 publication because [§16.5](#165-signed-event-delivery) is not mechanically enforceable without it. [`[OPEN-15-A]`](../appendix/b-open-questions.md)
+**[R]** `govstack-openapi-common.yaml` and `govstack-asyncapi-common.yaml` **MUST** declare the GovStack event-signature profile as detached JWS using `ES256`. The JWS payload **MUST** be the UTF-8 bytes of the complete structured CloudEvent JSON object after JSON Canonicalization Scheme processing defined by RFC 8785. The serialized JWS **MUST** omit its payload using the detached-content procedure in RFC 7515 Appendix F; verifiers **MUST** reconstruct that payload from the received, RFC 8785-canonicalized event body. The protected JWS `kid` **MUST** select the publisher's verification key. Implementations **MUST NOT** use RFC 7797 unencoded-payload JWS unless a future guide version explicitly adopts it.
 
 ## 16.9 Operational signing concerns out of scope <a href="#169-operational-signing-concerns-out-of-scope" id="169-operational-signing-concerns-out-of-scope"></a>
 
@@ -72,4 +72,4 @@ Operational concerns such as replay-window enforcement and signing-key rotation 
 
 ## 16.11 Subscription management interfaces <a href="#1611-subscription-management-interfaces" id="1611-subscription-management-interfaces"></a>
 
-**[M+R]** Subscription management **MUST** expose documented interfaces to create, list, rotate the signing secret, and delete a subscription. HTTP subscription management uses OpenAPI endpoints; brokered or stream-based subscription management **MAY** use message-based commands documented in AsyncAPI if that is the BB's chosen control plane.
+**[M+R]** Subscription management **MUST** expose documented interfaces to create, list, rotate the signing secret or verification key material used by the selected profile, and delete a subscription. HTTP subscription management uses OpenAPI endpoints; brokered or stream-based subscription management **MAY** use message-based commands documented in AsyncAPI if that is the BB's chosen control plane.

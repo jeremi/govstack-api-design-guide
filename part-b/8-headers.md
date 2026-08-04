@@ -16,19 +16,19 @@ description: "Rules governing standard, custom, and rate-limit HTTP headers used
 
 ## 8.2 Accept-Language and Content-Language <a href="#82-accept-language-and-content-language" id="82-accept-language-and-content-language"></a>
 
-**[M+R]** Localisation requests **MUST** use `Accept-Language`; responses **MUST** echo via `Content-Language`.
+**[M+R]** Localisation requests **MUST** use `Accept-Language`; a localised response **MUST** identify the language actually selected using `Content-Language`, which is not necessarily the request's first preference. A cacheable response selected using `Accept-Language` **MUST** declare `Vary: Accept-Language`.
 
 ## 8.3 Idempotency-Key header accepted <a href="#83-idempotency-key-header-accepted" id="83-idempotency-key-header-accepted"></a>
 
 **[M+R]** POST endpoints that require idempotency under [§14](../part-d/14-idempotency.md) **MUST** accept an `Idempotency-Key` header, unless [§14.6](../part-d/14-idempotency.md#146-naturally-idempotent-designs) applies.
 
-## 8.4 X-Request-Id correlation <a href="#84-x-request-id-correlation" id="84-x-request-id-correlation"></a>
+## 8.4 W3C Trace Context correlation <a href="#84-w3c-trace-context-correlation" id="84-w3c-trace-context-correlation"></a>
 
-**[M+R]** Every request **SHOULD** carry an `X-Request-Id` header for correlation. The server **MUST** echo this header in the response (or generate one if absent). This correlation identifier is distinct from the error-envelope `traceId` ([§11.3](../part-c/11-errors.md#113-govstack-error-extension-fields)); a BB **MAY** reuse the same value but is not required to, and any propagation between them is operational and out of scope ([§1.2](../1-introduction.md#12-scope)).
+**[M+R]** Every cross-service HTTP operation **MUST** declare the W3C Trace Context `traceparent` request header and **MAY** declare `tracestate`. A conforming implementation **MUST** propagate a valid received trace context on downstream calls and **MUST** create a valid new context when none is present or the received value is invalid. `tracestate` **MUST NOT** contain personal data. The RFC 9457 `traceId` extension in [§11.3](../part-c/11-errors.md#113-govstack-error-extension-fields) **MUST** equal the 32-hex-digit trace-id component of the request's effective `traceparent`. A separate business or support correlation identifier **MAY** be defined, but **MUST NOT** replace Trace Context.
 
 ## 8.5 No new X- prefixed headers <a href="#85-no-new-x--prefixed-headers" id="85-no-new-x--prefixed-headers"></a>
 
-**[M]** New custom headers introduced by this guide or by BBs **MUST NOT** use the `X-` prefix (per RFC 6648), except for the legacy correlation header explicitly allowed in [§8.4](#84-x-request-id-correlation) pending [`[OPEN-7-A]`](../appendix/b-open-questions.md).
+**[M]** New custom headers introduced by this guide or by BBs **MUST NOT** use the `X-` prefix, per RFC 6648. Existing private `X-` headers **MAY** remain only on an unchanged legacy major version and **MUST NOT** be introduced on a new surface or new major version.
 
 ## 8.6 No personal data in addressable locations <a href="#86-no-personal-data-in-addressable-locations" id="86-no-personal-data-in-addressable-locations"></a>
 
@@ -36,4 +36,4 @@ description: "Rules governing standard, custom, and rate-limit HTTP headers used
 
 ## 8.7 Rate-limit headers declared <a href="#87-rate-limit-headers-declared" id="87-rate-limit-headers-declared"></a>
 
-**[M+R]** Endpoints rate-limited by the BB itself **MUST** declare rate-limit response headers per `draft-ietf-httpapi-ratelimit-headers` (an active, still-evolving Internet-Draft, not yet an RFC); where rate limiting is delegated to an API gateway or interoperability mediator, the spec **MUST** state that, rather than declaring headers the BB does not emit. The default v0.1 form is the three-header variant: `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset`, chosen deliberately for its current deployment ubiquity over the draft's newer structured-field form. `429` responses **MUST** additionally declare `Retry-After`. [`[OPEN-7-B]`](../appendix/b-open-questions.md)
+**[M+R]** An endpoint rate-limited by the BB itself **MUST** document the quota scope and **MUST** declare the `RateLimit` response header using the Structured Field syntax pinned from `draft-ietf-httpapi-ratelimit-headers-11`. A BB that advertises quota-policy details **MUST** use `RateLimit-Policy`. The server **MAY** omit these advisory headers on individual responses as allowed by the draft, but a `429` response **MUST** declare `Retry-After`; when `Retry-After` and `RateLimit` are both present, clients **MUST** treat `Retry-After` as authoritative. Where an API gateway or interoperability mediator owns rate limiting, the BB specification **MUST** state that fact instead of claiming to emit headers it does not control. The legacy `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` fields **MUST NOT** be described as conforming to the pinned draft.

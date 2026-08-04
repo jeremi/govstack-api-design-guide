@@ -14,7 +14,7 @@ Four guides live here today:
 - [Maintaining this guide](../guides/maintaining-this-guide.md): where the canonical copy lives, how to edit a rule without breaking its anchor, and how to regenerate the machine-readable index.
 
 {% hint style="info" %}
-This book is DRAFT v0.2 and not yet ratified. The guides above describe the tooling and workflow as they exist today; some referenced artifacts, most notably the GovStack Spectral ruleset, are v1.0 companions that do not exist yet (see [Appendix A](../appendix/a-companion-documents.md)).
+This book is exact draft version `0.2.0-draft` and is not yet ratified. The matching draft Spectral ruleset ships in this repository; the common OpenAPI/AsyncAPI component files and conformance test pack remain publication prerequisites (see [Appendix A](../appendix/a-companion-documents.md)).
 {% endhint %}
 
-At v1.0, this section is expected to accrete three things: a worked positive and negative example for every numbered rule, a cross-reference from each `[M]`/`[M+R]` rule to its GovStack Spectral rule ID once that ruleset is authored, and a conformance walkthrough that takes one reference BB specification from a blank file to a passing conformance run.
+Before ratification, this section is expected to gain worked positive and negative examples for every numbered rule and a conformance walkthrough that takes one reference BB specification from a blank file to a passing run.

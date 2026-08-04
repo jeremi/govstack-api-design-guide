@@ -21,6 +21,7 @@ The test for inclusion: *would two BB editors writing two different specs need t
 - Event-driven APIs over brokered transports and event streams, documented in AsyncAPI 3.0 (MQTT, AMQP, Kafka, WebSockets, SSE).
 - Webhook subscriptions, documented via OpenAPI 3.1 `webhooks` for HTTP push.
 - The companion files `govstack-openapi-common.yaml` (REST security scheme, error schema, pagination components, common headers, Operation resource) and `govstack-asyncapi-common.yaml` (event envelope, message headers, security schemes, signing metadata, delivery declarations, common error messages) that BBs reference.
+- The repository-level API inventory (`api/index.yaml`, when the default canonical paths are insufficient) and functional-requirement traceability file (`api/coverage.yaml`).
 
 CloudEvents is the normative GovStack event contract across transports. It defines the common event envelope and stable event metadata (`id`, `source`, `type`, `time`, `data`, and extensions). AsyncAPI 3.0 is the required machine-readable documentation format for brokered event channels and event streams other than HTTP push webhooks: it describes channels, operations, messages, security, protocol bindings, examples, and delivery semantics. OpenAPI 3.1 `webhooks` remains the documentation format for HTTP push webhooks. Where AsyncAPI and CloudEvents overlap on event payload fields, CloudEvents takes precedence. GovStack domain events use structured CloudEvents JSON so the full event envelope is visible in the message payload and can be validated consistently across brokers. Protocol-specific depth for Kafka, MQTT, AMQP, WebSockets, and SSE is intentionally lighter in v0.1: BBs must declare the relevant bindings where they affect the contract, while detailed broker-operation guidance belongs in the Security & Operations companion or a later protocol profile. The 2026 audit is OpenAPI-centric only because the current BB set is predominantly REST, not because the ecosystem should remain so.
 
@@ -28,9 +29,9 @@ The decision tree below summarises which artifact documents which kind of surfac
 
 ```mermaid
 flowchart TD
-    Q{"What kind of API surface?"} -->|"Synchronous HTTP request-response"| R["REST: OpenAPI 3.1<br/>canonical file at api/openapi.yaml"]
+    Q{"What kind of API surface?"} -->|"Synchronous HTTP request-response"| R["REST: OpenAPI 3.1<br/>default api/openapi.yaml or api/index.yaml entry"]
     Q -->|"HTTP push to subscriber URLs"| W["Webhooks: OpenAPI 3.1 webhooks section"]
-    Q -->|"Brokered channels or event streams<br/>(MQTT, AMQP, Kafka, WebSockets, SSE)"| A["AsyncAPI 3.0<br/>canonical file at api/asyncapi.yaml"]
+    Q -->|"Brokered channels or event streams<br/>(MQTT, AMQP, Kafka, WebSockets, SSE)"| A["AsyncAPI 3.0<br/>default api/asyncapi.yaml or api/index.yaml entry"]
     W --> CE["Domain events use the CloudEvents v1.0.2 envelope"]
     A --> CE
 ```
@@ -64,7 +65,7 @@ The guide uses RFC 2119 language: **MUST**, **MUST NOT**, **SHOULD**, **SHOULD N
 
 ## 1.6 Exception process <a href="#16-exception-process" id="16-exception-process"></a>
 
-A BB editor MAY propose deviating from a MUST rule via the exception process to be defined in the proposed **GovStack API Lifecycle & Governance** companion document. The lifecycle (submission, review, expiry, public log) is governance, not design, and belongs there once ratified.
+A BB editor **MAY** propose deviating from a **MUST** rule through the exception process to be defined in the proposed **GovStack API Lifecycle & Governance** companion document. An exception is effective only after approval and only for its recorded scope and lifetime. The canonical specification **MUST** declare each approved exception using the exact fields in [§20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version); an expired entry or one with a missing or syntactically invalid exception record URI does not suppress a rule. The submission, review, renewal, public-log, and revocation workflow remains governance.
 
 ## 1.7 Precedence of external standards <a href="#17-precedence-of-external-standards" id="17-precedence-of-external-standards"></a>
 
@@ -116,4 +117,8 @@ The tag is guidance for the ruleset author and the conformance process, not part
 
 ## 1.10 Applicability and transition <a href="#110-applicability-and-transition" id="110-applicability-and-transition"></a>
 
-This guide applies in full to new API surfaces and to new major versions of existing surfaces. An already-published BB specification is not retroactively non-conformant: it is expected to reach conformance at its next major version, and bringing a wire contract into conformance is itself a breaking change ([§18](part-d/18-compatibility-and-lifecycle.md), [note on retrofitting](part-d/18-compatibility-and-lifecycle.md#note-on-retrofitting)). The transition schedule, conformance levels, and enforcement for existing BBs are governance questions for the GovStack API Lifecycle & Governance companion ([Appendix A](appendix/a-companion-documents.md)). The guide itself is versioned with SemVer: a guide minor release only adds rules or relaxes existing ones; removals or strengthened requirements arrive only in a guide major release. Each BB spec declares the guide version it conforms to ([§20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version)).
+This guide applies in full to new API surfaces and to new major versions of existing surfaces. An already-published BB specification is not retroactively wire-incompatible merely because a newer guide exists. Existing surfaces **MUST** adopt requirements that do not change their public wire contract as soon as practical: canonical-file designation, `api/index.yaml` where needed, `api/coverage.yaml`, validation, complete metadata and descriptions, accurate examples, and security declarations that describe the behaviour already deployed. A change to paths, field names, representations, identifiers, status semantics, security behaviour, event addresses, or another consumer-visible contract **MUST NOT** be made in place solely to satisfy this guide; it **MUST** be released in the next major API version under [§18.4](part-d/18-compatibility-and-lifecycle.md#184-breaking-changes-bump-major-version). Until that major version, the existing surface documents the gap and follows the approved exception process rather than silently changing the wire contract.
+
+The transition schedule, conformance levels, and enforcement dates for existing BBs are governance questions for the GovStack API Lifecycle & Governance companion ([Appendix A](appendix/a-companion-documents.md)). Every canonical specification pins the exact guide and ruleset versions it uses under [§20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version); validation tooling **MUST NOT** silently substitute a newer compatible-looking version.
+
+The guide itself follows SemVer, including the current exact prerelease identifier `0.2.0-draft`. A guide patch release **MUST NOT** change which specifications conform; it may only correct prose or tooling defects without changing normative meaning. A guide minor release **MAY** add optional guidance, deprecate a rule, or relax a requirement, but **MUST NOT** add or strengthen a mandatory requirement. Adding or strengthening a **MUST** or **SHOULD**, removing a permitted behaviour, or otherwise making a previously conforming specification non-conforming **MUST** increment the guide major version. These rules apply even during the `0.x` drafting series so that exact conformance declarations remain meaningful.

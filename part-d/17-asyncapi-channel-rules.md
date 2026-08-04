@@ -14,13 +14,13 @@ description: "Rules governing AsyncAPI channel addressing, payload structure, me
 
 **[M+R]** Each AsyncAPI document **MUST** define the BB's perspective. An operation with `action: send` means the BB publishes that message to the channel. An operation with `action: receive` means the BB consumes that message from the channel.
 
-## 17.2 Reverse-DNS channel addresses <a href="#172-reverse-dns-channel-addresses" id="172-reverse-dns-channel-addresses"></a>
+## 17.2 Stable logical channel IDs and native addresses <a href="#172-stable-logical-channel-ids-and-native-addresses" id="172-stable-logical-channel-ids-and-native-addresses"></a>
 
-**[M]** Channel addresses **MUST** follow one ecosystem-wide naming convention. The default shape is reverse-DNS: `org.govstack.{bb-code}.v{major}.{resource}.{event}`. The `{bb-code}` segment is the BB's single registered code per [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). [`[OPEN-15-D]`](../appendix/b-open-questions.md)
+**[M+R]** Each entry under AsyncAPI `channels` **MUST** use a stable logical channel ID with reverse-DNS shape `org.govstack.{bb-code}.v{major}.{resource}.{event}`. The `{bb-code}` segment **MUST** be the registered code from [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The Channel Object `address` **MUST** use the chosen protocol's native destination syntax, such as an MQTT topic, AMQP routing key, Kafka topic, or WebSocket/SSE path, and **MUST NOT** be forced into reverse-DNS form when that would change protocol semantics. Protocol bindings **MUST** document the mapping from logical ID to native address.
 
 ## 17.3 No personal data in channels <a href="#173-no-personal-data-in-channels" id="173-no-personal-data-in-channels"></a>
 
-**[R]** Channel addresses, topic names, queue names, routing keys, and channel parameters **MUST NOT** contain personal data, secrets, access tokens, phone numbers, email addresses, national identifiers, names, dates of birth, exact addresses, or other directly identifying attributes. Use opaque IDs or claim-protected payload fields instead.
+**[R]** Logical channel IDs, native addresses, topic names, queue names, routing keys, and channel parameters **MUST NOT** contain personal data, secrets, access tokens, phone numbers, email addresses, national identifiers, names, dates of birth, exact addresses, or other directly identifying attributes. Use opaque IDs or claim-protected payload fields instead.
 
 ## 17.4 Declared channel parameters <a href="#174-declared-channel-parameters" id="174-declared-channel-parameters"></a>
 
@@ -40,7 +40,7 @@ description: "Rules governing AsyncAPI channel addressing, payload structure, me
 
 ## 17.8 Message headers and idempotency metadata <a href="#178-message-headers-and-idempotency-metadata" id="178-message-headers-and-idempotency-metadata"></a>
 
-**[M+R]** GovStack-owned transport/application message headers **MUST** use camelCase and **MUST NOT** use the `X-` prefix. For structured CloudEvents messages, trace and workflow metadata **SHOULD** be carried as CloudEvents extension attributes: `traceid`, `correlationid`, and `causationid`. These names are lowercase because CloudEvents requires lowercase extension-attribute names; the same concepts use camelCase in GovStack-owned JSON bodies and transport/application headers. Transport/application headers **MAY** mirror these values where broker tooling requires header-level metadata, but the CloudEvent remains the normative event envelope. Command-like messages that create resources, move value, or trigger non-idempotent processing **MUST** carry an idempotency key. For structured CloudEvents command messages, the key **MUST** be the CloudEvents extension attribute `idempotencykey`; for non-CloudEvents command messages, it **MUST** be the message header `idempotencyKey`.
+**[M+R]** GovStack-owned transport/application message headers **MUST** use camelCase and **MUST NOT** use the `X-` prefix. Structured CloudEvents messages that participate in a distributed trace **MUST** carry the standard CloudEvents distributed-tracing extension attribute `traceparent` and **MAY** carry `tracestate`; workflow metadata **MAY** use the extension attributes `correlationid` and `causationid`. CloudEvents extension names are lowercase; equivalent GovStack-owned transport/application headers are camelCase. Transport headers **MAY** mirror these values where broker tooling requires it, but the CloudEvent remains normative. The event-signature metadata name **MUST** follow [§16.6](../part-d/16-cloudevents-and-webhooks.md#166-govstack-signature-header). Command-like messages that create resources, move value, or trigger non-idempotent processing **MUST** carry an idempotency key: structured CloudEvents commands **MUST** use `idempotencykey`, while non-CloudEvents commands **MUST** use `idempotencyKey`.
 
 ## 17.9 Message localisation headers <a href="#179-message-localisation-headers" id="179-message-localisation-headers"></a>
 
@@ -72,7 +72,7 @@ description: "Rules governing AsyncAPI channel addressing, payload structure, me
 
 ## 17.16 Async rejection error messages <a href="#1716-async-rejection-error-messages" id="1716-async-rejection-error-messages"></a>
 
-**[M+R]** Command-like messages that can be rejected asynchronously **MUST** define a rejection or failure message using the common GovStack error envelope from [§11](../part-c/11-errors.md). The error message **MUST** be correlated to the original message using the correlation metadata rules in [§17.8](#178-message-headers-and-idempotency-metadata) or an equivalent protocol binding.
+**[M+R]** Command-like messages that can be rejected asynchronously **MUST** define a rejection or failure message using `GovStackAsyncError` from [§11.8](../part-c/11-errors.md#118-transport-neutral-asynchronous-errors), not an artificial RFC 9457 HTTP `status`. The error message **MUST** be correlated to the original message using [§17.8](#178-message-headers-and-idempotency-metadata) or an equivalent protocol binding.
 
 ## 17.17 Declared request-reply correlation <a href="#1717-declared-request-reply-correlation" id="1717-declared-request-reply-correlation"></a>
 

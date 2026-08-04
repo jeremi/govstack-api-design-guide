@@ -16,7 +16,7 @@ description: "Rules defining the meaning, safety, and idempotency guarantees of 
 
 ## 6.2 POST creates or performs actions <a href="#62-post-creates-or-performs-actions" id="62-post-creates-or-performs-actions"></a>
 
-**[R]** `POST` creates a resource or performs a non-idempotent action.
+**[R]** `POST` **MUST** be used to create a server-assigned resource or to perform an action that is not expressed by another HTTP method. A creation completed during the request **MUST** return `201 Created`; work accepted but not completed **MUST** return `202 Accepted` with an Operation resource; a completed non-creation action **MUST** return `200 OK` with a result or `204 No Content` without one. A POST action **MAY** be naturally idempotent or made retry-safe under [§14](../part-d/14-idempotency.md).
 
 ## 6.3 PUT replaces the entire resource <a href="#63-put-replaces-the-entire-resource" id="63-put-replaces-the-entire-resource"></a>
 

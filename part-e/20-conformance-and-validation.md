@@ -12,15 +12,32 @@ description: "Rules governing mechanical conformance verification of BB API spec
 
 ## 20.1 Every file passes validation <a href="#201-every-file-passes-validation" id="201-every-file-passes-validation"></a>
 
-**[M]** Every BB OpenAPI file **MUST** pass `openapi-spec-validator`. Every BB AsyncAPI file **MUST** pass an equivalent AsyncAPI parser/validator (e.g., `asyncapi/parser`).
+**[M]** Every canonical OpenAPI entrypoint **MUST** pass `openapi-spec-validator` for its declared qualified 3.1 patch, with local references resolved. Every canonical AsyncAPI entrypoint **MUST** pass an AsyncAPI 3.0 parser/validator such as `@asyncapi/parser`. A referenced schema fragment **MUST** validate against its own declared schema dialect and **MUST NOT** be rejected merely because it is not a standalone OpenAPI or AsyncAPI document.
 
 ## 20.2 Passes the GovStack Spectral ruleset <a href="#202-passes-the-govstack-spectral-ruleset" id="202-passes-the-govstack-spectral-ruleset"></a>
 
-**[M]** Every BB API spec **MUST** pass the GovStack Spectral ruleset for the machine-checkable rules applicable to its surface. The machine-checkable rules are those tagged `[M]`, together with the mechanical portion of rules tagged `[M+R]` ([§1.9](../1-introduction.md#19-rule-enforcement-classes)). The v0.1 ruleset **MUST** include the OpenAPI rules, CloudEvents event rules, and AsyncAPI documentation rules from [§3](../part-a/3-asyncapi-document-standards.md), [§16](../part-d/16-cloudevents-and-webhooks.md), and [§17](../part-d/17-asyncapi-channel-rules.md). Future protocol profiles may add deeper Kafka, MQTT, AMQP, WebSocket, or SSE rules.
+**[M]** Every BB API spec **MUST** pass the exact GovStack Spectral ruleset version declared under [§20.3](#203-declared-guide-conformance-version) for the machine-checkable rules applicable to its surface. The machine-checkable rules are those tagged `[M]`, together with the mechanical portion of `[M+R]` rules ([§1.9](../1-introduction.md#19-rule-enforcement-classes)). Ruleset `0.2.0-draft` **MUST** cover the OpenAPI, CloudEvents, and AsyncAPI documentation rules recorded in its coverage manifest. Validation **MUST** fail when the declared ruleset artifact is unavailable or differs from the exact declared version; tooling **MUST NOT** select “latest” or fall back by major/minor compatibility.
 
 ## 20.3 Declared guide conformance version <a href="#203-declared-guide-conformance-version" id="203-declared-guide-conformance-version"></a>
 
-**[M]** Each canonical specification file **MUST** declare the guide version it conforms to via the `info`-level extension `x-govstack-api-guide`: an object with `version` (the guide version targeted, SemVer) and optional `exceptions` (a list of rule IDs, each with a reference to its approved exception record per [§1.6](../1-introduction.md#16-exception-process)). Validation tooling ([§20.2](#202-passes-the-govstack-spectral-ruleset)) selects the matching ruleset version from this declaration. [`[OPEN-20-A]`](../appendix/b-open-questions.md)
+**[M]** Each canonical specification file **MUST** declare the exact guide and ruleset versions it targets in the `info`-level `x-govstack-api-guide` object using `version` and `rulesetVersion`, each an exact SemVer value rather than a range. For this draft both values **MUST** be `0.2.0-draft`. An optional `exceptions` array **MUST** contain objects with exactly these fields: `rule` (guide rule ID), `scope` (RFC 6901 JSON Pointer into this canonical document), `rationale` (non-empty explanation), `record` (absolute HTTPS URI for the approved public record), `reviewedBy` (non-empty approving authority), `reviewedAt` (calendar date `YYYY-MM-DD`), and `expiresAt` (calendar date `YYYY-MM-DD`). An exception **MUST** suppress only its named rule at or below its declared scope. An expired entry, invalid field, or exception not approved under [§1.6](../1-introduction.md#16-exception-process) **MUST** fail validation rather than suppress the rule. Offline validation **MUST NOT** require dereferencing the record URI.
+
+**Example (informative).**
+
+```yaml
+info:
+  x-govstack-api-guide:
+    version: 0.2.0-draft
+    rulesetVersion: 0.2.0-draft
+    exceptions:
+      - rule: "5.2"
+        scope: /paths/~1v1~1status/get
+        rationale: Legacy statutory endpoint name cannot change before v2.
+        record: https://docs.govstack.org/api-exceptions/registration-2026-004
+        reviewedBy: GovStack API Working Group
+        reviewedAt: "2026-07-10"
+        expiresAt: "2027-01-31"
+```
 
 ## Note on governance <a href="#note-on-governance" id="note-on-governance"></a>
 
