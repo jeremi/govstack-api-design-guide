@@ -11,6 +11,7 @@
 functionsDir: "../functions"
 functions:
   - envelopeShape
+  - mediaTypeExpected
   - s16-eventField
   - s16-signatureHeader
   - s16-subscriptionEndpoints
@@ -62,6 +63,24 @@ rules:
         properties:
           time: {}
           datacontenttype: {}
+
+  # 16.2 [M] structured-content-mode sentence — split per the mixed-strength
+  # convention. On the webhooks surface the event MUST be delivered as
+  # `application/cloudevents+json`; a plain `application/json` body is the
+  # CloudEvents binary content mode, whose body carries only `data` and so
+  # cannot be reconstructed for the 16.8 signature check.
+  govstack-16.2-structured:
+    description: "webhook events must use CloudEvents structured content mode, not binary (guide 16.2, [M])."
+    message: "[16.2][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#162-cloudevents-envelope-required
+    severity: error
+    formats: [oas3_1]
+    given: $.webhooks[*][post,put,patch].requestBody.content
+    then:
+      function: mediaTypeExpected
+      functionOptions:
+        require: '^application/cloudevents\+json\s*(;|$)'
+        forbid: '^application/json\s*(;|$)'
 
   # 16.3 [M] — the pinned event `type` value MUST follow reverse-DNS
   # global.govstack.{bb-code}.{resource}.{action} and MUST NOT carry a version

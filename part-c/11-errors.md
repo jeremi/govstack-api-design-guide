@@ -63,7 +63,7 @@ description: "One RFC 9457 problem-details error envelope, GovStack extension fi
 
 ## 11.7 Common error catalogue <a href="#117-common-error-catalogue" id="117-common-error-catalogue"></a>
 
-**[M+R]** A small set of cross-BB common errors **MUST** be defined in `govstack-openapi-common.yaml` and reused. The starting set is modelled on `google.rpc.Code` (gRPC canonical error codes) but uses the GovStack reverse-DNS error-code convention: `global.govstack.common.unauthenticated`, `global.govstack.common.permissionDenied`, `global.govstack.common.notFound`, `global.govstack.common.invalidArgument`, `global.govstack.common.alreadyExists`, `global.govstack.common.aborted`, `global.govstack.common.resourceExhausted`, `global.govstack.common.internal`, `global.govstack.common.unimplemented`. The final list is [`[OPEN-10-B]`](../appendix/b-open-questions.md).
+**[M+R]** A small set of cross-BB common errors **MUST** be defined in `govstack-openapi-common.yaml` as the `CommonErrorCode` schema and reused by reference rather than restated. The starting set is modelled on `google.rpc.Code` (gRPC canonical error codes) but uses the GovStack reverse-DNS error-code convention: `global.govstack.common.unauthenticated`, `global.govstack.common.permissionDenied`, `global.govstack.common.notFound`, `global.govstack.common.invalidArgument`, `global.govstack.common.alreadyExists`, `global.govstack.common.aborted`, `global.govstack.common.resourceExhausted`, `global.govstack.common.internal`, `global.govstack.common.unimplemented`. The final list is [`[OPEN-10-B]`](../appendix/b-open-questions.md).
 
 ## 11.8 Transport-neutral asynchronous errors <a href="#118-transport-neutral-asynchronous-errors" id="118-transport-neutral-asynchronous-errors"></a>
 

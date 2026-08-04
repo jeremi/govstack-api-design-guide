@@ -657,8 +657,8 @@ rules:
   - id: "16.2"
     class: "M"
     status: implemented
-    spectral_rules: [govstack-16.2, govstack-16.2-recommended]
-    note: "event payload schema requires specversion(const \"1.0\")/id/source/type + data"
+    spectral_rules: [govstack-16.2, govstack-16.2-recommended, govstack-16.2-structured]
+    note: "event payload schema requires specversion(const \"1.0\")/id/source/type + data, and the webhooks surface must declare application/cloudevents+json rather than a binary-mode application/json body"
   - id: "16.3"
     class: "M"
     status: implemented

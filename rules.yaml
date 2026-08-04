@@ -869,7 +869,7 @@ rules:
   surface: Universal
   page: part-c/11-errors.md
   anchor: 117-common-error-catalogue
-  text: "A small set of cross-BB common errors **MUST** be defined in `govstack-openapi-common.yaml` and reused. The starting set is modelled on `google.rpc.Code` (gRPC canonical error codes) but uses the GovStack reverse-DNS error-code convention: `global.govstack.common.unauthenticated`, `global.govstack.common.permissionDenied`, `global.govstack.common.notFound`, `global.govstack.common.invalidArgument`, `global.govstack.common.alreadyExists`, `global.govstack.common.aborted`, `global.govstack.common.resourceExhausted`, `global.govstack.common.internal`, `global.govstack.common.unimplemented`. The final list is `[OPEN-10-B]`."
+  text: "A small set of cross-BB common errors **MUST** be defined in `govstack-openapi-common.yaml` as the `CommonErrorCode` schema and reused by reference rather than restated. The starting set is modelled on `google.rpc.Code` (gRPC canonical error codes) but uses the GovStack reverse-DNS error-code convention: `global.govstack.common.unauthenticated`, `global.govstack.common.permissionDenied`, `global.govstack.common.notFound`, `global.govstack.common.invalidArgument`, `global.govstack.common.alreadyExists`, `global.govstack.common.aborted`, `global.govstack.common.resourceExhausted`, `global.govstack.common.internal`, `global.govstack.common.unimplemented`. The final list is `[OPEN-10-B]`."
   open_questions: ["OPEN-10-B"]
 - id: "11.8"
   title: "Transport-neutral asynchronous errors"
@@ -1162,11 +1162,11 @@ rules:
 - id: "16.2"
   title: "CloudEvents envelope required"
   class: M
-  strengths: ["MUST", "SHOULD"]
+  strengths: ["MUST NOT", "MUST", "SHOULD"]
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 162-cloudevents-envelope-required
-  text: "GovStack domain events **MUST** conform to the CloudEvents v1.0.2 specification (CNCF). The event envelope **MUST** include the CloudEvents-required fields `specversion`, `id`, `source`, and `type`; `specversion` **MUST** be the CloudEvents wire value `\"1.0\"` for CloudEvents v1.0.x; `time` and `datacontenttype` **SHOULD** be included; and GovStack-owned domain payload fields **MUST** live under `data`."
+  text: "GovStack domain events **MUST** conform to the CloudEvents v1.0.2 specification (CNCF). The event envelope **MUST** include the CloudEvents-required fields `specversion`, `id`, `source`, and `type`; `specversion` **MUST** be the CloudEvents wire value `\"1.0\"` for CloudEvents v1.0.x; `time` and `datacontenttype` **SHOULD** be included; and GovStack-owned domain payload fields **MUST** live under `data`. On the HTTP webhooks surface the event **MUST** be delivered in CloudEvents structured content mode with media type `application/cloudevents+json`; binary content mode **MUST NOT** be used, because §16.8 signs the complete structured event object and a binary-mode request body carries only `data`. §17.6 imposes the same requirement on the AsyncAPI surface."
   open_questions: []
 - id: "16.3"
   title: "Reverse-DNS event types"
@@ -1220,8 +1220,8 @@ rules:
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 168-pinned-signature-profile
-  text: "`govstack-openapi-common.yaml` and `govstack-asyncapi-common.yaml` **MUST** declare the GovStack event-signature profile as detached JWS using `ES256`. The JWS payload **MUST** be the UTF-8 bytes of the complete structured CloudEvent JSON object after JSON Canonicalization Scheme processing defined by RFC 8785. The serialized JWS **MUST** omit its payload using the detached-content procedure in RFC 7515 Appendix F; verifiers **MUST** reconstruct that payload from the received, RFC 8785-canonicalized event body. The protected JWS `kid` **MUST** select the publisher's verification key. Implementations **MUST NOT** use RFC 7797 unencoded-payload JWS unless a future guide version explicitly adopts it."
-  open_questions: []
+  text: "`govstack-openapi-common.yaml` and `govstack-asyncapi-common.yaml` **MUST** declare the GovStack event-signature profile as detached JWS using `ES256`. The JWS payload **MUST** be the UTF-8 bytes of the complete structured CloudEvent JSON object after JSON Canonicalization Scheme processing defined by RFC 8785. The serialized JWS **MUST** omit its payload using the detached-content procedure in RFC 7515 Appendix F; verifiers **MUST** reconstruct that payload from the received, RFC 8785-canonicalized event body. The protected JWS `kid` **MUST** select the publisher's verification key. Implementations **MUST NOT** use RFC 7797 unencoded-payload JWS unless a future guide version explicitly adopts it. How a subscriber obtains the key that `kid` selects is not yet settled ecosystem-wide: §16.11 supplies it per subscription, which covers HTTP webhooks but not brokered or stream transports with no subscription control plane. `[OPEN-15-H]`"
+  open_questions: ["OPEN-15-H"]
 - id: "16.9"
   title: "Operational signing concerns out of scope"
   class: informative
@@ -1229,8 +1229,8 @@ rules:
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 169-operational-signing-concerns-out-of-scope
-  text: "Operational concerns such as replay-window enforcement and signing-key rotation are out of scope here and live in the Security & Operations companion (§1.2)."
-  open_questions: []
+  text: "Operational concerns such as replay-window enforcement and signing-key rotation are out of scope here and live in the Security & Operations companion (§1.2). Until that companion fixes a bound, §16.7 gives a receiver the material to detect a replay but no ecosystem-wide window against which to reject one, so two conformant implementations can disagree about whether a given event is a replay. `[OPEN-15-H]`"
+  open_questions: ["OPEN-15-H"]
 - id: "16.10"
   title: "Documented delivery-failure contract"
   class: R
