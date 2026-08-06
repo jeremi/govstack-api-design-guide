@@ -8,8 +8,10 @@ const POLL_PATH = /^\/v\d+\/operations\/\{[^}]+\}$/;
  * This flags a spec that uses Operations but does not declare that canonical
  * poll endpoint.
  *
- * "Uses Operations" is detected structurally: the document declares a
+ * "Uses Operations" is detected structurally: the document declares a local
  * `components.schemas.Operation` schema, or has any path under `/operations/`.
+ * The function deliberately does not inspect the schema's fields or status
+ * values; those semantics belong to the BB.
  *
  * It is a proxy: it cannot decide whether asynchronous behaviour is actually
  * needed, and it accepts any version major and any path-parameter name.

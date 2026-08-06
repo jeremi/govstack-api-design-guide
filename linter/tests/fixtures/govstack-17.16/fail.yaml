@@ -8,6 +8,8 @@ channels:
     messages:
       cmd:
         $ref: '#/components/messages/SubmitPayment'
+      rejected:
+        $ref: '#/components/messages/PaymentRejected'
 operations:
   onSubmitPayment:
     action: receive
@@ -17,8 +19,8 @@ operations:
       - $ref: '#/channels/submitPayment/messages/cmd'
 components:
   messages:
-    # 17.16: a command message exists but no rejection/failure message using the
-    # §11 error envelope is defined anywhere.
+    # 17.16: an HTTP-shaped problem with status is not a transport-neutral
+    # GovStackAsyncError and must not satisfy the rejection-message rule.
     SubmitPayment:
       payload:
         type: object
@@ -37,3 +39,23 @@ components:
       examples:
         - name: sample
           payload: {}
+    PaymentRejected:
+      contentType: application/json
+      correlationId:
+        location: '$message.header#/correlationId'
+      payload:
+        type: object
+        required: [type, title, status]
+        properties:
+          type:
+            type: string
+          title:
+            type: string
+          status:
+            type: integer
+      examples:
+        - name: sample
+          payload:
+            type: about:blank
+            title: Payment rejected
+            status: 422

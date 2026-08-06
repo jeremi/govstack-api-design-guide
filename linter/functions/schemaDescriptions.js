@@ -1,15 +1,23 @@
 import { walkSchema, forEachProperty } from './lib/schemaWalk.js';
 import { isObject, isNonEmptyString } from './lib/util.js';
 
-// Nodes whose ONLY keywords are structural combinators carry no description of
-// their own; requiring one there produces noise. They are skipped in mode "all".
+// Nodes whose ONLY keywords are structural combinators carry no domain meaning
+// of their own. A `required`-only assertion below `not` is likewise just a
+// prohibition such as `not: { required: [legacyField] }`, not a schema editors
+// need to describe.
 const COMBINATOR_ONLY = new Set([
   'allOf', 'anyOf', 'oneOf', 'not', 'if', 'then', 'else', '$ref', 'description', 'title',
 ]);
+const ASSERTION_ONLY = new Set(['required', 'description', 'title']);
 
 function isCombinatorWrapper(node) {
   const keys = Object.keys(node);
   return keys.length > 0 && keys.every((k) => COMBINATOR_ONLY.has(k));
+}
+
+function isNegatedRequiredAssertion(node, path) {
+  const keys = Object.keys(node);
+  return path.includes('not') && keys.length > 0 && keys.every((key) => ASSERTION_ONLY.has(key));
 }
 
 /**
@@ -22,7 +30,8 @@ function isCombinatorWrapper(node) {
  *     "properties" — every declared property schema (recursively) needs a
  *                    non-empty description. Good default: documents each field.
  *     "all"        — every subschema node needs one, except pure combinator
- *                    wrappers (a node whose only keywords are allOf/anyOf/…).
+ *                    wrappers (a node whose only keywords are allOf/anyOf/…)
+ *                    and required-only assertions nested under `not`.
  *   includeRoot {boolean} in "properties" mode, also require the root schema to
  *               have a description. Default false.
  *
@@ -40,7 +49,7 @@ export default function schemaDescriptions(targetVal, options, context) {
 
   if (mode === 'all') {
     walkSchema(targetVal, (node, path) => {
-      if (isCombinatorWrapper(node)) return;
+      if (isCombinatorWrapper(node) || isNegatedRequiredAssertion(node, path)) return;
       if (!isNonEmptyString(node.description)) {
         results.push({
           message:

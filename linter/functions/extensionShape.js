@@ -3,14 +3,13 @@ import { isObject, toRegExp, SEMVER_PATTERN } from './lib/util.js';
 /**
  * extensionShape — validate the presence and shape of an `x-govstack-*`
  * extension on a container object (operation, info, message, …). Drives the
- * §17 delivery/ordering trio, §18.7 deprecation metadata and §20.3 guide
- * metadata.
+ * §18.7 deprecation metadata and §20.3 guide metadata.
  *
  * `given` should select the container that carries the extension (e.g. an
  * operation, or `$.info`).
  *
  * options:
- *   extension {string} the extension key to validate, e.g. "x-govstack-delivery".
+ *   extension {string} the extension key to validate, e.g. "x-govstack-api-guide".
  *   required  {boolean} default true — absent extension is a violation.
  *   valueType {"string"|"object"|"array"} expected type of the value.
  *   enum      {any[]}  for string values: allowed values.

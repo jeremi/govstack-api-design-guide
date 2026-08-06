@@ -4,8 +4,8 @@
 # Invariant: for each rule, `page` + `anchor` locate it in the book.
 # The same `#anchor` fragment resolves on both GitHub and GitBook.
 guide: GovStack Cross-BB API Design Guide
-version: 0.2.0-draft
-rule_count: 173
+version: 0.1.0-draft
+rule_count: 171
 rules:
 - id: "2.1"
   title: "OpenAPI 3.1 required"
@@ -14,7 +14,7 @@ rules:
   surface: OpenAPI
   page: part-a/2-openapi-document-standards.md
   anchor: 21-openapi-31-required
-  text: "The spec **MUST** declare an explicit, published OpenAPI 3.1 patch version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.2.0-draft` qualify `openapi: 3.1.0`, `3.1.1`, and `3.1.2`; tooling **MUST** treat those patches as the same OAS 3.1 feature set. OpenAPI 3.0 and earlier **MUST NOT** be used. A later OpenAPI minor version, including 3.2, **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it."
+  text: "The spec **MUST** declare an explicit, published OpenAPI 3.1 patch version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.1.0-draft` qualify `openapi: 3.1.0`, `3.1.1`, and `3.1.2`; tooling **MUST** treat those patches as the same OAS 3.1 feature set. OpenAPI 3.0 and earlier **MUST NOT** be used. A later OpenAPI minor version, including 3.2, **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it."
   open_questions: []
 - id: "2.2"
   title: "One canonical OpenAPI entrypoint"
@@ -71,13 +71,13 @@ rules:
   text: "Every operation **MUST** include `operationId` (camelCase, verb-noun), `summary`, `description`, and at least one `tag`."
   open_questions: []
 - id: "2.8"
-  title: "Pinned vendored common components"
-  class: M
-  strengths: ["MUST"]
+  title: "Conditional vendored OpenAPI schemas"
+  class: M+R
+  strengths: ["MUST", "MAY"]
   surface: OpenAPI
   page: part-a/2-openapi-document-standards.md
-  anchor: 28-pinned-vendored-common-components
-  text: "Shared components (security scheme, error schema, pagination, common headers, Operation resource) **MUST** be referenced from a pinned version of `govstack-openapi-common.yaml`. The file **MUST** be vendored locally at `api/common/govstack-openapi-common.yaml` in each BB repository, and the pinned version **MUST** be explicit.\nVendoring is required because GovStack BBs are deployed in air-gapped or limited-connectivity environments where remote `$ref` resolution is unreliable."
+  anchor: 28-conditional-vendored-openapi-schemas
+  text: "A BB **MAY** reuse the schema-only `govstack-openapi-common.yaml` artifact for `Problem`, `ValidationProblem`, `FieldError`, and `PageInfo`. If it does, the file **MUST** be vendored locally at `api/common/govstack-openapi-common.yaml`, its version **MUST** be pinned explicitly, and the BB **MUST** reference the named schemas rather than copy them. A BB that does not reuse the artifact **MUST** define equivalent schemas locally that satisfy §11 and §12.\nSecurity schemes, parameters, headers, Response Objects, examples, and Operation resources **MUST** be defined locally because their values and semantics belong to the BB contract. They are not part of the shared OpenAPI artifact.\nVendoring is required when reuse is chosen because GovStack BBs are deployed in air-gapped or limited-connectivity environments where remote `$ref` resolution is unreliable."
   open_questions: []
 - id: "3.1"
   title: "AsyncAPI 3.0.0 required"
@@ -86,7 +86,7 @@ rules:
   surface: AsyncAPI
   page: part-a/3-asyncapi-document-standards.md
   anchor: 31-asyncapi-300-required
-  text: "An event-driven BB surface other than HTTP push webhooks **MUST** be documented in AsyncAPI 3 and **MUST** declare an explicit, published AsyncAPI 3 version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.2.0-draft` qualify `asyncapi: 3.0.0` and `asyncapi: 3.1.0`; every rule in this guide applies identically to both. AsyncAPI 2.x and earlier **MUST NOT** be used for new GovStack event-driven surfaces. A later AsyncAPI version **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it."
+  text: "An event-driven BB surface other than HTTP push webhooks **MUST** be documented in AsyncAPI 3 and **MUST** declare an explicit, published AsyncAPI 3 version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.1.0-draft` qualify `asyncapi: 3.0.0` and `asyncapi: 3.1.0`; every rule in this guide applies identically to both. AsyncAPI 2.x and earlier **MUST NOT** be used for new GovStack event-driven surfaces. A later AsyncAPI version **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it."
   open_questions: []
 - id: "3.2"
   title: "One canonical AsyncAPI entrypoint"
@@ -140,7 +140,7 @@ rules:
   surface: AsyncAPI
   page: part-a/3-asyncapi-document-standards.md
   anchor: 37-complete-asyncapi-operation-metadata
-  text: "Every AsyncAPI operation **MUST** include an operation identifier (the key under `operations`), `action` (`send` or `receive`), `summary`, `description`, at least one `tag`, a referenced `channel`, and at least one referenced CloudEvents message. In AsyncAPI 3.0, root-level operation `messages` **MUST** reference message entries defined on the operation's referenced channel. Channel message entries **MAY** in turn reference reusable message definitions under `components.messages`."
+  text: "Every AsyncAPI operation **MUST** include an operation identifier (the key under `operations`), `action` (`send` or `receive`), `summary`, `description`, at least one `tag`, a referenced `channel`, and at least one referenced message. In AsyncAPI 3.0, root-level operation `messages` **MUST** reference message entries defined on the operation's referenced channel. Channel message entries **MAY** in turn reference reusable message definitions under `components.messages`. §17.6–§17.7 define which domain messages use CloudEvents and how asynchronous rejection messages reuse the common error schema."
   open_questions: []
 - id: "3.8"
   title: "Pinned vendored AsyncAPI components"
@@ -149,7 +149,7 @@ rules:
   surface: AsyncAPI
   page: part-a/3-asyncapi-document-standards.md
   anchor: 38-pinned-vendored-asyncapi-components
-  text: "Shared event documentation components (CloudEvents message schema, common message headers, common error message, signing metadata, security schemes, delivery-semantics extensions) **MUST** be referenced from a pinned version of `govstack-asyncapi-common.yaml`. The file **MUST** be vendored locally at `api/common/govstack-asyncapi-common.yaml` in each BB repository, and the pinned version **MUST** be explicit."
+  text: "A BB that documents GovStack domain events **MUST** reference `CloudEventEnvelope` from a pinned version of `govstack-asyncapi-common.yaml`. A BB that documents asynchronous rejections **MUST** reference `GovStackAsyncError`, and **MUST** reuse `AsyncFieldError` when it exposes field-level errors. The common file **MUST** be vendored locally at `api/common/govstack-asyncapi-common.yaml`, and the pinned version **MUST** be explicit. BB specifications own their Message Objects, security schemes, headers, examples, and protocol bindings because those objects require BB- and transport-specific values."
   open_questions: []
 - id: "3.9"
   title: "JSON Schema payload conventions"
@@ -221,8 +221,8 @@ rules:
   surface: OpenAPI
   page: part-b/5-url-structure-and-versioning.md
   anchor: 51-major-version-in-the-path
-  text: "Major version **MUST** appear in the URL path as `/v{N}/...` (e.g., `/v1/policies`). The standard unversioned endpoints of §5.10 are the only exception. `[OPEN-4-A]`"
-  open_questions: ["OPEN-4-A"]
+  text: "Major version **MUST** appear in the URL path as `/v{N}/...` (e.g., `/v1/policies`). The standard unversioned endpoints of §5.10 are the only exception. `[OPEN-5-A]`"
+  open_questions: ["OPEN-5-A"]
 - id: "5.2"
   title: "Plural noun resources"
   class: M+R
@@ -248,8 +248,8 @@ rules:
   surface: OpenAPI
   page: part-b/5-url-structure-and-versioning.md
   anchor: 54-shallow-path-nesting
-  text: "Path hierarchy **SHOULD** be shallow, with at most two levels of nesting after `/v{N}/`. Deep nesting makes paths hard to read and discourages addressable sub-resources. `[OPEN-4-C]`"
-  open_questions: ["OPEN-4-C"]
+  text: "Path hierarchy **SHOULD** be shallow, with at most two levels of nesting after `/v{N}/`. Deep nesting makes paths hard to read and discourages addressable sub-resources. `[OPEN-5-B]`"
+  open_questions: ["OPEN-5-B"]
 - id: "5.5"
   title: "Identifiers as path parameters"
   class: M+R
@@ -392,7 +392,7 @@ rules:
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 73-202-accepted-for-async-operations
-  text: "Work accepted but not completed during the request **MUST** use `202 Accepted`. The response **MUST** include a `Location` header pointing to an Operation resource and **MUST** return that Operation representation using the shared schema in §15. `202` **MUST NOT** claim that the requested work succeeded."
+  text: "Work accepted but not completed during the request **MUST** use `202 Accepted`. The response **MUST** include a `Location` header pointing to an Operation resource and **MUST** return that Operation representation using the local schema defined under §15. `202` **MUST NOT** claim that the requested work succeeded."
   open_questions: []
 - id: "7.4"
   title: "204 for void responses"
@@ -464,8 +464,8 @@ rules:
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 711-422-for-semantic-errors
-  text: "A well-formed request that violates domain validation or other semantic constraints **MUST** use `422 Unprocessable Content` (RFC 9110; formerly \"Unprocessable Entity\"). The idempotency-fingerprint use of `422` is in §14.5. `[OPEN-6-A]`"
-  open_questions: ["OPEN-6-A"]
+  text: "A well-formed request that violates domain validation or other semantic constraints **MUST** use `422 Unprocessable Content` (RFC 9110; formerly \"Unprocessable Entity\"). The idempotency-fingerprint use of `422` is in §14.5. `[OPEN-7-A]`"
+  open_questions: ["OPEN-7-A"]
 - id: "7.12"
   title: "429 for rate limits"
   class: R
@@ -680,7 +680,7 @@ rules:
   surface: Universal
   page: part-c/9-json-conventions-and-naming.md
   anchor: 97-screaming-snake-case-enum-values
-  text: "Enum values that name a BB-defined state or category **MUST** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`). Values whose form is fixed elsewhere keep the casing their own definition gives them and **MUST NOT** be re-cased to satisfy this rule: identifiers built to a shape this guide defines (error codes per §11.5, event types per §16.3, sort keys per §12.7), the GovStack `x-govstack-*` extension vocabularies (§17.11, §17.13), codes drawn from an external standard (BCP 47 language tags per §10.9, ISO 4217 currency codes per §10.10), and values registered in an IANA registry, including JOSE and COSE algorithm and curve names such as `ES256`, `EdDSA`, and `Ed25519`, and media types. The distinction is ownership, not appearance: a value this BB defines is re-cased to satisfy this rule, a value defined elsewhere is reproduced exactly as its own registry or specification spells it."
+  text: "Enum values that name a BB-defined state or category **MUST** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`). Values whose form is fixed elsewhere keep the casing their own definition gives them and **MUST NOT** be re-cased to satisfy this rule: identifiers built to a shape this guide defines (event types per §16.3, sort keys per §12.7), codes drawn from an external standard (BCP 47 language tags per §10.9, ISO 4217 currency codes per §10.10), and values registered in an IANA registry, including JOSE and COSE algorithm and curve names such as `ES256`, `EdDSA`, and `Ed25519`, and media types. The distinction is ownership, not appearance: a value this BB defines is re-cased to satisfy this rule, a value defined elsewhere is reproduced exactly as its own registry or specification spells it."
   open_questions: []
 - id: "9.8"
   title: "Forward-compatible schemas"
@@ -707,7 +707,7 @@ rules:
   surface: Universal
   page: part-c/9-json-conventions-and-naming.md
   anchor: 910-govstack-extension-prefix
-  text: "GovStack-defined specification extensions on OpenAPI or AsyncAPI documents **MUST** be prefixed `x-govstack-` (for example, `x-govstack-delivery`, `x-govstack-ordering`, and `x-govstack-replay` in §17.15, `x-govstack-deprecated` in §18.7, and `x-govstack-api-guide` in §20.3)."
+  text: "GovStack-defined specification extensions on OpenAPI or AsyncAPI documents **MUST** be prefixed `x-govstack-` (for example, `x-govstack-deprecated` in §18.7, and `x-govstack-api-guide` in §20.3). A prefix rule does not create or standardise an extension; each GovStack extension still requires an explicit schema and governing rule."
   open_questions: []
 - id: "9.11"
   title: "Single registered BB code"
@@ -716,7 +716,7 @@ rules:
   surface: Universal
   page: part-c/9-json-conventions-and-naming.md
   anchor: 911-single-registered-bb-code
-  text: "Every namespace that embeds a BB code (error codes §11.5, problem-type URLs §11.2, OAuth scopes §13.4, event types §16.3, logical channel IDs §17.2) **MUST** use the BB's single registered code, identically in all of them. BB codes **MUST** match `^[a-z][a-z0-9-]{1,30}$` and **MUST** be unique across the ecosystem. The segment `common` is reserved for ecosystem-wide artifacts (§11.7). The BB-code register is proposed for the Lifecycle & Governance companion (Appendix A); until it exists, codes **SHOULD** be agreed through the API Working Group. `[OPEN-9-A]`"
+  text: "Every namespace that embeds a BB code (HTTP problem-type URLs §11.2, OAuth scopes §13.4, event types §16.3, logical channel IDs §17.2, and any transport-neutral asynchronous error code that embeds one §11.6) **MUST** use the BB's single registered code, identically in all of them. BB codes **MUST** match `^[a-z][a-z0-9-]{1,30}$` and **MUST** be unique across the ecosystem. The BB-code register is proposed for the Lifecycle & Governance companion (Appendix A); until it exists, codes **SHOULD** be agreed through the API Working Group. `[OPEN-9-A]`"
   open_questions: ["OPEN-9-A"]
 - id: "10.1"
   title: "Opaque server-generated identifiers"
@@ -824,70 +824,52 @@ rules:
   surface: Universal
   page: part-c/11-errors.md
   anchor: 111-rfc-9457-problem-details
-  text: "HTTP `4xx` and `5xx` responses **MUST** use media type `application/problem+json` and the RFC 9457 Problem Details model (RFC 9457 obsoletes RFC 7807 and retains this media type). This rule **MUST NOT** be represented as an RFC 9457 requirement on a non-HTTP message; §11.8 defines that mapping."
+  text: "HTTP `4xx` and `5xx` responses **MUST** use media type `application/problem+json` and the RFC 9457 Problem Details model (RFC 9457 obsoletes RFC 7807 and retains this media type). This rule **MUST NOT** be represented as an RFC 9457 requirement on a non-HTTP message; §11.6 defines the separate asynchronous model."
   open_questions: []
 - id: "11.2"
-  title: "Standard problem fields present"
+  title: "Stable HTTP problem type URI"
   class: M+R
-  strengths: ["MUST", "SHOULD"]
+  strengths: ["MUST NOT", "MUST", "SHOULD"]
   surface: Universal
   page: part-c/11-errors.md
-  anchor: 112-standard-problem-fields-present
-  text: "Standard RFC 9457 fields `type`, `title`, and `status` **MUST** be present in every GovStack HTTP problem. `type` **MUST** be a stable absolute URI that identifies the problem type and **SHOULD** dereference to human-readable documentation, for example `https://docs.govstack.global/errors/{bb-code}/{error-name}`. `status` **MUST** equal the actual HTTP response status. `detail` and `instance` **SHOULD** be present when they add diagnostic value. The spec **MUST** declare that these fields carry no personal data and no system-internal details such as stack traces, hostnames, or query fragments."
+  anchor: 112-stable-http-problem-type-uri
+  text: "Standard RFC 9457 fields `type`, `title`, and `status` **MUST** be present in every GovStack HTTP problem. `type` **MUST** be the sole machine identifier for the problem and **MUST** use `https://govstack.global/problems/{bb-code}/{problem-slug}`. `{bb-code}` is the registered code from §9.11; `{problem-slug}` **MUST** be stable kebab-case, for example `bad-request`, `invalid-field`, or `internal-error`. The URI **SHOULD** dereference to human-readable documentation. A GovStack HTTP Problem **MUST NOT** add a duplicate machine identifier such as `code`.\n`status` **MUST** equal the actual HTTP response status. `detail` and `instance` **SHOULD** be present when they add diagnostic value. The spec **MUST** declare that these fields carry no personal data and no system-internal details such as stack traces, hostnames, or query fragments. HTTP problems **MUST NOT** add a `timestamp`; use response metadata and trace correlation for occurrence diagnostics."
   open_questions: []
 - id: "11.3"
-  title: "GovStack error extension fields"
+  title: "Trace identifier"
   class: M
   strengths: ["MUST"]
   surface: Universal
   page: part-c/11-errors.md
-  anchor: 113-govstack-error-extension-fields
-  text: "GovStack HTTP problems and asynchronous errors **MUST** include `code` (machine-stable error code), `traceId` (the W3C trace-id defined by §8.4), and `timestamp` (an RFC 3339 `date-time`)."
+  anchor: 113-trace-identifier
+  text: "Every GovStack HTTP problem **MUST** include `traceId`, containing the W3C trace-id defined by §8.4."
   open_questions: []
 - id: "11.4"
   title: "Field-level errors array"
   class: M+R
-  strengths: ["MUST"]
+  strengths: ["MUST NOT", "MUST"]
   surface: Universal
   page: part-c/11-errors.md
   anchor: 114-field-level-errors-array
-  text: "Where a failure is attributable to specific request fields, those field-level validation errors **MUST** appear in an `errors` array; each entry contains `pointer` (JSON Pointer), `code`, and `message`. The `errors` array is omitted for failures not attributable to a field (for example, an idempotency-key fingerprint mismatch, §14.5)."
+  text: "Where an HTTP failure is attributable to specific request fields, those field-level validation errors **MUST** appear in an `errors` array; each entry **MUST** contain `pointer` (JSON Pointer) and `message`. It **MUST NOT** add a field-level `code`; the enclosing Problem `type` identifies the problem class. The `errors` array is omitted for failures not attributable to a field (for example, an idempotency-key fingerprint mismatch, §14.5)."
   open_questions: []
 - id: "11.5"
-  title: "Namespaced stable error codes"
-  class: M+R
-  strengths: ["MUST", "MAY"]
-  surface: Universal
-  page: part-c/11-errors.md
-  anchor: 115-namespaced-stable-error-codes
-  text: "Error codes **MUST** be stable, machine-readable identifiers, namespaced by BB so that integrators can disambiguate identical codes from different BBs. The `code` field is an identifier, not a URL; the problem-type URI belongs in `type` (§11.2). The default shape is reverse-DNS: `global.govstack.{bb-code}.{error-name}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The `{error-name}` segment **MUST** use lowerCamelCase, for example `global.govstack.identity.personNotFound`. Numeric suffixes **MAY** be used where a BB already maintains a numbered error catalogue, for example `global.govstack.{bb-code}.{number}`. `[OPEN-10-A]`"
-  open_questions: ["OPEN-10-A"]
-- id: "11.6"
-  title: "Stable codes across languages"
+  title: "Stable HTTP problem fields across languages"
   class: R
-  strengths: ["MUST", "MAY"]
+  strengths: ["MUST NOT", "MAY"]
   surface: Universal
   page: part-c/11-errors.md
-  anchor: 116-stable-codes-across-languages
-  text: "`title` and `detail` **MAY** be localised; `code` and `type` **MUST** remain stable across languages."
+  anchor: 115-stable-http-problem-fields-across-languages
+  text: "HTTP Problem `title`, `detail`, and field-error `message` **MAY** be localised. The `type` URI, `status`, `traceId`, `instance`, and field-error `pointer` **MUST NOT** be translated."
   open_questions: []
-- id: "11.7"
-  title: "Common error catalogue"
-  class: M+R
-  strengths: ["MUST"]
-  surface: Universal
-  page: part-c/11-errors.md
-  anchor: 117-common-error-catalogue
-  text: "A small set of cross-BB common errors **MUST** be defined in `govstack-openapi-common.yaml` as the `CommonErrorCode` schema and reused by reference rather than restated. The starting set is modelled on `google.rpc.Code` (gRPC canonical error codes) but uses the GovStack reverse-DNS error-code convention: `global.govstack.common.unauthenticated`, `global.govstack.common.permissionDenied`, `global.govstack.common.notFound`, `global.govstack.common.invalidArgument`, `global.govstack.common.alreadyExists`, `global.govstack.common.aborted`, `global.govstack.common.resourceExhausted`, `global.govstack.common.internal`, `global.govstack.common.unimplemented`. The final list is `[OPEN-10-B]`."
-  open_questions: ["OPEN-10-B"]
-- id: "11.8"
+- id: "11.6"
   title: "Transport-neutral asynchronous errors"
   class: M+R
   strengths: ["MUST NOT", "MUST", "MAY"]
   surface: Universal
   page: part-c/11-errors.md
-  anchor: 118-transport-neutral-asynchronous-errors
-  text: "An asynchronous command rejection or processing failure **MUST** use the shared `GovStackAsyncError` schema from `govstack-asyncapi-common.yaml`, with message `contentType: application/json`. The schema **MUST** contain `type` (a stable absolute problem-type URI), `title`, `code`, `traceId`, and `timestamp`, and **MAY** contain `detail` and `errors` with the semantics in §11.4. When carried as a structured CloudEvent, this object **MUST** be the event `data`. It **MUST NOT** contain RFC 9457 `status` merely to simulate an HTTP response; a protocol-specific rejection code **MUST** be declared in the applicable binding or as a separately named field whose semantics the BB defines."
+  anchor: 116-transport-neutral-asynchronous-errors
+  text: "An asynchronous command rejection or processing failure **MUST** use the shared `GovStackAsyncError` schema from `govstack-asyncapi-common.yaml`, with message `contentType: application/json`. This transport-neutral schema remains separate from the HTTP Problem model and **MUST** contain `type` (a stable absolute problem-type URI), `title`, `code`, `traceId`, and `timestamp`; it **MAY** contain `detail` and `errors`. Each asynchronous field error contains `pointer`, `code`, and `message` as defined by the shared `AsyncFieldError` schema. When carried as a structured CloudEvent, this object **MUST** be the event `data`. It **MUST NOT** contain RFC 9457 `status` merely to simulate an HTTP response; a protocol-specific rejection code **MUST** be declared in the applicable binding or as a separately named field whose semantics the BB defines."
   open_questions: []
 - id: "12.1"
   title: "Collections must paginate"
@@ -905,7 +887,7 @@ rules:
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 122-cursor-pagination-by-default
-  text: "Default pagination **MUST** be cursor-based, modelled on Google AIP-158, with optional query parameters `pageSize` and `cursor`. The `cursor` name is used in place of AIP-158's `pageToken`. A cursor **MUST** be URL-safe, opaque, and integrity-protected; base64 encoding of a transparent internal value is not sufficient. It **MUST NOT** contain personal data, grant authority, or bypass authorization on a later request. Clients **MUST NOT** parse or construct cursor values, and servers **MUST** re-authorize every page request. Except for `pageSize`, the filter and sort arguments on a follow-up request **MUST** equal those that produced the cursor; a mismatch, malformed cursor, or expired cursor **MUST** return `400` with a stable problem code. The specification **MUST** document cursor expiry and a deterministic default order with a unique tie-breaker so concurrent records do not create ambiguous page boundaries."
+  text: "Default pagination **MUST** be cursor-based, modelled on Google AIP-158, with optional query parameters `pageSize` and `cursor`. The `cursor` name is used in place of AIP-158's `pageToken`. A cursor **MUST** be URL-safe, opaque, and integrity-protected; base64 encoding of a transparent internal value is not sufficient. It **MUST NOT** contain personal data, grant authority, or bypass authorization on a later request. Clients **MUST NOT** parse or construct cursor values, and servers **MUST** re-authorize every page request. Except for `pageSize`, the filter and sort arguments on a follow-up request **MUST** equal those that produced the cursor; a mismatch, malformed cursor, or expired cursor **MUST** return `400` with a stable Problem `type`. The specification **MUST** document cursor expiry and a deterministic default order with a unique tie-breaker so concurrent records do not create ambiguous page boundaries."
   open_questions: []
 - id: "12.3"
   title: "Cursor pagination envelope"
@@ -914,7 +896,7 @@ rules:
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 123-cursor-pagination-envelope
-  text: "The cursor-pagination response envelope **MUST** be `{ items: [...], pageInfo: { nextCursor, hasMore, total? } }`. `nextCursor` **MUST** be a non-empty string when `hasMore` is `true` and **MUST** be `null` when `hasMore` is `false`; its schema therefore **MUST** declare explicit nullability. `total`, when present, **MUST** state whether it is exact or estimated and whether it reflects the first-page snapshot or the current collection. The `pageInfo` wrapper is inspired by GraphQL Relay Connections but deliberately uses flat `items` and simplified continuation fields."
+  text: "The cursor-pagination response envelope **MUST** be `{ items: [...], pageInfo: { nextCursor, total? } }`. `nextCursor` **MUST** be a non-empty string when another page is available and **MUST** be `null` on the final page; its schema therefore **MUST** declare explicit nullability. Clients determine whether another page is available from `nextCursor` and no separate `hasMore` field is used. `total`, when present, **MUST** state whether it is exact or estimated and whether it reflects the first-page snapshot or the current collection. The `pageInfo` wrapper is inspired by GraphQL Relay Connections but deliberately uses flat `items` and one continuation field."
   open_questions: []
 - id: "12.4"
   title: "Documented pageSize bounds"
@@ -1013,8 +995,8 @@ rules:
   surface: Universal
   page: part-d/13-authentication-and-authorisation.md
   anchor: 134-namespaced-oauth-scopes
-  text: "Where an operation's authorization is scope-based, its OAuth scope strings **MUST** be documented per operation, and **MUST** follow a single ecosystem-wide naming convention so that one BB's scope does not collide with another's. An API that authorizes on verified token claims rather than scopes **MUST** document, per operation, which claims it requires and what values it accepts; it **MUST NOT** declare scope strings it does not enforce. The default shape is `bb:{bb-code}:{resource}:{action}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The `bb:` prefix is retained for OAuth scopes because colon-separated scope strings are widely supported and readable in OAuth tooling; reverse-DNS (`global.govstack.{bb-code}.{resource}.{action}`) and `resource.action` are alternatives. `[OPEN-12-A]`"
-  open_questions: ["OPEN-12-A"]
+  text: "Where an operation's authorization is scope-based, its OAuth scope strings **MUST** be documented per operation, and **MUST** follow a single ecosystem-wide naming convention so that one BB's scope does not collide with another's. An API that authorizes on verified token claims rather than scopes **MUST** document, per operation, which claims it requires and what values it accepts; it **MUST NOT** declare scope strings it does not enforce. The default shape is `bb:{bb-code}:{resource}:{action}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The `bb:` prefix is retained for OAuth scopes because colon-separated scope strings are widely supported and readable in OAuth tooling; reverse-DNS (`global.govstack.{bb-code}.{resource}.{action}`) and `resource.action` are alternatives. `[OPEN-13-A]`"
+  open_questions: ["OPEN-13-A"]
 - id: "13.5"
   title: "Authorization is the credential channel"
   class: M+R
@@ -1106,23 +1088,23 @@ rules:
   text: "Operations that cannot complete synchronously **MUST** return `202 Accepted` with a `Location` header pointing to an Operation resource and **MUST** return the current Operation representation in the response body."
   open_questions: []
 - id: "15.2"
-  title: "Shared Operation resource shape"
-  class: M
-  strengths: ["MUST"]
+  title: "Local Operation resource shape"
+  class: M+R
+  strengths: ["MUST NOT", "MUST"]
   surface: OpenAPI
   page: part-d/15-asynchronous-operations.md
-  anchor: 152-shared-operation-resource-shape
-  text: "The Operation resource **MUST** be declared once in `govstack-openapi-common.yaml` and `$ref`'d by all BBs. The default shape is `{ id, status, result, error, createdAt, updatedAt, progress? }`, modelled on Google AIP-151 (Long-Running Operations). A stricter AIP-151 mirror (with `done` and `metadata`) is a defensible alternative. `[OPEN-14-A]`"
-  open_questions: ["OPEN-14-A"]
+  anchor: 152-local-operation-resource-shape
+  text: "A BB that exposes long-running work **MUST** define its Operation schema locally. Its identifier **MUST** be an opaque string and clients **MUST NOT** infer a UUID or any other internal format. The local schema **MUST** document how the identifier, lifecycle state, result, error, and any progress metadata are represented, including when each state-dependent field is present. This guide does not fix those field names or shapes. A shared Operation schema is deferred until multiple BBs demonstrate a stable reusable contract."
+  open_questions: []
 - id: "15.3"
-  title: "Fixed Operation status enum"
-  class: M
+  title: "Documented Operation lifecycle"
+  class: M+R
   strengths: ["MUST"]
   surface: OpenAPI
   page: part-d/15-asynchronous-operations.md
-  anchor: 153-fixed-operation-status-enum
-  text: "Operation `status` **MUST** be drawn from a fixed enumeration declared in the common file. The default set is `PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED`, `CANCELLED`. AIP-151's boolean `done` plus a result-or-error union is a defensible alternative. `[OPEN-14-A]`"
-  open_questions: ["OPEN-14-A"]
+  anchor: 153-documented-operation-lifecycle
+  text: "The local Operation contract **MUST** distinguish terminal from non-terminal states and **MUST** document the result, error, polling, and cancellation semantics for each applicable state. This guide does not prescribe a status enum or lifecycle model."
+  open_questions: []
 - id: "15.4"
   title: "Polling the Operation resource"
   class: M+R
@@ -1175,7 +1157,7 @@ rules:
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 162-cloudevents-envelope-required
-  text: "GovStack domain events **MUST** conform to the CloudEvents v1.0.2 specification (CNCF). The event envelope **MUST** include the CloudEvents-required fields `specversion`, `id`, `source`, and `type`; `specversion` **MUST** be the CloudEvents wire value `\"1.0\"` for CloudEvents v1.0.x; `time` and `datacontenttype` **SHOULD** be included; and GovStack-owned domain payload fields **MUST** live under `data`. On the HTTP webhooks surface the event **MUST** be delivered in CloudEvents structured content mode with media type `application/cloudevents+json`; binary content mode **MUST NOT** be used, because §16.8 signs the complete structured event object and a binary-mode request body carries only `data`. §17.6 imposes the same requirement on the AsyncAPI surface."
+  text: "GovStack domain events **MUST** conform to the CloudEvents v1.0.2 specification (CNCF). The event envelope **MUST** include the CloudEvents-required fields `specversion`, `id`, `source`, and `type`; `specversion` **MUST** be the CloudEvents wire value `\"1.0\"` for CloudEvents v1.0.x; `time` and `datacontenttype` **SHOULD** be included; and GovStack-owned domain payload fields **MUST** live under `data`. On the HTTP webhooks surface the event **MUST** be delivered in CloudEvents structured content mode with media type `application/cloudevents+json`; binary content mode **MUST NOT** be used. §17.6 imposes the same requirement on the AsyncAPI surface."
   open_questions: []
 - id: "16.3"
   title: "Reverse-DNS event types"
@@ -1184,8 +1166,8 @@ rules:
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 163-reverse-dns-event-types
-  text: "Event `type` names **MUST** follow a single ecosystem-wide convention. The default shape is reverse-DNS: `global.govstack.{bb-code}.{resource}.{action}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The event type identifies the semantic event kind and **MUST NOT** include the major API version; the versioned transport contract is carried by the AsyncAPI logical channel ID or equivalent version metadata (§18.2). `[OPEN-15-B]`"
-  open_questions: ["OPEN-15-B"]
+  text: "Event `type` names **MUST** follow a single ecosystem-wide convention. The default shape is reverse-DNS: `global.govstack.{bb-code}.{resource}.{action}`. The `{bb-code}` segment is the BB's single registered code per §9.11. The event type identifies the semantic event kind and **MUST NOT** include the major API version; the versioned transport contract is carried by the AsyncAPI logical channel ID or equivalent version metadata (§18.2). `[OPEN-16-A]`"
+  open_questions: ["OPEN-16-A"]
 - id: "16.4"
   title: "Stable CloudEvents source"
   class: M+R
@@ -1196,22 +1178,22 @@ rules:
   text: "The CloudEvents `source` field **MUST** be a stable, non-empty URI-reference identifying the publishing BB or BB surface; an absolute URI or URN **SHOULD** be used. It **MUST NOT** identify a specific deployment host, pod, broker, queue, or environment."
   open_questions: []
 - id: "16.5"
-  title: "Signed event delivery"
+  title: "Optional signed event delivery"
   class: R
-  strengths: ["MUST"]
+  strengths: ["MAY"]
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
-  anchor: 165-signed-event-delivery
-  text: "Event delivery **MUST** be signed using the GovStack event-signature profile defined in `govstack-openapi-common.yaml` and `govstack-asyncapi-common.yaml`."
+  anchor: 165-optional-signed-event-delivery
+  text: "Event delivery **MAY** use message-level signing when the BB's threat model requires authenticity or integrity beyond authenticated transport. Signing is not part of the baseline GovStack event contract. Requirements for an explicitly adopted profile are in §16.6–§16.8."
   open_questions: []
 - id: "16.6"
-  title: "GovStack-Signature header"
-  class: M+R
-  strengths: ["MUST", "SHOULD"]
+  title: "Signature metadata when used"
+  class: R
+  strengths: ["MUST NOT", "MUST", "SHOULD"]
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
-  anchor: 166-govstack-signature-header
-  text: "On the OpenAPI/webhooks surface the signature **MUST** travel in the ecosystem-wide HTTP header `GovStack-Signature`. On the AsyncAPI surface, a GovStack-owned transport/application metadata field **MUST** be named `govstackSignature` so it satisfies §17.8; when a protocol binding defines a standard signature field, that field **SHOULD** be used and the mapping **MUST** be documented."
+  anchor: 166-signature-metadata-when-used
+  text: "When the optional profile uses GovStack-owned metadata, an OpenAPI webhook signature **MUST** travel in `GovStack-Signature` and an AsyncAPI transport/application metadata field **MUST** be named `govstackSignature`. When a protocol binding defines a standard signature field, that field **SHOULD** be used and its mapping **MUST** be documented. A surface that does not adopt signing **MUST NOT** require signature metadata."
   open_questions: []
 - id: "16.7"
   title: "Replay-detectable signed material"
@@ -1220,26 +1202,26 @@ rules:
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 167-replay-detectable-signed-material
-  text: "The signed material **MUST** include the event body, the event `id`, and either the CloudEvents `time` value or a signature timestamp, so receivers can detect replays."
+  text: "When signing is adopted, the signed material **MUST** include the event body, the event `id`, and either the CloudEvents `time` value or a signature timestamp, so receivers have the inputs needed to detect replays."
   open_questions: []
 - id: "16.8"
-  title: "Pinned signature profile"
+  title: "Separate experimental signing profile"
   class: R
-  strengths: ["MUST NOT", "MUST"]
+  strengths: ["MUST NOT", "MUST", "MAY"]
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
-  anchor: 168-pinned-signature-profile
-  text: "`govstack-openapi-common.yaml` and `govstack-asyncapi-common.yaml` **MUST** declare the GovStack event-signature profile as detached JWS using `ES256`. The JWS payload **MUST** be the UTF-8 bytes of the complete structured CloudEvent JSON object after JSON Canonicalization Scheme processing defined by RFC 8785. The serialized JWS **MUST** omit its payload using the detached-content procedure in RFC 7515 Appendix F; verifiers **MUST** reconstruct that payload from the received, RFC 8785-canonicalized event body. The protected JWS `kid` **MUST** select the publisher's verification key. Implementations **MUST NOT** use RFC 7797 unencoded-payload JWS unless a future guide version explicitly adopts it. How a subscriber obtains the key that `kid` selects is not yet settled ecosystem-wide: §16.11 supplies it per subscription, which covers HTTP webhooks but not brokered or stream transports with no subscription control plane. `[OPEN-15-H]`"
-  open_questions: ["OPEN-15-H"]
+  anchor: 168-separate-experimental-signing-profile
+  text: "Event signing belongs in the separate optional `experimental/govstack-openapi-signing-profile.yaml` artifact, not in either baseline common schema artifact. A BB **MAY** adopt this profile explicitly, but it **MUST** pin the profile version and **MUST** document its key discovery, key rotation, replay policy, protocol mapping, and conformance tests. The profile remains incomplete pending a shared key-discovery and replay-policy contract and **MUST NOT** be presented as an ecosystem-wide baseline."
+  open_questions: []
 - id: "16.9"
-  title: "Operational signing concerns out of scope"
+  title: "Readiness for a shared signature profile"
   class: informative
   strengths: []
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
-  anchor: 169-operational-signing-concerns-out-of-scope
-  text: "Operational concerns such as replay-window enforcement and signing-key rotation are out of scope here and live in the Security & Operations companion (§1.2). Until that companion fixes a bound, §16.7 gives a receiver the material to detect a replay but no ecosystem-wide window against which to reject one, so two conformant implementations can disagree about whether a given event is a replay. `[OPEN-15-H]`"
-  open_questions: ["OPEN-15-H"]
+  anchor: 169-readiness-for-a-shared-signature-profile
+  text: "A future guide version should promote a shared signature profile only after it defines key discovery, key rotation, replay-window enforcement, protocol mappings, conformance test vectors, and interoperable implementations in at least two commonly used GovStack implementation languages. Those operational concerns belong in the Security & Operations companion (§1.2)."
+  open_questions: []
 - id: "16.10"
   title: "Documented delivery-failure contract"
   class: R
@@ -1256,7 +1238,7 @@ rules:
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 1611-subscription-management-interfaces
-  text: "Subscription management **MUST** expose documented interfaces to create, list, rotate the signing secret or verification key material used by the selected profile, and delete a subscription. HTTP subscription management uses OpenAPI endpoints; brokered or stream-based subscription management **MAY** use message-based commands documented in AsyncAPI if that is the BB's chosen control plane."
+  text: "Subscription management **MUST** expose documented interfaces to create, list, and delete a subscription. If the subscription adopts message signing, it **MUST** also expose or document how to rotate or redistribute the verification material used by the selected profile. HTTP subscription management uses OpenAPI endpoints; brokered or stream-based subscription management **MAY** use message-based commands documented in AsyncAPI if that is the BB's chosen control plane."
   open_questions: []
 - id: "17.1"
   title: "Send and receive perspective"
@@ -1310,16 +1292,16 @@ rules:
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
   anchor: 176-structured-cloudevents-json-payloads
-  text: "AsyncAPI message payloads for GovStack domain events **MUST** use structured CloudEvents JSON: the message payload is the complete CloudEvent, and GovStack-owned domain data lives under the CloudEvents `data` field. This provides one portable, schema-validatable event shape across brokered transports. `[OPEN-15-E]`"
-  open_questions: ["OPEN-15-E"]
+  text: "AsyncAPI Message Objects for GovStack domain events **MUST** use `contentType: application/cloudevents+json` and structured CloudEvents JSON: the message payload is the complete CloudEvent, and any GovStack-owned domain data **MUST** live under the CloudEvents `data` field. The base envelope does not require `data` or constrain its JSON shape; each local Message Object makes that decision for its event. This provides one portable, schema-validatable event shape across brokered transports. `[OPEN-17-A]`"
+  open_questions: ["OPEN-17-A"]
 - id: "17.7"
-  title: "Shared CloudEvents message schema"
+  title: "Shared CloudEvents envelope schema"
   class: M
   strengths: ["MUST"]
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
-  anchor: 177-shared-cloudevents-message-schema
-  text: "AsyncAPI channel message entries **MUST** reference the shared CloudEvents message schema from `govstack-asyncapi-common.yaml` and specialise only the `data` schema for the BB-specific event payload. Operation message references **MUST** point to the relevant message entries under the operation's referenced channel, per AsyncAPI 3.0."
+  anchor: 177-shared-cloudevents-envelope-schema
+  text: "Each BB **MUST** define its Message Objects locally. A domain-event message payload **MUST** compose `#/components/schemas/CloudEventEnvelope` from the pinned `govstack-asyncapi-common.yaml` with a local schema that specialises the event `type` and, when present, `data`. A rejection message **MUST** either reference the shared `GovStackAsyncError` schema directly or use it as CloudEvent `data`. Operation message references **MUST** point to the relevant message entries under the operation's referenced channel, per AsyncAPI 3.0. Security schemes, headers, examples, correlation, and protocol bindings remain local because they require BB- or transport-specific values."
   open_questions: []
 - id: "17.8"
   title: "Message headers and idempotency metadata"
@@ -1328,7 +1310,7 @@ rules:
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
   anchor: 178-message-headers-and-idempotency-metadata
-  text: "GovStack-owned transport/application message headers **MUST** use camelCase and **MUST NOT** use the `X-` prefix. Structured CloudEvents messages that participate in a distributed trace **MUST** carry the standard CloudEvents distributed-tracing extension attribute `traceparent` and **MAY** carry `tracestate`; workflow metadata **MAY** use the extension attributes `correlationid` and `causationid`. CloudEvents extension names are lowercase; equivalent GovStack-owned transport/application headers are camelCase. Transport headers **MAY** mirror these values where broker tooling requires it, but the CloudEvent remains normative. The event-signature metadata name **MUST** follow §16.6. Command-like messages that create resources, move value, or trigger non-idempotent processing **MUST** carry an idempotency key: structured CloudEvents commands **MUST** use `idempotencykey`, while non-CloudEvents commands **MUST** use `idempotencyKey`."
+  text: "GovStack-owned transport/application message headers **MUST** use camelCase and **MUST NOT** use the `X-` prefix. Structured CloudEvents messages that participate in a distributed trace **MUST** carry the standard CloudEvents distributed-tracing extension attribute `traceparent` and **MAY** carry `tracestate`; workflow metadata **MAY** use the extension attributes `correlationid` and `causationid`. CloudEvents extension names are lowercase; equivalent GovStack-owned transport/application headers are camelCase. Transport headers **MAY** mirror these values where broker tooling requires it, but the CloudEvent remains normative. If optional signing is adopted, signature metadata **MUST** follow §16.6. Command-like messages that create resources, move value, or trigger non-idempotent processing **MUST** carry an idempotency key: structured CloudEvents commands **MUST** use `idempotencykey`, while non-CloudEvents commands **MUST** use `idempotencyKey`."
   open_questions: []
 - id: "17.9"
   title: "Message localisation headers"
@@ -1346,53 +1328,53 @@ rules:
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
   anchor: 1710-security-schemes-cover-every-operation
-  text: "AsyncAPI security schemes **MUST** be declared under `components.securitySchemes` and applied on `servers`, `operations`, or both so every operation is covered. Message signing (§16.5) is message-level integrity and **MUST NOT** be treated as a substitute for broker, server, or operation authentication."
+  text: "AsyncAPI security schemes **MUST** be declared under `components.securitySchemes` and applied on `servers`, `operations`, or both so every operation is covered. Optional message signing (§16.5) is message-level integrity and **MUST NOT** be treated as a substitute for broker, server, or operation authentication."
   open_questions: []
 - id: "17.11"
-  title: "Documented delivery guarantees"
-  class: M+R
-  strengths: ["MUST NOT", "MUST"]
+  title: "Duplicate delivery contract"
+  class: R
+  strengths: ["MUST NOT", "MUST", "MAY"]
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
-  anchor: 1711-documented-delivery-guarantees
-  text: "Each operation **MUST** document its delivery guarantee: `atMostOnce`, `atLeastOnce`, or `effectivelyOnce`. `effectivelyOnce` **MUST** be backed by an idempotency contract, duplicate detection, or a documented resource-state invariant; it **MUST NOT** imply the transport literally delivers a message exactly once."
+  anchor: 1711-duplicate-delivery-contract
+  text: "When the selected protocol or deployment can redeliver a message and consumers need to handle duplicates, the operation **MUST** document the duplicate-handling contract. For CloudEvents, the default duplicate identity is the pair `source` plus `id`. Protocol QoS, acknowledgement, and redelivery fields **MUST** use the applicable AsyncAPI binding when available. Specifications **MUST NOT** claim `effectivelyOnce` as a portable transport guarantee; they **MAY** document application-level idempotency or de-duplication instead."
   open_questions: []
 - id: "17.12"
-  title: "Documented ordering guarantees"
-  class: M+R
-  strengths: ["MUST"]
-  surface: AsyncAPI
-  page: part-d/17-asyncapi-channel-rules.md
-  anchor: 1712-documented-ordering-guarantees
-  text: "Each operation **MUST** document ordering guarantees, if any. If ordering is partitioned, keyed, or scoped, the key or scope **MUST** be declared. If no ordering is guaranteed, the spec **MUST** state that explicitly."
-  open_questions: []
-- id: "17.13"
-  title: "Declared delivery-management capabilities"
-  class: M+R
-  strengths: ["MUST"]
-  surface: AsyncAPI
-  page: part-d/17-asyncapi-channel-rules.md
-  anchor: 1713-declared-delivery-management-capabilities
-  text: "Each operation **MUST** declare which delivery-management capabilities the chosen transport contract exposes: redelivery, dead-letter handling, retention, and replay. The declaration **MUST** state whether each capability is supported, unsupported, or not applicable."
-  open_questions: []
-- id: "17.14"
-  title: "Portable capability contract"
+  title: "Ordering only when promised"
   class: R
   strengths: ["MUST"]
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
-  anchor: 1714-portable-capability-contract
-  text: "A reference specification **MUST** define the portable contract shape, defaults, and allowed bounds for supported delivery-management capabilities. Concrete retry counts, backoff intervals, retention periods, replay windows, and dead-letter store settings belong in implementation profiles."
+  anchor: 1712-ordering-only-when-promised
+  text: "Ordering **MUST** be documented only when consumers are allowed to rely on it. When ordering is promised, the applicable protocol binding or operation description **MUST** identify its scope and key, such as a Kafka partition key or an ordered queue. A specification with no ordering promise does not need a placeholder declaration."
   open_questions: []
-- id: "17.15"
-  title: "Machine-readable delivery extensions"
-  class: M+R
-  strengths: ["MUST"]
+- id: "17.13"
+  title: "Public delivery-management capabilities"
+  class: R
+  strengths: ["MUST", "MAY"]
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
-  anchor: 1715-machine-readable-delivery-extensions
-  text: "Delivery, ordering, and delivery-management capability declarations **MUST** be machine-readable using GovStack specification extensions declared in `govstack-asyncapi-common.yaml` (for example, `x-govstack-delivery`, `x-govstack-ordering`, and `x-govstack-replay`) as well as human-readable in `description`. `[OPEN-15-G]`"
-  open_questions: ["OPEN-15-G"]
+  anchor: 1713-public-delivery-management-capabilities
+  text: "Redelivery, dead-letter handling, retention, and replay **MUST** be documented when they are part of the public contract available to a consumer. The specification **MUST** use the applicable protocol binding, channel configuration, or a linked protocol profile where one exists. Capabilities that are deployment-internal or unavailable to consumers **MAY** be omitted."
+  open_questions: []
+- id: "17.14"
+  title: "Implementation values in protocol profiles"
+  class: R
+  strengths: ["MUST NOT", "SHOULD"]
+  surface: AsyncAPI
+  page: part-d/17-asyncapi-channel-rules.md
+  anchor: 1714-implementation-values-in-protocol-profiles
+  text: "Concrete retry counts, backoff intervals, retention periods, replay windows, and dead-letter store settings **SHOULD** live in protocol or implementation profiles unless a value is a stable promise to every conforming consumer. The core cross-BB specification **MUST NOT** imply that a broker-specific setting is portable across protocols."
+  open_questions: []
+- id: "17.15"
+  title: "No universal delivery extensions"
+  class: R
+  strengths: ["MUST NOT", "MUST"]
+  surface: AsyncAPI
+  page: part-d/17-asyncapi-channel-rules.md
+  anchor: 1715-no-universal-delivery-extensions
+  text: "`govstack-asyncapi-common.yaml` does not define universal delivery, ordering, redelivery, dead-letter, retention, or replay extensions. A specification **MUST** use standard AsyncAPI bindings first and **MUST** state any remaining consumer-visible promise in `description` or a linked protocol profile. The presence of a custom extension alone **MUST NOT** be treated as an interoperable delivery contract."
+  open_questions: []
 - id: "17.16"
   title: "Async rejection error messages"
   class: M+R
@@ -1400,7 +1382,7 @@ rules:
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
   anchor: 1716-async-rejection-error-messages
-  text: "Command-like messages that can be rejected asynchronously **MUST** define a rejection or failure message using `GovStackAsyncError` from §11.8, not an artificial RFC 9457 HTTP `status`. The error message **MUST** be correlated to the original message using §17.8 or an equivalent protocol binding."
+  text: "Command-like messages that can be rejected asynchronously **MUST** define a rejection or failure message using `GovStackAsyncError` from §11.6, not an artificial RFC 9457 HTTP `status`. The error message **MUST** be correlated to the original message using §17.8 or an equivalent protocol binding."
   open_questions: []
 - id: "17.17"
   title: "Declared request-reply correlation"
@@ -1427,8 +1409,8 @@ rules:
   surface: AsyncAPI
   page: part-d/17-asyncapi-channel-rules.md
   anchor: 1719-protocol-bindings-where-relevant
-  text: "Protocol bindings **MUST** be present where protocol-specific fields affect interoperability. At minimum, Kafka-like bindings **SHOULD** declare topic and key semantics; MQTT bindings **SHOULD** declare QoS and retained-message policy; AMQP bindings **SHOULD** declare exchange, queue, and routing-key semantics; WebSocket and SSE bindings **SHOULD** declare connection and message framing. Detailed broker operations remain out of scope for this guide. `[OPEN-15-F]`"
-  open_questions: ["OPEN-15-F"]
+  text: "Protocol bindings **MUST** be present where protocol-specific fields affect interoperability. At minimum, Kafka-like bindings **SHOULD** declare topic and key semantics; MQTT bindings **SHOULD** declare QoS and retained-message policy; AMQP bindings **SHOULD** declare exchange, queue, and routing-key semantics; WebSocket and SSE bindings **SHOULD** declare connection and message framing. Detailed broker operations remain out of scope for this guide. `[OPEN-17-B]`"
+  open_questions: ["OPEN-17-B"]
 - id: "17.20"
   title: "Examples for every message"
   class: M+R
@@ -1454,7 +1436,7 @@ rules:
   surface: Universal
   page: part-d/18-compatibility-and-lifecycle.md
   anchor: 182-major-version-in-path-or-channel
-  text: "A major version increment **MUST** be reflected in every versioned OpenAPI path key (`/v2/`) and **MUST NOT** be duplicated in the OpenAPI `servers` URL. The unversioned operational endpoints of §5.9 carry no major version and are unaffected by an increment. On AsyncAPI, the major version **MUST** appear in the logical channel ID defined by §17.2 or in an equivalent machine-readable version field defined by `govstack-asyncapi-common.yaml`; protocol-native channel addresses **MUST NOT** be rewritten solely to carry it."
+  text: "A major version increment **MUST** be reflected in every versioned OpenAPI path key (`/v2/`) and **MUST NOT** be duplicated in the OpenAPI `servers` URL. The unversioned operational endpoints of §5.9 carry no major version and are unaffected by an increment. On AsyncAPI, the major version **MUST** appear in the logical channel ID defined by §17.2; protocol-native channel addresses **MUST NOT** be rewritten solely to carry it."
   open_questions: []
 - id: "18.3"
   title: "Backward-compatible minor changes"
@@ -1499,8 +1481,8 @@ rules:
   surface: Universal
   page: part-d/18-compatibility-and-lifecycle.md
   anchor: 187-asyncapi-deprecation-metadata
-  text: "AsyncAPI channels, operations, and messages **MUST** declare deprecation in their `description` and, where supported by tooling, with a specification extension `x-govstack-deprecated` containing `since`, `sunset`, `replacement`, and `reason`. `[OPEN-16-A]`"
-  open_questions: ["OPEN-16-A"]
+  text: "AsyncAPI channels, operations, and messages **MUST** declare deprecation in their `description` and, where supported by tooling, with a specification extension `x-govstack-deprecated` containing `since`, `sunset`, `replacement`, and `reason`. `[OPEN-18-A]`"
+  open_questions: ["OPEN-18-A"]
 - id: "19.1"
   title: "Honour the request language"
   class: R
@@ -1517,7 +1499,7 @@ rules:
   surface: Universal
   page: part-e/19-localisation.md
   anchor: 192-never-translate-stable-content
-  text: "Stable content (error `code`, enum values, identifiers, timestamps, currency codes) **MUST NOT** be translated."
+  text: "Stable content (HTTP Problem `type`, transport-neutral asynchronous error `code`, enum values, identifiers, timestamps, currency codes) **MUST NOT** be translated."
   open_questions: []
 - id: "19.3"
   title: "English as default language"
@@ -1526,8 +1508,8 @@ rules:
   surface: Universal
   page: part-e/19-localisation.md
   anchor: 193-english-as-default-language
-  text: "Default language **MUST** be English. `[OPEN-17-A]`"
-  open_questions: ["OPEN-17-A"]
+  text: "Default language **MUST** be English. `[OPEN-19-A]`"
+  open_questions: ["OPEN-19-A"]
 - id: "19.4"
   title: "Declare the response language"
   class: M+R
@@ -1553,7 +1535,7 @@ rules:
   surface: Universal
   page: part-e/20-conformance-and-validation.md
   anchor: 202-passes-the-govstack-spectral-ruleset
-  text: "Every BB API spec **MUST** pass the exact GovStack Spectral ruleset version declared under §20.3 for the machine-checkable rules applicable to its surface. The machine-checkable rules are those tagged `[M]`, together with the mechanical portion of `[M+R]` rules (§1.9). Ruleset `0.2.0-draft` **MUST** cover the OpenAPI, CloudEvents, and AsyncAPI documentation rules recorded in its coverage manifest. Validation **MUST** fail when the declared ruleset artifact is unavailable or differs from the exact declared version; tooling **MUST NOT** select “latest” or fall back by major/minor compatibility."
+  text: "Every BB API spec **MUST** pass the exact GovStack Spectral ruleset version declared under §20.3 for the machine-checkable rules applicable to its surface. The machine-checkable rules are those tagged `[M]`, together with the mechanical portion of `[M+R]` rules (§1.9). Ruleset `0.1.0-draft` **MUST** cover the OpenAPI, CloudEvents, and AsyncAPI documentation rules recorded in its coverage manifest. Validation **MUST** fail when the declared ruleset artifact is unavailable or differs from the exact declared version; tooling **MUST NOT** select “latest” or fall back by major/minor compatibility."
   open_questions: []
 - id: "20.3"
   title: "Declared guide conformance version"
@@ -1562,5 +1544,5 @@ rules:
   surface: Universal
   page: part-e/20-conformance-and-validation.md
   anchor: 203-declared-guide-conformance-version
-  text: "Each canonical specification file **MUST** declare the exact guide and ruleset versions it targets in the `info`-level `x-govstack-api-guide` object using `version` and `rulesetVersion`, each an exact SemVer value rather than a range. For this draft both values **MUST** be `0.2.0-draft`. An optional `exceptions` array **MUST** contain objects with exactly these fields: `rule` (guide rule ID), `scope` (RFC 6901 JSON Pointer into this canonical document), `rationale` (non-empty explanation), `record` (absolute HTTPS URI for the approved public record), `reviewedBy` (non-empty approving authority), `reviewedAt` (calendar date `YYYY-MM-DD`), and `expiresAt` (calendar date `YYYY-MM-DD`). An exception **MUST** suppress only its named rule at or below its declared scope. An expired entry, invalid field, or exception not approved under §1.6 **MUST** fail validation rather than suppress the rule. Offline validation **MUST NOT** require dereferencing the record URI."
+  text: "Each canonical specification file **MUST** declare the exact guide and ruleset versions it targets in the `info`-level `x-govstack-api-guide` object using `version` and `rulesetVersion`, each an exact SemVer value rather than a range. For this draft both values **MUST** be `0.1.0-draft`. An optional `exceptions` array **MUST** contain objects with exactly these fields: `rule` (guide rule ID), `scope` (RFC 6901 JSON Pointer into this canonical document), `rationale` (non-empty explanation), `record` (absolute HTTPS URI for the approved public record), `reviewedBy` (non-empty approving authority), `reviewedAt` (calendar date `YYYY-MM-DD`), and `expiresAt` (calendar date `YYYY-MM-DD`). An exception **MUST** suppress only its named rule at or below its declared scope. An expired entry, invalid field, or exception not approved under §1.6 **MUST** fail validation rather than suppress the rule. Offline validation **MUST NOT** require dereferencing the record URI."
   open_questions: []

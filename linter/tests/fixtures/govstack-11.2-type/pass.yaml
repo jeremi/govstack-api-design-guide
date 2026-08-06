@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Fixture API
   version: 1.0.0
-  description: Fixture for govstack-11.5-example.
+  description: Fixture for govstack-11.2-type.
   contact: {}
 paths:
   /v1/foos/{id}:
@@ -17,24 +17,20 @@ paths:
           required: true
           schema: { type: string }
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: { type: object }
         '404':
           description: Not found
           content:
             application/problem+json:
               schema:
                 type: object
-                required: [type, title, status, code, traceId, timestamp]
+                required: [type, title, status, traceId]
                 properties:
-                  type: { type: string }
+                  type: { type: string, format: uri }
                   title: { type: string }
                   status: { type: integer }
-                  code:
-                    type: string
-                    example: global.govstack.identity.personNotFound
                   traceId: { type: string }
-                  timestamp: { type: string, format: date-time }
+              example:
+                type: https://govstack.global/problems/identity/person-not-found
+                title: Person not found
+                status: 404
+                traceId: 4bf92f3577b34da6a3ce929d0e0e4736

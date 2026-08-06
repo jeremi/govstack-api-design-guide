@@ -32,10 +32,9 @@ paths:
                     items: { type: object }
                   pageInfo:
                     type: object
-                    required: [nextCursor, hasMore]
+                    required: [nextCursor]
                     properties:
                       nextCursor: { type: string, nullable: true }
-                      hasMore: { type: boolean }
   # Guide 12.2 covers collection endpoints; the operational liveness probe
   # /health is exempt (s12-collectionPagination), so a bare GET must NOT fire.
   /health:

@@ -28,6 +28,8 @@ paths:
             application/problem+json:
               schema:
                 type: object
-                required: [code]
+                required: [traceId, code, timestamp]
                 properties:
+                  traceId: { type: string }
                   code: { type: string }
+                  timestamp: { type: string, format: date-time }

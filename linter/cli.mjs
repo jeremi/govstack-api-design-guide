@@ -28,7 +28,7 @@ const { Spectral, Document } = spectralCore;
 const { bundleAndLoadRuleset } = bundler;
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const SUPPORTED_GUIDE_VERSION = '0.2.0-draft';
+const SUPPORTED_GUIDE_VERSION = '0.1.0-draft';
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
 
 // Spectral severity numbers -> our names. 0=error 1=warn 2=info 3=hint.

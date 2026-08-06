@@ -1,11 +1,11 @@
 # Rules for §15 asynchronous operations — generated from the guide.
 #
-# Implements 15.1, 15.5 (implemented) and 15.2, 15.3, 15.4 (partial-proxy).
+# Implements 15.1 and 15.5, plus the 15.4 polling-path proxy. Operation
+# resource fields and lifecycle states are owned and documented by each BB.
 # Source text: ../../rules.yaml. Severity/formats per ../README.md#rule-naming-and-severities.
 functionsDir: "../functions"
 functions:
   - responseHeaderRequired
-  - envelopeShape
   - s15-operationsPolling
   - s15-cancelPath
 rules:
@@ -26,47 +26,13 @@ rules:
         status: "202"
         headers: [Location]
 
-  # 15.2 [M] — PROXY (bucket B), MUST notched to warn.
-  # SCOPE LIMIT: checks the in-document `components.schemas.Operation` shape
-  # ({ id, status, result, error, createdAt, updatedAt } required; progress
-  # optional). Does NOT verify that the Operation resource is declared once in
-  # govstack-openapi-common.yaml and $ref'd (needs-context: the common file does
-  # not yet exist), nor the AIP-151 `done`/`metadata` alternative.
-  govstack-15.2:
-    description: "the Operation resource must declare the shared shape (guide 15.2, [M], proxy)."
-    message: "[15.2][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#152-shared-operation-resource-shape
-    severity: warn
-    formats: [oas3_1]
-    given: $.components.schemas.Operation
-    then:
-      function: envelopeShape
-      functionOptions:
-        requiredProperties: [id, status, result, error, createdAt, updatedAt]
-
-  # 15.3 [M] — PROXY (bucket B), MUST notched to warn.
-  # SCOPE LIMIT: checks the in-document Operation `status` enum equals the fixed
-  # set. Does NOT verify the enum is declared in the common file (needs-context),
-  # nor the AIP-151 boolean-`done` alternative (which has no `status` property
-  # and so is not flagged).
-  govstack-15.3:
-    description: "Operation status must use the fixed enum (guide 15.3, [M], proxy)."
-    message: "[15.3][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#153-fixed-operation-status-enum
-    severity: warn
-    formats: [oas3_1]
-    given: $.components.schemas.Operation.properties.status
-    then:
-      function: envelopeShape
-      functionOptions:
-        enum: [PENDING, RUNNING, SUCCEEDED, FAILED, CANCELLED]
-
   # 15.4 [M+R] — PROXY (bucket B), notched to warn.
   # Verifies: when the Operations pattern is used (an Operation schema or an
   # /operations/ path exists), a canonical GET /v{N}/operations/{operationId}
   # poll endpoint is declared.
   # Does NOT verify: whether asynchronous behaviour is actually needed, or the
-  # response shape of the poll endpoint (that is §15.2/§15.3).
+  # response shape or lifecycle semantics of the poll endpoint, which are
+  # documented locally by the BB.
   govstack-15.4:
     description: "a canonical GET /v{N}/operations/{operationId} poll endpoint must exist when Operations are used (guide 15.4, [M+R], proxy)."
     message: "[15.4][M+R] {{error}}"

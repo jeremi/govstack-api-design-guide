@@ -32,10 +32,9 @@ paths:
                     items: { type: object }
                   pageInfo:
                     type: object
-                    required: [nextCursor, hasMore]
+                    required: [nextCursor]
                     properties:
                       nextCursor: { type: string, nullable: true }
-                      hasMore: { type: boolean }
   # Guide 12.1 lets a collection whose size the specification itself fixes go
   # unpaginated, provided the bound is declared with maxItems.
   /v1/supported-locales:

@@ -11,11 +11,9 @@ functions:
   - valuePattern
   - s17-channelIds
   - schemaPropertyNames
-  - extensionShape
   - s17-channelParameters
   - s17-cloudEventsPayload
   - s17-securityCoverage
-  - s17-opExtensions
   - s17-rejectionMessage
   - s17-requestReply
   - s17-protocolBindings
@@ -84,11 +82,13 @@ rules:
         flags: i
         forbidPattern: '(^|[.\-_])(dev|test|prod|staging|uat|qa|sandbox|preprod|nonprod|kafka|rabbitmq|mqtt|amqp|broker)([.\-_]|$)'
 
-  # 17.6 [M] — domain-event message payloads MUST be structured CloudEvents JSON
-  # with GovStack domain data under `data`. Bare §11 error envelopes are skipped
-  # (governed by 17.16). Does not resolve payloads $ref'd to external files.
+  # 17.6 [M] — domain-event Message Objects MUST use the structured CloudEvents
+  # JSON media type and carry any GovStack domain data under `data`. The rule checks
+  # messages that declare the media type, envelope reference, or CloudEvents
+  # fields. It deliberately skips other messages because their semantic role is
+  # not machine-identifiable. The base validator resolves external references.
   govstack-17.6:
-    description: "Domain-event message payloads must be structured CloudEvents JSON with data under `data` (guide 17.6, [M])."
+    description: "Domain-event Message Objects must use application/cloudevents+json and structured CloudEvents payloads with any domain data under `data` (guide 17.6, [M])."
     message: "[17.6][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#176-structured-cloudevents-json-payloads
     severity: error
@@ -96,6 +96,23 @@ rules:
     given: $.components.messages[*]
     then:
       function: s17-cloudEventsPayload
+
+  # 17.7 [M] — Message Objects remain local. Recognizable CloudEvents and async
+  # error payloads MUST reference the reviewed envelope or async-error schema
+  # from the vendored common file. Other message kinds are outside this rule.
+  # The base validator separately proves that the external ref resolves.
+  govstack-17.7:
+    description: "CloudEvents and async-error Message Objects must reference payload schemas from the vendored govstack-asyncapi-common.yaml file (guide 17.7, [M])."
+    message: "[17.7][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#177-shared-cloudevents-envelope-schema
+    severity: error
+    formats: [aas3]
+    resolved: false
+    given: $.components.messages[*]
+    then:
+      function: s17-cloudEventsPayload
+      functionOptions:
+        requireSharedReference: true
 
   # 17.8 [M+R] — PROXY (bucket B), MUST -> warn. GovStack-owned message headers
   # MUST be camelCase and MUST NOT use the X- prefix (camelCase subsumes the X-
@@ -142,79 +159,6 @@ rules:
     given: $
     then:
       function: s17-securityCoverage
-
-  # 17.11 [M+R] — each operation MUST document its delivery guarantee as
-  # x-govstack-delivery in {atMostOnce, atLeastOnce, effectivelyOnce}. The
-  # "effectivelyOnce MUST be backed by an idempotency contract" clause is not
-  # mechanically verifiable.
-  govstack-17.11:
-    description: "Each operation must declare x-govstack-delivery in {atMostOnce,atLeastOnce,effectivelyOnce} (guide 17.11, [M+R])."
-    message: "[17.11][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#1711-documented-delivery-guarantees
-    severity: error
-    formats: [aas3]
-    given: $.operations[*]
-    then:
-      function: extensionShape
-      functionOptions:
-        extension: x-govstack-delivery
-        enum: [atMostOnce, atLeastOnce, effectivelyOnce]
-
-  # 17.12 [M+R] — each operation MUST document ordering via x-govstack-ordering
-  # (an explicit "none", or the partition key/scope). The key/scope contents are
-  # defined in govstack-asyncapi-common.yaml and not further validated here.
-  govstack-17.12:
-    description: "Each operation must declare x-govstack-ordering (key/scope or explicit none) (guide 17.12, [M+R])."
-    message: "[17.12][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#1712-documented-ordering-guarantees
-    severity: error
-    formats: [aas3]
-    given: $.operations[*]
-    then:
-      function: extensionShape
-      functionOptions:
-        extension: x-govstack-ordering
-
-  # 17.13 [M+R] — each operation MUST declare the four delivery-management
-  # capabilities, each stated supported/unsupported/notApplicable. Encoded as the
-  # per-capability extensions x-govstack-redelivery / -dead-letter / -retention /
-  # -replay (the exact names are defined in govstack-asyncapi-common.yaml; §17.15
-  # confirms x-govstack-replay). Value may be a bare string or {status: ...}.
-  govstack-17.13:
-    description: "Each operation must declare redelivery/dead-letter/retention/replay as supported/unsupported/notApplicable (guide 17.13, [M+R])."
-    message: "[17.13][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#1713-declared-delivery-management-capabilities
-    severity: error
-    formats: [aas3]
-    given: $.operations[*]
-    then:
-      function: s17-opExtensions
-      functionOptions:
-        require:
-          - x-govstack-redelivery
-          - x-govstack-dead-letter
-          - x-govstack-retention
-          - x-govstack-replay
-        enumEach: [supported, unsupported, notApplicable]
-
-  # 17.15 [M+R] — delivery/ordering/replay declarations MUST be machine-readable
-  # (x-govstack-delivery, x-govstack-ordering, x-govstack-replay) AND
-  # human-readable in the operation description.
-  govstack-17.15:
-    description: "Each operation must carry x-govstack-delivery/ordering/replay plus a description (guide 17.15, [M+R])."
-    message: "[17.15][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#1715-machine-readable-delivery-extensions
-    severity: error
-    formats: [aas3]
-    given: $.operations[*]
-    then:
-      function: s17-opExtensions
-      functionOptions:
-        require:
-          - x-govstack-delivery
-          - x-govstack-ordering
-          - x-govstack-replay
-        requireDescription: true
 
   # 17.16 [M+R] — PROXY (bucket B), MUST -> warn. Asserts an async rejection/
   # failure message using the §11 error envelope exists and is correlated. Does

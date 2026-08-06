@@ -10,9 +10,9 @@ import { isObject, asArray } from './lib/util.js';
  * §11 error envelope, correlated to the original message. This function CANNOT
  * identify which messages are "command-like", so, when the document declares any
  * operations, it asserts:
- *   - at least one `components.messages` entry looks like a §11 error envelope
- *     (payload declares problem-style fields: `type`+`title`+`status`, or
- *     `code`+`traceId`/`traceid`), and
+ *   - at least one `components.messages` entry references GovStackAsyncError or
+ *     declares its transport-neutral `code`+`traceId`/`traceid` shape without
+ *     an HTTP `status`, and
  *   - at least one such error message declares a correlation mechanism (a
  *     message-level `correlationId`, or a header/payload property whose name
  *     contains "correlation").
@@ -74,19 +74,41 @@ function propNames(schema) {
 /** True when a set of property names looks like the §11 problem envelope. */
 function problemShaped(names) {
   const has = (n) => names.has(n);
-  if (has('title') && has('status')) return true;
-  if (has('code') && (has('traceId') || has('traceid'))) return true;
-  return false;
+  return !has('status') && has('code') && (has('traceId') || has('traceid'));
 }
 
 function isErrorEnvelope(msg) {
   if (!isObject(msg)) return false;
   const payload = msg.payload;
+  if (referencesSchema(payload, 'GovStackAsyncError')) return true;
   // Bare §11 envelope, or CloudEvents-wrapped with the problem under `data`.
   if (problemShaped(propNames(payload))) return true;
-  const data = isObject(payload) && isObject(payload.properties) ? payload.properties.data : undefined;
-  if (problemShaped(propNames(data))) return true;
+  for (const data of propertySchemas(payload, 'data')) {
+    if (referencesSchema(data, 'GovStackAsyncError')) return true;
+    if (problemShaped(propNames(data))) return true;
+  }
   return false;
+}
+
+/** Property schemas declared directly or in one level of allOf. */
+function propertySchemas(schema, name) {
+  if (!isObject(schema)) return [];
+  const values = [];
+  if (isObject(schema.properties?.[name])) values.push(schema.properties[name]);
+  for (const branch of asArray(schema.allOf)) {
+    if (isObject(branch) && isObject(branch.properties?.[name])) {
+      values.push(branch.properties[name]);
+    }
+  }
+  return values;
+}
+
+function referencesSchema(schema, name) {
+  return (
+    isObject(schema) &&
+    typeof schema.$ref === 'string' &&
+    schema.$ref.endsWith(`#/components/schemas/${name}`)
+  );
 }
 
 function hasCorrelation(msg) {

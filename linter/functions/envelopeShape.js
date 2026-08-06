@@ -12,6 +12,7 @@ import { isObject, asArray } from './lib/util.js';
  *
  * The options object is a "spec" node. A spec node may contain:
  *   requiredProperties {string[]} names that must appear in schema.required.
+ *   forbiddenProperties {string[]} names that must not be declared.
  *   properties {object}  map of name -> child spec node; each named property
  *                        must be declared, and is validated by its child spec.
  *   type   {string}      schema.type must equal this (array-typed `type` ok).
@@ -79,6 +80,12 @@ function matchNode(schema, spec, path, results, depth) {
   for (const name of asArray(spec.requiredProperties)) {
     if (!eff.required.has(name)) {
       results.push({ message: `schema must list "${name}" in required`, path: [...path, 'required'] });
+    }
+  }
+
+  for (const name of asArray(spec.forbiddenProperties)) {
+    if (Object.prototype.hasOwnProperty.call(eff.properties, name)) {
+      results.push({ message: `schema must not declare property "${name}"`, path: [...path, 'properties', name] });
     }
   }
 

@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.join(HERE, '..', 'cli.mjs');
 const MINI_RULESET = path.join(HERE, 'driver-fixtures', 'mini-ruleset.yaml');
-const GUIDE_VERSION = '0.2.0-draft';
+const GUIDE_VERSION = '0.1.0-draft';
 const ADVISORY = ['--mode', 'advisory', '--skip-validators'];
 
 function makeRepo(files) {

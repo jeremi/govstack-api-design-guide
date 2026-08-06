@@ -61,15 +61,6 @@ const DEFAULT_ALLOW_VALUES = [
   'P-521',
   'secp256k1',
   'ECDH-ES',
-  // §17.11 delivery guarantees.
-  'atMostOnce',
-  'atLeastOnce',
-  'effectivelyOnce',
-  // §17.13 delivery-management capabilities, and §17.12's explicit "no ordering".
-  'supported',
-  'unsupported',
-  'notApplicable',
-  'none',
 ];
 
 export default function s09EnumCasing(targetVal, options, context) {

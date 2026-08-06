@@ -38,22 +38,28 @@ components:
         - name: sample
           payload: {}
     PaymentRejected:
-      # §11 error envelope, correlated to the original command.
+      # CloudEvents-wrapped §11 error, correlated to the original command.
+      contentType: application/cloudevents+json
       correlationId:
         location: '$message.header#/correlationId'
       payload:
-        type: object
-        required: [type, title, status]
-        properties:
-          type:
-            type: string
-          title:
-            type: string
-          status:
-            type: integer
+        allOf:
+          - $ref: './common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope'
+          - type: object
+            required: [data]
+            properties:
+              data:
+                $ref: './common/govstack-asyncapi-common.yaml#/components/schemas/GovStackAsyncError'
       examples:
         - name: sample
           payload:
-            type: about:blank
-            title: Payment rejected
-            status: 422
+            specversion: '1.0'
+            id: f68f9e59-f7aa-4efe-b3a1-4f893c0ce99d
+            source: urn:govstack:bb:pay
+            type: global.govstack.pay.payment.rejected
+            data:
+              type: about:blank
+              title: Payment rejected
+              code: global.govstack.pay.paymentRejected
+              traceId: 9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c
+              timestamp: '2026-07-10T12:41:05Z'

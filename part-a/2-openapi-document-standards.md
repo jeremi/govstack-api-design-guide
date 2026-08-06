@@ -1,5 +1,5 @@
 ---
-description: "Rules governing the canonical OpenAPI document: version, location, validation, metadata, and vendored shared components."
+description: "Rules governing the canonical OpenAPI document: version, location, validation, metadata, and conditional schema reuse."
 ---
 
 # 2. OpenAPI document standards
@@ -12,7 +12,7 @@ description: "Rules governing the canonical OpenAPI document: version, location,
 
 ## 2.1 OpenAPI 3.1 required <a href="#21-openapi-31-required" id="21-openapi-31-required"></a>
 
-**[M]** The spec **MUST** declare an explicit, published OpenAPI 3.1 patch version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.2.0-draft` qualify `openapi: 3.1.0`, `3.1.1`, and `3.1.2`; tooling **MUST** treat those patches as the same OAS 3.1 feature set. OpenAPI 3.0 and earlier **MUST NOT** be used. A later OpenAPI minor version, including 3.2, **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it.
+**[M]** The spec **MUST** declare an explicit, published OpenAPI 3.1 patch version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.1.0-draft` qualify `openapi: 3.1.0`, `3.1.1`, and `3.1.2`; tooling **MUST** treat those patches as the same OAS 3.1 feature set. OpenAPI 3.0 and earlier **MUST NOT** be used. A later OpenAPI minor version, including 3.2, **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it.
 
 ## 2.2 One canonical OpenAPI entrypoint <a href="#22-one-canonical-openapi-entrypoint" id="22-one-canonical-openapi-entrypoint"></a>
 
@@ -40,8 +40,10 @@ An operation-free shared component library under `api/common/` is referenced sup
 
 **[M+R]** Every operation **MUST** include `operationId` (camelCase, verb-noun), `summary`, `description`, and at least one `tag`.
 
-## 2.8 Pinned vendored common components <a href="#28-pinned-vendored-common-components" id="28-pinned-vendored-common-components"></a>
+## 2.8 Conditional vendored OpenAPI schemas <a href="#28-conditional-vendored-openapi-schemas" id="28-conditional-vendored-openapi-schemas"></a>
 
-**[M]** Shared components (security scheme, error schema, pagination, common headers, Operation resource) **MUST** be referenced from a pinned version of `govstack-openapi-common.yaml`. The file **MUST** be vendored locally at `api/common/govstack-openapi-common.yaml` in each BB repository, and the pinned version **MUST** be explicit.
+**[M+R]** A BB **MAY** reuse the schema-only `govstack-openapi-common.yaml` artifact for `Problem`, `ValidationProblem`, `FieldError`, and `PageInfo`. If it does, the file **MUST** be vendored locally at `api/common/govstack-openapi-common.yaml`, its version **MUST** be pinned explicitly, and the BB **MUST** reference the named schemas rather than copy them. A BB that does not reuse the artifact **MUST** define equivalent schemas locally that satisfy [§11](../part-c/11-errors.md) and [§12](../part-c/12-pagination-filtering-sorting.md).
 
-Vendoring is required because GovStack BBs are deployed in air-gapped or limited-connectivity environments where remote `$ref` resolution is unreliable.
+Security schemes, parameters, headers, Response Objects, examples, and Operation resources **MUST** be defined locally because their values and semantics belong to the BB contract. They are not part of the shared OpenAPI artifact.
+
+Vendoring is required when reuse is chosen because GovStack BBs are deployed in air-gapped or limited-connectivity environments where remote `$ref` resolution is unreliable.

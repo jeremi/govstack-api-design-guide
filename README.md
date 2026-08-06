@@ -5,10 +5,11 @@ description: "The rules every GovStack Building Block API specification must fol
 # GovStack Cross-BB API Design Guide
 
 {% hint style="warning" %}
-**Status: DRAFT v0.2, for GovStack committee feedback.** This guide is not yet ratified. It supersedes the v0.1 document circulated on 2026-05-31; the [version history](version-history.md) lists every change, and [How to use this guide](how-to-use-this-guide.md) maps the old section numbers to the new ones.
+**Status: DRAFT, for GovStack committee feedback.** This guide has not been
+published or ratified.
 {% endhint %}
 
-**Author:** Jeremi Joslin · **Date:** 2026-07-10
+**Author:** Jeremi Joslin
 
 ## Start here
 
@@ -18,7 +19,7 @@ description: "The rules every GovStack Building Block API specification must fol
 
 ## Executive summary
 
-GovStack has standardised a great deal, but never a single API design guide that every Building Block follows. In its absence each BB team made reasonable local choices that, predictably, diverged. The rules below were drafted against the published Building Block API specifications as they stood in 2026, so this guide closes gaps observed in those specifications, not hypothetical ones.
+GovStack has standardised a great deal, but never a single API design guide that every Building Block follows. In its absence each BB team made reasonable local choices that, predictably, diverged. The rules below address gaps observed in published Building Block API specifications, not hypothetical ones.
 
 The GovStack Cross-BB API Design Guide defines the rules every Building Block API specification must follow, so that an integrator combining several BBs into a national digital platform sees consistent shapes for authentication, errors, identifiers, pagination, events, and lifecycle. It governs OpenAPI 3.1 REST surfaces, CloudEvents event payloads, OpenAPI webhooks, and AsyncAPI 3.0 documentation for brokered event channels and event streams. Operational behaviour (token validation, key rotation, audit logging) and ecosystem governance (ratification, enforcement, exception lifecycle) are out of scope.
 
@@ -33,11 +34,11 @@ The substantive rules establish:
 - Standard HTTP status codes used consistently, with `ETag` / `If-Match` for optimistic concurrency ([§7](part-b/7-http-status-codes.md)).
 - Standard headers for authentication, idempotency, localisation, correlation, and rate limiting; no personal data in URLs, channel addresses, routing keys, or message headers ([§8](part-b/8-headers.md), [§17](part-d/17-asyncapi-channel-rules.md)).
 - `camelCase` JSON, RFC 3339 timestamps, decimal-string monetary amounts, E.164 phone numbers, ISO code lists for country / currency / language ([§9](part-c/9-json-conventions-and-naming.md)–[§10](part-c/10-data-types-and-formats.md)).
-- One ecosystem-wide error format (RFC 9457 Problem Details, which obsoletes RFC 7807) with GovStack extensions for stable error codes, trace IDs, and field-level validation ([§11](part-c/11-errors.md)).
+- One ecosystem-wide HTTP error format based on RFC 9457 Problem Details, with a stable `https://govstack.global/problems/...` type URI, trace IDs, and field-level validation ([§11](part-c/11-errors.md)).
 - Cursor-based pagination by default, with a single envelope shape for collection responses ([§12](part-c/12-pagination-filtering-sorting.md)).
 - OAuth 2.0 + OIDC for citizen-facing operations, mutual TLS or OAuth client credentials for BB-to-BB calls ([§13](part-d/13-authentication-and-authorisation.md)).
 - An `Idempotency-Key` contract for retry-safe POSTs ([§14](part-d/14-idempotency.md)).
-- A single async pattern: `202 Accepted` plus an Operation resource referenced from a shared YAML file ([§15](part-d/15-asynchronous-operations.md)).
+- A single async pattern: `202 Accepted` plus a locally defined Operation resource with a common baseline shape ([§15](part-d/15-asynchronous-operations.md)).
 - CloudEvents as the normative event envelope and type/source model across transports; OpenAPI `webhooks` and AsyncAPI 3.0 document the event surfaces ([§16](part-d/16-cloudevents-and-webhooks.md), [§17](part-d/17-asyncapi-channel-rules.md)).
 - SemVer with major versions visible in the relevant surface contract, additive minor changes, deprecation and sunset headers ([§18](part-d/18-compatibility-and-lifecycle.md)).
 - A single language model based on `Accept-Language` and `Content-Language` ([§19](part-e/19-localisation.md)).

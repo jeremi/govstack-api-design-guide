@@ -12,7 +12,7 @@ description: "Rules governing the canonical AsyncAPI document: version, location
 
 ## 3.1 AsyncAPI 3.0.0 required <a href="#31-asyncapi-300-required" id="31-asyncapi-300-required"></a>
 
-**[M]** An event-driven BB surface other than HTTP push webhooks **MUST** be documented in AsyncAPI 3 and **MUST** declare an explicit, published AsyncAPI 3 version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.2.0-draft` qualify `asyncapi: 3.0.0` and `asyncapi: 3.1.0`; every rule in this guide applies identically to both. AsyncAPI 2.x and earlier **MUST NOT** be used for new GovStack event-driven surfaces. A later AsyncAPI version **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it.
+**[M]** An event-driven BB surface other than HTTP push webhooks **MUST** be documented in AsyncAPI 3 and **MUST** declare an explicit, published AsyncAPI 3 version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.1.0-draft` qualify `asyncapi: 3.0.0` and `asyncapi: 3.1.0`; every rule in this guide applies identically to both. AsyncAPI 2.x and earlier **MUST NOT** be used for new GovStack event-driven surfaces. A later AsyncAPI version **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it.
 
 ## 3.2 One canonical AsyncAPI entrypoint <a href="#32-one-canonical-asyncapi-entrypoint" id="32-one-canonical-asyncapi-entrypoint"></a>
 
@@ -38,11 +38,11 @@ An operation-free shared component library under `api/common/` is referenced sup
 
 ## 3.7 Complete AsyncAPI operation metadata <a href="#37-complete-asyncapi-operation-metadata" id="37-complete-asyncapi-operation-metadata"></a>
 
-**[M+R]** Every AsyncAPI operation **MUST** include an operation identifier (the key under `operations`), `action` (`send` or `receive`), `summary`, `description`, at least one `tag`, a referenced `channel`, and at least one referenced CloudEvents message. In AsyncAPI 3.0, root-level operation `messages` **MUST** reference message entries defined on the operation's referenced channel. Channel message entries **MAY** in turn reference reusable message definitions under `components.messages`.
+**[M+R]** Every AsyncAPI operation **MUST** include an operation identifier (the key under `operations`), `action` (`send` or `receive`), `summary`, `description`, at least one `tag`, a referenced `channel`, and at least one referenced message. In AsyncAPI 3.0, root-level operation `messages` **MUST** reference message entries defined on the operation's referenced channel. Channel message entries **MAY** in turn reference reusable message definitions under `components.messages`. [§17.6](../part-d/17-asyncapi-channel-rules.md#176-structured-cloudevents-json-payloads)–[§17.7](../part-d/17-asyncapi-channel-rules.md#177-shared-cloudevents-envelope-schema) define which domain messages use CloudEvents and how asynchronous rejection messages reuse the common error schema.
 
 ## 3.8 Pinned vendored AsyncAPI components <a href="#38-pinned-vendored-asyncapi-components" id="38-pinned-vendored-asyncapi-components"></a>
 
-**[M]** Shared event documentation components (CloudEvents message schema, common message headers, common error message, signing metadata, security schemes, delivery-semantics extensions) **MUST** be referenced from a pinned version of `govstack-asyncapi-common.yaml`. The file **MUST** be vendored locally at `api/common/govstack-asyncapi-common.yaml` in each BB repository, and the pinned version **MUST** be explicit.
+**[M]** A BB that documents GovStack domain events **MUST** reference `CloudEventEnvelope` from a pinned version of `govstack-asyncapi-common.yaml`. A BB that documents asynchronous rejections **MUST** reference `GovStackAsyncError`, and **MUST** reuse `AsyncFieldError` when it exposes field-level errors. The common file **MUST** be vendored locally at `api/common/govstack-asyncapi-common.yaml`, and the pinned version **MUST** be explicit. BB specifications own their Message Objects, security schemes, headers, examples, and protocol bindings because those objects require BB- and transport-specific values.
 
 ## 3.9 JSON Schema payload conventions <a href="#39-json-schema-payload-conventions" id="39-json-schema-payload-conventions"></a>
 

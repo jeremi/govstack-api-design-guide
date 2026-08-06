@@ -18,6 +18,7 @@ operations:
 components:
   messages:
     PersonCreated:
+      contentType: application/cloudevents+json
       payload:
         type: object
         required: [specversion, id, source, type, data]
@@ -44,3 +45,14 @@ components:
             type: global.govstack.reg.v1.person.created
             data:
               personId: p-1
+    LocalJsonCommand:
+      contentType: application/json
+      payload:
+        type: object
+        properties:
+          command:
+            type: string
+      examples:
+        - name: sample
+          payload:
+            command: refresh

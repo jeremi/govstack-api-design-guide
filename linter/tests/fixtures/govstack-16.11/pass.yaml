@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Subscriptions API
   version: 1.0.0
-  description: Subscription surface exposes create/list/rotate-secret/delete.
+  description: Subscription surface exposes create/list/delete.
   contact:
     name: Sample BB Team
     url: https://example.org/contact
@@ -39,18 +39,3 @@ paths:
       responses:
         '204':
           description: No Content
-  /v1/subscriptions/{subscriptionId}/rotate-secret:
-    post:
-      operationId: rotateSubscriptionSecret
-      summary: Rotate the signing secret
-      description: Rotates the subscription signing secret.
-      tags: [subscriptions]
-      parameters:
-        - name: subscriptionId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: OK

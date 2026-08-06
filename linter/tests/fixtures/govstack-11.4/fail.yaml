@@ -21,14 +21,23 @@ paths:
           content:
             application/json:
               schema: { type: object }
-        '400':
-          description: Bad request
+        '422':
+          description: Field validation failed
           content:
             application/problem+json:
               schema:
                 type: object
-                required: [type, title, status]
+                required: [type, title, status, traceId, errors]
                 properties:
                   type: { type: string }
                   title: { type: string }
                   status: { type: integer }
+                  traceId: { type: string }
+                  errors:
+                    type: array
+                    items:
+                      type: object
+                      required: [pointer]
+                      properties:
+                        pointer: { type: string }
+                        code: { type: string }

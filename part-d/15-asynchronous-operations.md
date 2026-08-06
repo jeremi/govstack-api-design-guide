@@ -1,5 +1,5 @@
 ---
-description: "The shared Operation resource shape and polling pattern BBs use for operations that cannot complete synchronously."
+description: "The local Operation resource shape and polling pattern BBs use for operations that cannot complete synchronously."
 ---
 
 # 15. Asynchronous operations
@@ -7,26 +7,26 @@ description: "The shared Operation resource shape and polling pattern BBs use fo
 {% hint style="info" %}
 **Intent.** A single async pattern across BBs. Without one, every BB picks a different status code (200, 201, or 202) and a different polling shape, and integrators write per-BB glue. In this guide, *Operation resource* (capitalised) is the polling resource defined in this section; lowercase *operation* means an OpenAPI or AsyncAPI operation.
 
-**Applies to:** OpenAPI surface (HTTP/REST). The Operation resource shape is reusable across surfaces; the `202` and polling mechanics are HTTP-specific.
+**Applies to:** OpenAPI surface (HTTP/REST). The Operation resource is defined locally by each BB; the `202` and polling mechanics are HTTP-specific.
 {% endhint %}
 
 ## 15.1 202 with Operation Location <a href="#151-202-with-operation-location" id="151-202-with-operation-location"></a>
 
 **[M+R]** Operations that cannot complete synchronously **MUST** return `202 Accepted` with a `Location` header pointing to an Operation resource and **MUST** return the current Operation representation in the response body.
 
-## 15.2 Shared Operation resource shape <a href="#152-shared-operation-resource-shape" id="152-shared-operation-resource-shape"></a>
+## 15.2 Local Operation resource shape <a href="#152-local-operation-resource-shape" id="152-local-operation-resource-shape"></a>
 
-**[M]** The Operation resource **MUST** be declared once in `govstack-openapi-common.yaml` and `$ref`'d by all BBs. The default shape is `{ id, status, result, error, createdAt, updatedAt, progress? }`, modelled on Google AIP-151 (Long-Running Operations). A stricter AIP-151 mirror (with `done` and `metadata`) is a defensible alternative. [`[OPEN-14-A]`](../appendix/b-open-questions.md)
+**[M+R]** A BB that exposes long-running work **MUST** define its Operation schema locally. Its identifier **MUST** be an opaque string and clients **MUST NOT** infer a UUID or any other internal format. The local schema **MUST** document how the identifier, lifecycle state, result, error, and any progress metadata are represented, including when each state-dependent field is present. This guide does not fix those field names or shapes. A shared Operation schema is deferred until multiple BBs demonstrate a stable reusable contract.
 
-## 15.3 Fixed Operation status enum <a href="#153-fixed-operation-status-enum" id="153-fixed-operation-status-enum"></a>
+## 15.3 Documented Operation lifecycle <a href="#153-documented-operation-lifecycle" id="153-documented-operation-lifecycle"></a>
 
-**[M]** Operation `status` **MUST** be drawn from a fixed enumeration declared in the common file. The default set is `PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED`, `CANCELLED`. AIP-151's boolean `done` plus a result-or-error union is a defensible alternative. [`[OPEN-14-A]`](../appendix/b-open-questions.md)
+**[M+R]** The local Operation contract **MUST** distinguish terminal from non-terminal states and **MUST** document the result, error, polling, and cancellation semantics for each applicable state. This guide does not prescribe a status enum or lifecycle model.
 
 **Example (informative).** An in-progress Operation resource:
 
 ```json
 {
-  "id": "9c3d2f6a-5b1e-4d7c-a8f0-1e2d3c4b5a69",
+  "id": "op_7JpQ9m2W4xK8fR3cT6vN1",
   "status": "RUNNING",
   "createdAt": "2026-07-10T08:30:00Z",
   "updatedAt": "2026-07-10T08:30:05Z",

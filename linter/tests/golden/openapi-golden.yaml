@@ -7,8 +7,8 @@
 #
 # It deliberately exercises the guide's shapes: /v1 kebab-case paths, camelCase
 # params/properties, described schemas (§4.1) with examples (§4.2), the §5.9
-# health endpoint family, RFC 9457 problem+json error envelopes with the
-# GovStack extension fields and field-level errors[] (§11), cursor pagination
+# health endpoint family, local error Response Objects/examples built on the
+# external RFC 9457 Problem and ValidationProblem schemas (§11), cursor pagination
 # (§12), a creating POST with Idempotency-Key + Location (§8.3/§14.1), traceparent
 # Trace Context correlation (§8.4), ETag/If-Match optimistic concurrency (§7.16/§7.17), merge-
 # patch PATCH (§6.4), async long-running Operations (§15), CloudEvents webhooks +
@@ -21,9 +21,8 @@
 # segment casing, §12.x pagination, §7.16 ETag), scopes the §5.9
 # application/json media type to the SUCCESS (200) response so the §11.1
 # problem+json error responses are satisfiable, and counts only non-param
-# segments toward §5.4 max nesting depth so the §15.5/§16.11 mandated action
-# sub-resource paths (/v1/operations/{operationId}/cancel,
-# .../subscriptions/{id}/rotate-secret) stay within two levels.
+# segments toward §5.4 max nesting depth so the §15.5 action sub-resource path
+# (/v1/operations/{operationId}/cancel) stays within two levels.
 openapi: 3.1.0
 info:
   title: GovStack Registry Building Block API
@@ -42,8 +41,8 @@ info:
     name: CC-BY-4.0
     url: https://creativecommons.org/licenses/by/4.0/
   x-govstack-api-guide:
-    version: 0.2.0-draft
-    rulesetVersion: 0.2.0-draft
+    version: 0.1.0-draft
+    rulesetVersion: 0.1.0-draft
 servers:
   - url: https://api.example.gov/registry
     description: Production gateway for the Registry Building Block.
@@ -174,6 +173,8 @@ paths:
           $ref: '#/components/responses/Forbidden'
         '409':
           $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationFailed'
         '500':
           $ref: '#/components/responses/ServerError'
   /v1/registrants/{registrantId}:
@@ -520,9 +521,8 @@ paths:
       operationId: createSubscription
       summary: Create a subscription
       description: >-
-        Registers a webhook subscription for registrant lifecycle events. Returns
-        the created subscription including its initial signing secret. Idempotent
-        via Idempotency-Key.
+        Registers a webhook subscription for registrant lifecycle events and
+        returns the created subscription. Idempotent via Idempotency-Key.
       tags: [Subscriptions]
       security:
         - registryOAuth:
@@ -586,41 +586,6 @@ paths:
           $ref: '#/components/responses/NotFound'
         '500':
           $ref: '#/components/responses/ServerError'
-  /v1/subscriptions/{subscriptionId}/rotate-secret:
-    parameters:
-      - $ref: '#/components/parameters/SubscriptionId'
-    post:
-      operationId: rotateSubscriptionSecret
-      summary: Rotate a subscription signing secret
-      description: >-
-        Rotates the HMAC signing secret used to compute the GovStack-Signature on
-        deliveries for this subscription, per guide §16.11.
-      tags: [Subscriptions]
-      security:
-        - registryOAuth:
-            - bb:registry:subscription:manage
-      parameters:
-        - $ref: '#/components/parameters/Traceparent'
-      responses:
-        '200':
-          description: The secret was rotated; the new secret is returned once.
-          headers:
-            traceparent:
-              $ref: '#/components/headers/Traceparent'
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SubscriptionSecret'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/ServerError'
 webhooks:
   registrantRegistered:
     post:
@@ -628,12 +593,9 @@ webhooks:
       summary: Registrant registered event
       description: >-
         Delivered to a subscriber's callback URL when a registrant is registered.
-        The body is a structured CloudEvents 1.0 envelope; the delivery carries a
-        GovStack-Signature header the receiver verifies against the subscription
-        secret.
+        The body is a structured CloudEvents 1.0 envelope. This baseline example
+        uses authenticated transport and does not opt into message signing.
       tags: [Subscriptions]
-      parameters:
-        - $ref: '#/components/parameters/GovStackSignature'
       requestBody:
         required: true
         description: A CloudEvents 1.0 envelope wrapping the registrant event.
@@ -723,7 +685,7 @@ components:
       description: Opaque identifier of a long-running Operation.
       schema:
         type: string
-        format: uuid
+        minLength: 1
     SubscriptionId:
       name: subscriptionId
       in: path
@@ -732,15 +694,6 @@ components:
       schema:
         type: string
         format: uuid
-    GovStackSignature:
-      name: GovStack-Signature
-      in: header
-      required: true
-      description: >-
-        Detached HMAC signature of the event body, for the receiver to verify
-        authenticity against the subscription secret (§16.6).
-      schema:
-        type: string
     PageSize:
       name: pageSize
       in: query
@@ -816,7 +769,22 @@ components:
         ETag:
           $ref: '#/components/headers/ETag'
     BadRequest:
-      description: The request was malformed or failed field-level validation.
+      description: The request could not be parsed or its non-field parameters were invalid.
+      headers:
+        Cache-Control:
+          $ref: '#/components/headers/CacheControl'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://govstack.global/problems/registry/bad-request
+            title: Bad request
+            status: 400
+            detail: The cursor parameter is malformed.
+            traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
+    ValidationFailed:
+      description: One or more request fields failed validation.
       headers:
         Cache-Control:
           $ref: '#/components/headers/CacheControl'
@@ -824,6 +792,15 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/ValidationProblem'
+          example:
+            type: https://govstack.global/problems/registry/invalid-field
+            title: Validation failed
+            status: 422
+            detail: One or more fields are invalid.
+            traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
+            errors:
+              - pointer: /emailAddress
+                message: Must be a valid email address.
     Unauthorized:
       description: Authentication is required or the supplied credentials are invalid.
       headers:
@@ -835,6 +812,11 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          example:
+            type: https://govstack.global/problems/registry/authentication-required
+            title: Authentication required
+            status: 401
+            traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
     Forbidden:
       description: The authenticated principal lacks a required OAuth scope.
       headers:
@@ -844,6 +826,11 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          example:
+            type: https://govstack.global/problems/registry/permission-denied
+            title: Permission denied
+            status: 403
+            traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
     NotFound:
       description: The requested resource does not exist.
       headers:
@@ -853,6 +840,11 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          example:
+            type: https://govstack.global/problems/registry/resource-not-found
+            title: Resource not found
+            status: 404
+            traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
     Conflict:
       description: The request conflicts with the current state of the resource.
       headers:
@@ -862,6 +854,11 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          example:
+            type: https://govstack.global/problems/registry/state-conflict
+            title: State conflict
+            status: 409
+            traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
     PreconditionFailed:
       description: The If-Match precondition did not hold; the resource was modified.
       headers:
@@ -871,6 +868,11 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          example:
+            type: https://govstack.global/problems/registry/precondition-failed
+            title: Precondition failed
+            status: 412
+            traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
     UnsupportedMediaType:
       description: The request media type is not supported by this endpoint.
       headers:
@@ -880,6 +882,11 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          example:
+            type: https://govstack.global/problems/registry/unsupported-media-type
+            title: Unsupported media type
+            status: 415
+            traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
     ServerError:
       description: An unexpected error occurred while processing the request.
       headers:
@@ -889,6 +896,11 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          example:
+            type: https://govstack.global/problems/registry/internal-error
+            title: Internal error
+            status: 500
+            traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
     ServiceUnavailable:
       description: The service is temporarily unable to accept work (guide §5.9).
       headers:
@@ -898,94 +910,18 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+          example:
+            type: https://govstack.global/problems/registry/service-unavailable
+            title: Service unavailable
+            status: 503
+            traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
   schemas:
     Problem:
-      type: object
-      description: >-
-        RFC 9457 problem details envelope with GovStack extension fields. Used for
-        every 4xx and 5xx response.
-      required: [type, title, status, code, traceId, timestamp]
-      properties:
-        type:
-          type: string
-          format: uri
-          description: URI reference identifying the problem type.
-        title:
-          type: string
-          description: Short, human-readable summary of the problem type.
-        status:
-          type: integer
-          description: HTTP status code duplicated in the body for convenience.
-        detail:
-          type: string
-          description: Human-readable explanation specific to this occurrence.
-        instance:
-          type: string
-          format: uri-reference
-          description: URI reference identifying this specific occurrence.
-        code:
-          type: string
-          description: >-
-            Stable, namespaced GovStack error code (§11.5), reverse-DNS
-            global.govstack.{bb-code}.{errorName}.
-          example: global.govstack.registry.requestFailed
-        traceId:
-          type: string
-          description: Distributed-trace identifier correlating this error to server logs.
-        timestamp:
-          type: string
-          format: date-time
-          description: RFC 3339 timestamp at which the error was produced.
-      examples:
-        - type: https://docs.example.gov/registry/problems/request-failed
-          title: Request failed
-          status: 500
-          detail: The request could not be processed.
-          instance: /v1/registrants/6f9619ff-8b86-d011-b42d-00cf4fc964ff
-          code: global.govstack.registry.requestFailed
-          traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
-          timestamp: '2026-07-10T12:34:56Z'
+      $ref: '../../../../api/common/govstack-openapi-common.yaml#/components/schemas/Problem'
     ValidationProblem:
-      description: >-
-        Problem details for field-level validation failures (§11.4): the standard
-        problem envelope plus an errors array pinpointing each offending field.
-      allOf:
-        - $ref: '#/components/schemas/Problem'
-        - type: object
-          description: The field-level errors extension of the problem envelope.
-          required: [errors]
-          properties:
-            errors:
-              type: array
-              description: One entry per field that failed validation.
-              items:
-                $ref: '#/components/schemas/FieldError'
-      examples:
-        - type: https://docs.example.gov/registry/problems/validation
-          title: Validation failed
-          status: 400
-          detail: One or more fields are invalid.
-          code: global.govstack.registry.validationFailed
-          traceId: 1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d
-          timestamp: '2026-07-10T12:34:56Z'
-          errors:
-            - pointer: /emailAddress
-              code: global.govstack.registry.invalidEmail
-              message: emailAddress must be a valid email address.
+      $ref: '../../../../api/common/govstack-openapi-common.yaml#/components/schemas/ValidationProblem'
     FieldError:
-      type: object
-      description: A single field-level validation error.
-      required: [pointer, code, message]
-      properties:
-        pointer:
-          type: string
-          description: JSON Pointer to the offending field in the request body.
-        code:
-          type: string
-          description: Stable, namespaced code identifying the validation failure.
-        message:
-          type: string
-          description: Human-readable description of what is wrong with the field.
+      $ref: '../../../../api/common/govstack-openapi-common.yaml#/components/schemas/FieldError'
     HealthStatus:
       type: object
       description: >-
@@ -1193,21 +1129,10 @@ components:
           registrationStatus: ACTIVE
           pageSize: 20
     PageInfo:
-      type: object
-      description: Cursor pagination metadata (§12.3).
-      required: [nextCursor, hasMore]
-      properties:
-        nextCursor:
-          type: [string, 'null']
-          description: >-
-            Opaque cursor to pass as the cursor parameter to fetch the next page;
-            null on the last page.
-        hasMore:
-          type: boolean
-          description: Whether more items exist beyond this page.
-      examples:
-        - nextCursor: b3BhcXVlLWN1cnNvci0y
-          hasMore: true
+      description: >-
+        Page metadata. total, when present, is exact and describes the
+        collection at the time this page is generated.
+      $ref: '../../../../api/common/govstack-openapi-common.yaml#/components/schemas/PageInfo'
     RegistrantPage:
       type: object
       description: A cursor-paginated page of registrant records.
@@ -1230,7 +1155,6 @@ components:
               updatedAt: '2026-07-01T14:30:00Z'
           pageInfo:
             nextCursor: b3BhcXVlLWN1cnNvci0y
-            hasMore: true
     SubscriptionPage:
       type: object
       description: A cursor-paginated page of webhook subscriptions.
@@ -1254,7 +1178,6 @@ components:
               updatedAt: '2026-06-01T08:00:00Z'
           pageInfo:
             nextCursor: null
-            hasMore: false
     BulkImportRequest:
       type: object
       description: Instructions for a long-running bulk import.
@@ -1279,7 +1202,7 @@ components:
       properties:
         id:
           type: string
-          format: uuid
+          minLength: 1
           description: Opaque identifier of the Operation.
         status:
           type: string
@@ -1311,7 +1234,7 @@ components:
           format: date-time
           description: RFC 3339 timestamp when the Operation last changed state.
       examples:
-        - id: 3a7c1e94-2b6d-4f0a-9c1e-8d5f6a7b0c11
+        - id: op_7JpQ9m2W4xK8fR3cT6vN1
           status: RUNNING
           progress: 42
           result: null
@@ -1342,11 +1265,6 @@ components:
           description: Whether the subscription is ACTIVE or PAUSED.
           enum: [ACTIVE, PAUSED]
           x-extensible-enum: true
-        secret:
-          type: string
-          description: >-
-            Current signing secret; returned only at creation and rotation, then
-            masked.
         createdAt:
           type: string
           format: date-time
@@ -1382,21 +1300,6 @@ components:
         - callbackUrl: https://partner.example.org/hooks/registry
           eventTypes:
             - global.govstack.registry.registrant.registered
-    SubscriptionSecret:
-      type: object
-      description: A freshly rotated subscription signing secret.
-      required: [secret, rotatedAt]
-      properties:
-        secret:
-          type: string
-          description: The new signing secret; shown once and not retrievable later.
-        rotatedAt:
-          type: string
-          format: date-time
-          description: RFC 3339 timestamp when the secret was rotated.
-      examples:
-        - secret: whsec_9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c
-          rotatedAt: '2026-07-10T12:34:56Z'
     RegistrantRegisteredEvent:
       type: object
       description: >-

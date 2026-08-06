@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Subscriptions API
   version: 1.0.0
-  description: Subscription surface is missing a rotate-secret interface.
+  description: Subscription surface is missing a delete interface.
   contact:
     name: Sample BB Team
     url: https://example.org/contact
@@ -25,10 +25,10 @@ paths:
         '200':
           description: OK
   /v1/subscriptions/{subscriptionId}:
-    delete:
-      operationId: deleteSubscription
-      summary: Delete a subscription
-      description: Removes a webhook subscription.
+    get:
+      operationId: getSubscription
+      summary: Get a subscription
+      description: Returns one webhook subscription but does not provide deletion.
       tags: [subscriptions]
       parameters:
         - name: subscriptionId

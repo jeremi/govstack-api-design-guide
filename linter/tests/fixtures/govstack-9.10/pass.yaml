@@ -6,7 +6,7 @@ paths:
   /things:
     get:
       operationId: listThings
-      x-govstack-delivery: atLeastOnce
+      x-govstack-deprecated: true
       responses:
         '200':
           description: ok

@@ -21,12 +21,6 @@ components:
     MediaType:
       type: string
       enum: [application/json, application/problem+json]
-    DeliveryGuarantee:
-      type: string
-      enum: [atMostOnce, atLeastOnce, effectivelyOnce]
-    DeliveryCapability:
-      type: string
-      enum: [supported, unsupported, notApplicable]
     ErrorCode:
       type: string
       enum: [global.govstack.identity.personNotFound]

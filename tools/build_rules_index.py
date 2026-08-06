@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 GUIDE_NAME = "GovStack Cross-BB API Design Guide"
-GUIDE_VERSION = "0.2.0-draft"
+GUIDE_VERSION = "0.1.0-draft"
 
 # Regex for a heading line carrying an explicit anchor tag, e.g.
 #   ## 2.1 OpenAPI 3.1.0 required <a href="#21-openapi-310-required" id="21-openapi-310-required"></a>

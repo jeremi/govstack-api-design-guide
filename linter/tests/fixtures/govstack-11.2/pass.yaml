@@ -28,11 +28,9 @@ paths:
             application/problem+json:
               schema:
                 type: object
-                required: [type, title, status, code, traceId, timestamp]
+                required: [type, title, status, traceId]
                 properties:
                   type: { type: string }
                   title: { type: string }
                   status: { type: integer }
-                  code: { type: string }
                   traceId: { type: string }
-                  timestamp: { type: string, format: date-time }

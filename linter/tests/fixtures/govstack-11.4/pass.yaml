@@ -22,22 +22,34 @@ paths:
             application/json:
               schema: { type: object }
         '400':
-          description: Bad request
+          description: Malformed request without field attribution
           content:
             application/problem+json:
               schema:
                 type: object
-                required: [type, title, status, errors]
+                required: [type, title, status, traceId]
                 properties:
                   type: { type: string }
                   title: { type: string }
                   status: { type: integer }
+                  traceId: { type: string }
+        '422':
+          description: Field validation failed
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                required: [type, title, status, traceId, errors]
+                properties:
+                  type: { type: string }
+                  title: { type: string }
+                  status: { type: integer }
+                  traceId: { type: string }
                   errors:
                     type: array
                     items:
                       type: object
-                      required: [pointer, code, message]
+                      required: [pointer, message]
                       properties:
                         pointer: { type: string }
-                        code: { type: string }
                         message: { type: string }

@@ -37,7 +37,6 @@ paths:
                     items: { type: object }
                   pageInfo:
                     type: object
-                    required: [nextCursor, hasMore]
+                    required: [nextCursor]
                     properties:
-                      nextCursor: { type: string, nullable: true }
-                      hasMore: { type: boolean }
+                      nextCursor: { type: [string, 'null'], minLength: 1 }

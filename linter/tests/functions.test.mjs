@@ -19,8 +19,12 @@ import mediaTypeExpected from '../functions/mediaTypeExpected.js';
 import successResponseSchema from '../functions/s07-successResponseSchema.js';
 import creationResponses from '../functions/s07-creationResponses.js';
 import baselineResponses from '../functions/s07-baselineResponses.js';
+import bbCode from '../functions/s09-bbCode.js';
+import fieldErrors from '../functions/s11-fieldErrors.js';
+import problemType from '../functions/s11-problemType.js';
 import collectionPagination from '../functions/s12-collectionPagination.js';
 import schemeExists from '../functions/s13-schemeExists.js';
+import cloudEventsPayload from '../functions/s17-cloudEventsPayload.js';
 import { walkSchema } from '../functions/lib/schemaWalk.js';
 import { isStandardUnversionedPath } from '../functions/lib/standardEndpoints.js';
 
@@ -42,8 +46,12 @@ const ALL = {
   successResponseSchema,
   creationResponses,
   baselineResponses,
+  bbCode,
+  fieldErrors,
+  problemType,
   collectionPagination,
   schemeExists,
+  cloudEventsPayload,
 };
 test('all functions return undefined on bad input, never throw', () => {
   for (const [name, fn] of Object.entries(ALL)) {
@@ -95,6 +103,13 @@ test('schemaDescriptions: properties vs all mode', () => {
   assert.equal(count(schemaDescriptions(schema, { mode: 'all' })), 1); // b node
   const noRoot = { type: 'object', properties: { a: { type: 'string', description: 'A' } } };
   assert.equal(count(schemaDescriptions(noRoot, { includeRoot: true })), 1); // root
+
+  const assertion = {
+    type: 'object',
+    description: 'A schema that rejects a prohibited property.',
+    not: { required: ['prohibitedField'] },
+  };
+  assert.equal(count(schemaDescriptions(assertion, { mode: 'all' })), 0);
 });
 
 test('responseHeaderRequired: header presence + companion status', () => {
@@ -196,6 +211,116 @@ test('s12-collectionPagination: 5.10 and maxItems carve-outs, pageParam, pageSiz
   assert.equal(count(collectionPagination(noMaximum, { mode: 'pageSizeBounds' }, ctx('/v1/things'))), 1);
   const bothBounds = withSchema({ type: 'object' }, [{ name: 'pageSize', schema: { default: 20, maximum: 100 } }]);
   assert.equal(count(collectionPagination(bothBounds, { mode: 'pageSizeBounds' }, ctx('/v1/things'))), 0);
+
+  const cursorParams = [{ name: 'pageSize' }, { name: 'cursor' }];
+  const cursorEnvelope = withSchema({
+    type: 'object',
+    required: ['items', 'pageInfo'],
+    properties: {
+      items: { type: 'array' },
+      pageInfo: {
+        type: 'object',
+        required: ['nextCursor'],
+        properties: {
+          nextCursor: { type: ['string', 'null'], minLength: 1 },
+        },
+      },
+    },
+  }, cursorParams);
+  assert.equal(count(collectionPagination(cursorEnvelope, { mode: 'cursorEnvelope' }, ctx('/v1/things'))), 0);
+
+  const nonNullable = structuredClone(cursorEnvelope);
+  nonNullable.responses[200].content['application/json'].schema.properties.pageInfo.properties.nextCursor = {
+    type: 'string',
+    minLength: 1,
+  };
+  assert.equal(count(collectionPagination(nonNullable, { mode: 'cursorEnvelope' }, ctx('/v1/things'))), 1);
+
+  const permitsIntegerCursor = structuredClone(cursorEnvelope);
+  permitsIntegerCursor.responses[200].content['application/json'].schema.properties.pageInfo.properties.nextCursor = {
+    type: ['string', 'null', 'integer'],
+    minLength: 1,
+  };
+  assert.equal(count(collectionPagination(permitsIntegerCursor, { mode: 'cursorEnvelope' }, ctx('/v1/things'))), 1);
+
+  const permitsIntegerBranch = structuredClone(cursorEnvelope);
+  permitsIntegerBranch.responses[200].content['application/json'].schema.properties.pageInfo.properties.nextCursor = {
+    anyOf: [
+      { type: 'string', minLength: 1 },
+      { type: 'null' },
+      { type: 'integer' },
+    ],
+  };
+  assert.equal(count(collectionPagination(permitsIntegerBranch, { mode: 'cursorEnvelope' }, ctx('/v1/things'))), 1);
+
+  const declaresHasMore = structuredClone(cursorEnvelope);
+  declaresHasMore.responses[200].content['application/json'].schema.properties.pageInfo.properties.hasMore = {
+    type: 'boolean',
+  };
+  assert.equal(count(collectionPagination(declaresHasMore, { mode: 'cursorEnvelope' }, ctx('/v1/things'))), 1);
+});
+
+test('s09-bbCode: canonical problem-type URIs participate in the single-code check', () => {
+  const consistent = {
+    security: [{ oauth: ['bb:registry:records:read'] }],
+    example: { type: 'https://govstack.global/problems/registry/record-not-found' },
+  };
+  assert.equal(count(bbCode(consistent)), 0);
+
+  const inconsistent = structuredClone(consistent);
+  inconsistent.example.type = 'https://govstack.global/problems/payments/record-not-found';
+  assert.equal(count(bbCode(inconsistent)), 1);
+
+  const malformed = {
+    example: { type: 'https://govstack.global/problems/Registry/record-not-found' },
+  };
+  assert.equal(count(bbCode(malformed)), 1);
+});
+
+test('s11-fieldErrors: non-field problems are ignored and opted-in errors require pointer/message', () => {
+  const ordinaryProblem = {
+    type: 'object',
+    required: ['type', 'title', 'status', 'traceId'],
+    properties: { type: {}, title: {}, status: {}, traceId: {} },
+  };
+  assert.equal(fieldErrors(ordinaryProblem), undefined);
+
+  const valid = {
+    allOf: [
+      ordinaryProblem,
+      {
+        required: ['errors'],
+        properties: {
+          errors: {
+            type: 'array',
+            items: {
+              required: ['pointer', 'message'],
+              properties: { pointer: { type: 'string' }, message: { type: 'string' } },
+            },
+          },
+        },
+      },
+    ],
+  };
+  assert.equal(count(fieldErrors(valid)), 0);
+
+  const invalid = structuredClone(valid);
+  invalid.allOf[1].properties.errors.items.required = ['pointer'];
+  delete invalid.allOf[1].properties.errors.items.properties.message;
+  assert.equal(count(fieldErrors(invalid)), 2);
+});
+
+test('s11-problemType: validates literal media-type examples only when present', () => {
+  const good = {
+    example: {
+      type: 'https://govstack.global/problems/registry/record-not-found',
+      title: 'Not found',
+    },
+  };
+  assert.equal(count(problemType(good)), 0);
+  good.example.type = 'https://docs.example.gov/problems/not-found';
+  assert.equal(count(problemType(good)), 1);
+  assert.equal(problemType({ schema: { type: 'object' } }), undefined);
 });
 
 test('s13-schemeExists: types / oauthFlows / httpBearerFormats', () => {
@@ -222,15 +347,16 @@ test('envelopeShape: required / nested / const / enum / allOf', () => {
     required: ['items', 'pageInfo'],
     properties: {
       items: { type: 'array' },
-      pageInfo: { type: 'object', required: ['nextCursor', 'hasMore'], properties: { nextCursor: {}, hasMore: {} } },
+      pageInfo: { type: 'object', required: ['nextCursor'], properties: { nextCursor: {} } },
     },
   };
   assert.equal(
-    count(envelopeShape(page, { requiredProperties: ['items', 'pageInfo'], properties: { pageInfo: { requiredProperties: ['nextCursor', 'hasMore'] } } })),
+    count(envelopeShape(page, { requiredProperties: ['items', 'pageInfo'], properties: { pageInfo: { requiredProperties: ['nextCursor'] } } })),
     0,
   );
   const bad = { type: 'object', required: ['items'], properties: { items: { type: 'array' } } };
   assert.ok(count(envelopeShape(bad, { requiredProperties: ['items', 'pageInfo'] })) >= 1);
+  assert.equal(count(envelopeShape(bad, { forbiddenProperties: ['items'] })), 1);
 
   const event = { type: 'object', properties: { specversion: { const: '1.0' }, type: { const: 'x' } } };
   assert.equal(count(envelopeShape(event, { properties: { specversion: { const: '1.0' } } })), 0);
@@ -279,9 +405,9 @@ test('schemaFieldFormat: format / forbidType / mustDeclare', () => {
 });
 
 test('extensionShape: presence / enum / object shape / semver', () => {
-  assert.equal(count(extensionShape({}, { extension: 'x-govstack-delivery' })), 1); // required, absent
-  assert.equal(count(extensionShape({ 'x-govstack-delivery': 'atLeastOnce' }, { extension: 'x-govstack-delivery', enum: ['atMostOnce', 'atLeastOnce', 'effectivelyOnce'] })), 0);
-  assert.equal(count(extensionShape({ 'x-govstack-delivery': 'sometimes' }, { extension: 'x-govstack-delivery', enum: ['atMostOnce', 'atLeastOnce'] })), 1);
+  assert.equal(count(extensionShape({}, { extension: 'x-example-mode' })), 1); // required, absent
+  assert.equal(count(extensionShape({ 'x-example-mode': 'active' }, { extension: 'x-example-mode', enum: ['active', 'inactive'] })), 0);
+  assert.equal(count(extensionShape({ 'x-example-mode': 'unknown' }, { extension: 'x-example-mode', enum: ['active', 'inactive'] })), 1);
 
   const good = { 'x-govstack-api-guide': { version: '0.2.0' } };
   assert.equal(count(extensionShape(good, { extension: 'x-govstack-api-guide', valueType: 'object', requiredKeys: ['version'], semverKeys: ['version'] })), 0);
@@ -349,4 +475,33 @@ test('walkSchema: visits combinators and is cycle-safe', () => {
   let visits = 0;
   walkSchema(cyc, () => (visits += 1));
   assert.equal(visits, 1); // visited once, no infinite loop
+});
+
+test('s17-cloudEventsPayload: scopes non-CloudEvents and requires a local vendored ref', () => {
+  const localJson = {
+    contentType: 'application/json',
+    payload: { type: 'object', properties: { command: { type: 'string' } } },
+  };
+  assert.equal(cloudEventsPayload(localJson, {}, { path: [] }), undefined);
+
+  const localEnvelope = {
+    contentType: 'application/cloudevents+json',
+    payload: {
+      allOf: [
+        { $ref: '../../../../api/common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope' },
+      ],
+    },
+  };
+  assert.equal(
+    cloudEventsPayload(localEnvelope, { requireSharedReference: true }, { path: [] }),
+    undefined,
+  );
+
+  const remoteEnvelope = structuredClone(localEnvelope);
+  remoteEnvelope.payload.allOf[0].$ref =
+    'https://example.org/api/common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope';
+  assert.equal(
+    count(cloudEventsPayload(remoteEnvelope, { requireSharedReference: true }, { path: [] })),
+    1,
+  );
 });

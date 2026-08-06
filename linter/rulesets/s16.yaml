@@ -1,19 +1,17 @@
 # Rules for §16 CloudEvents and webhooks (OpenAPI/webhooks surface).
 #
-# Implements guide rules 16.1, 16.2, 16.3, 16.4, 16.6, 16.11. Source text:
+# Implements guide rules 16.1, 16.2, 16.3, 16.4, 16.11. Source text:
 # ../../rules.yaml. Severity policy and formats follow
 # ../README.md#rule-naming-and-severities.
 #
 # Scope note: §16 spans both the OpenAPI/webhooks and the AsyncAPI surfaces.
 # These rules target the OpenAPI document (formats: [oas3_1]); the AsyncAPI
-# clauses of 16.1 (brokered transports use AsyncAPI 3.0) and 16.6 (signature in
-# the message-metadata channel) are not enforced here — see the report Flags.
+# clause of 16.1 (brokered transports use AsyncAPI 3.0) is not enforced here.
 functionsDir: "../functions"
 functions:
   - envelopeShape
   - mediaTypeExpected
   - s16-eventField
-  - s16-signatureHeader
   - s16-subscriptionEndpoints
 rules:
   # 16.1 [M+R] — PROXY (bucket B), notched MUST -> warn.
@@ -68,7 +66,7 @@ rules:
   # convention. On the webhooks surface the event MUST be delivered as
   # `application/cloudevents+json`; a plain `application/json` body is the
   # CloudEvents binary content mode, whose body carries only `data` and so
-  # cannot be reconstructed for the 16.8 signature check.
+  # is not the structured event envelope required by the guide.
   govstack-16.2-structured:
     description: "webhook events must use CloudEvents structured content mode, not binary (guide 16.2, [M])."
     message: "[16.2][M] {{error}}"
@@ -125,30 +123,15 @@ rules:
         expected: "it must not identify a specific deployment host, pod, broker, queue, or environment"
         forbidPattern: '(?:^|[^a-z0-9])(?:dev|test|staging|stage|qa|uat|prod|production|preprod|sandbox|pod|broker|queue)(?:[^a-z0-9]|$)|localhost|\.svc(?:[./]|$)|\.cluster\.local|\.internal(?:[:/]|$)|(?:\d{1,3}\.){3}\d{1,3}|:\d{2,5}(?:/|$)'
 
-  # 16.6 [M+R] — on the OpenAPI/webhooks surface the signature MUST travel in an
-  # HTTP header named `GovStack-Signature`. Every webhook delivery must declare
-  # that header parameter (path-item or operation level). The AsyncAPI clause of
-  # 16.6 (signature in the message-metadata channel) is out of scope here.
-  govstack-16.6:
-    description: "every webhook must declare the GovStack-Signature header parameter (guide 16.6, [M+R])."
-    message: "[16.6][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#166-govstack-signature-header
-    severity: error
-    formats: [oas3_1]
-    given: $.webhooks[*]
-    then:
-      function: s16-signatureHeader
-      functionOptions:
-        field: GovStack-Signature
-
   # 16.11 [M+R] — PROXY (bucket B), notched MUST -> warn.
   # Verifies: when a subscription surface exists (paths named /subscriptions),
-  # it exposes create/list/rotate-secret/delete interfaces.
+  # it exposes create/list/delete interfaces. Conditional signing-key rotation
+  # is not checked because signing is optional and profile-specific.
   # Does NOT verify: that a BB which should offer subscriptions actually does
   # (an absent subscription surface is not flagged), nor the AsyncAPI
   # message-command control plane the guide also permits.
   govstack-16.11:
-    description: "subscription management must expose create/list/rotate-secret/delete (guide 16.11, [M+R], proxy)."
+    description: "subscription management must expose create/list/delete (guide 16.11, [M+R], proxy)."
     message: "[16.11][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#1611-subscription-management-interfaces
     severity: warn

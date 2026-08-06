@@ -12,7 +12,7 @@ description: "Rules governing URL path structure, resource naming, and version p
 
 ## 5.1 Major version in the path <a href="#51-major-version-in-the-path" id="51-major-version-in-the-path"></a>
 
-**[M]** Major version **MUST** appear in the URL path as `/v{N}/...` (e.g., `/v1/policies`). The standard unversioned endpoints of [§5.10](#510-standard-unversioned-endpoints) are the only exception. [`[OPEN-4-A]`](../appendix/b-open-questions.md)
+**[M]** Major version **MUST** appear in the URL path as `/v{N}/...` (e.g., `/v1/policies`). The standard unversioned endpoints of [§5.10](#510-standard-unversioned-endpoints) are the only exception. [`[OPEN-5-A]`](../appendix/b-open-questions.md)
 
 ## 5.2 Plural noun resources <a href="#52-plural-noun-resources" id="52-plural-noun-resources"></a>
 
@@ -24,7 +24,7 @@ description: "Rules governing URL path structure, resource naming, and version p
 
 ## 5.4 Shallow path nesting <a href="#54-shallow-path-nesting" id="54-shallow-path-nesting"></a>
 
-**[M]** Path hierarchy **SHOULD** be shallow, with at most two levels of nesting after `/v{N}/`. Deep nesting makes paths hard to read and discourages addressable sub-resources. [`[OPEN-4-C]`](../appendix/b-open-questions.md)
+**[M]** Path hierarchy **SHOULD** be shallow, with at most two levels of nesting after `/v{N}/`. Deep nesting makes paths hard to read and discourages addressable sub-resources. [`[OPEN-5-B]`](../appendix/b-open-questions.md)
 
 ## 5.5 Identifiers as path parameters <a href="#55-identifiers-as-path-parameters" id="55-identifiers-as-path-parameters"></a>
 

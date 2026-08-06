@@ -17,7 +17,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [2.5](part-a/2-openapi-document-standards.md#25-complete-info-block) | M | MUST | OpenAPI | Complete info block |
 | [2.6](part-a/2-openapi-document-standards.md#26-meaningful-servers-block) | M+R | MUST | OpenAPI | Meaningful servers block |
 | [2.7](part-a/2-openapi-document-standards.md#27-complete-operation-metadata) | M+R | MUST | OpenAPI | Complete operation metadata |
-| [2.8](part-a/2-openapi-document-standards.md#28-pinned-vendored-common-components) | M | MUST | OpenAPI | Pinned vendored common components |
+| [2.8](part-a/2-openapi-document-standards.md#28-conditional-vendored-openapi-schemas) | M+R | MUST | OpenAPI | Conditional vendored OpenAPI schemas |
 
 ## 3. AsyncAPI document standards
 
@@ -146,13 +146,11 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | Rule | Class | Strength | Surface | Title |
 | --- | --- | --- | --- | --- |
 | [11.1](part-c/11-errors.md#111-rfc-9457-problem-details) | M | MUST | Universal | RFC 9457 problem details |
-| [11.2](part-c/11-errors.md#112-standard-problem-fields-present) | M+R | MUST | Universal | Standard problem fields present |
-| [11.3](part-c/11-errors.md#113-govstack-error-extension-fields) | M | MUST | Universal | GovStack error extension fields |
+| [11.2](part-c/11-errors.md#112-stable-http-problem-type-uri) | M+R | MUST | Universal | Stable HTTP problem type URI |
+| [11.3](part-c/11-errors.md#113-trace-identifier) | M | MUST | Universal | Trace identifier |
 | [11.4](part-c/11-errors.md#114-field-level-errors-array) | M+R | MUST | Universal | Field-level errors array |
-| [11.5](part-c/11-errors.md#115-namespaced-stable-error-codes) | M+R | MUST | Universal | Namespaced stable error codes |
-| [11.6](part-c/11-errors.md#116-stable-codes-across-languages) | R | MUST | Universal | Stable codes across languages |
-| [11.7](part-c/11-errors.md#117-common-error-catalogue) | M+R | MUST | Universal | Common error catalogue |
-| [11.8](part-c/11-errors.md#118-transport-neutral-asynchronous-errors) | M+R | MUST | Universal | Transport-neutral asynchronous errors |
+| [11.5](part-c/11-errors.md#115-stable-http-problem-fields-across-languages) | R | MUST | Universal | Stable HTTP problem fields across languages |
+| [11.6](part-c/11-errors.md#116-transport-neutral-asynchronous-errors) | M+R | MUST | Universal | Transport-neutral asynchronous errors |
 
 ## 12. Pagination, filtering, sorting
 
@@ -197,8 +195,8 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | Rule | Class | Strength | Surface | Title |
 | --- | --- | --- | --- | --- |
 | [15.1](part-d/15-asynchronous-operations.md#151-202-with-operation-location) | M+R | MUST | OpenAPI | 202 with Operation Location |
-| [15.2](part-d/15-asynchronous-operations.md#152-shared-operation-resource-shape) | M | MUST | OpenAPI | Shared Operation resource shape |
-| [15.3](part-d/15-asynchronous-operations.md#153-fixed-operation-status-enum) | M | MUST | OpenAPI | Fixed Operation status enum |
+| [15.2](part-d/15-asynchronous-operations.md#152-local-operation-resource-shape) | M+R | MUST | OpenAPI | Local Operation resource shape |
+| [15.3](part-d/15-asynchronous-operations.md#153-documented-operation-lifecycle) | M+R | MUST | OpenAPI | Documented Operation lifecycle |
 | [15.4](part-d/15-asynchronous-operations.md#154-polling-the-operation-resource) | M+R | MUST | OpenAPI | Polling the Operation resource |
 | [15.5](part-d/15-asynchronous-operations.md#155-cancellation-via-cancel-sub-resource) | M+R | MUST | OpenAPI | Cancellation via cancel sub-resource |
 | [15.6](part-d/15-asynchronous-operations.md#156-webhook-completion-notification) | R | SHOULD | OpenAPI | Webhook completion notification |
@@ -212,11 +210,11 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [16.2](part-d/16-cloudevents-and-webhooks.md#162-cloudevents-envelope-required) | M | MUST | Event-driven | CloudEvents envelope required |
 | [16.3](part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types) | M | MUST | Event-driven | Reverse-DNS event types |
 | [16.4](part-d/16-cloudevents-and-webhooks.md#164-stable-cloudevents-source) | M+R | MUST | Event-driven | Stable CloudEvents source |
-| [16.5](part-d/16-cloudevents-and-webhooks.md#165-signed-event-delivery) | R | MUST | Event-driven | Signed event delivery |
-| [16.6](part-d/16-cloudevents-and-webhooks.md#166-govstack-signature-header) | M+R | MUST | Event-driven | GovStack-Signature header |
+| [16.5](part-d/16-cloudevents-and-webhooks.md#165-optional-signed-event-delivery) | R | MAY | Event-driven | Optional signed event delivery |
+| [16.6](part-d/16-cloudevents-and-webhooks.md#166-signature-metadata-when-used) | R | MUST | Event-driven | Signature metadata when used |
 | [16.7](part-d/16-cloudevents-and-webhooks.md#167-replay-detectable-signed-material) | R | MUST | Event-driven | Replay-detectable signed material |
-| [16.8](part-d/16-cloudevents-and-webhooks.md#168-pinned-signature-profile) | R | MUST | Event-driven | Pinned signature profile |
-| [16.9](part-d/16-cloudevents-and-webhooks.md#169-operational-signing-concerns-out-of-scope) | — | — | Event-driven | Operational signing concerns out of scope |
+| [16.8](part-d/16-cloudevents-and-webhooks.md#168-separate-experimental-signing-profile) | R | MUST | Event-driven | Separate experimental signing profile |
+| [16.9](part-d/16-cloudevents-and-webhooks.md#169-readiness-for-a-shared-signature-profile) | — | — | Event-driven | Readiness for a shared signature profile |
 | [16.10](part-d/16-cloudevents-and-webhooks.md#1610-documented-delivery-failure-contract) | R | MUST | Event-driven | Documented delivery-failure contract |
 | [16.11](part-d/16-cloudevents-and-webhooks.md#1611-subscription-management-interfaces) | M+R | MUST | Event-driven | Subscription management interfaces |
 
@@ -230,15 +228,15 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [17.4](part-d/17-asyncapi-channel-rules.md#174-declared-channel-parameters) | M+R | MUST | AsyncAPI | Declared channel parameters |
 | [17.5](part-d/17-asyncapi-channel-rules.md#175-no-environment-names-in-addresses) | M+R | SHOULD | AsyncAPI | No environment names in addresses |
 | [17.6](part-d/17-asyncapi-channel-rules.md#176-structured-cloudevents-json-payloads) | M | MUST | AsyncAPI | Structured CloudEvents JSON payloads |
-| [17.7](part-d/17-asyncapi-channel-rules.md#177-shared-cloudevents-message-schema) | M | MUST | AsyncAPI | Shared CloudEvents message schema |
+| [17.7](part-d/17-asyncapi-channel-rules.md#177-shared-cloudevents-envelope-schema) | M | MUST | AsyncAPI | Shared CloudEvents envelope schema |
 | [17.8](part-d/17-asyncapi-channel-rules.md#178-message-headers-and-idempotency-metadata) | M+R | MUST | AsyncAPI | Message headers and idempotency metadata |
 | [17.9](part-d/17-asyncapi-channel-rules.md#179-message-localisation-headers) | M+R | MUST | AsyncAPI | Message localisation headers |
 | [17.10](part-d/17-asyncapi-channel-rules.md#1710-security-schemes-cover-every-operation) | M+R | MUST | AsyncAPI | Security schemes cover every operation |
-| [17.11](part-d/17-asyncapi-channel-rules.md#1711-documented-delivery-guarantees) | M+R | MUST | AsyncAPI | Documented delivery guarantees |
-| [17.12](part-d/17-asyncapi-channel-rules.md#1712-documented-ordering-guarantees) | M+R | MUST | AsyncAPI | Documented ordering guarantees |
-| [17.13](part-d/17-asyncapi-channel-rules.md#1713-declared-delivery-management-capabilities) | M+R | MUST | AsyncAPI | Declared delivery-management capabilities |
-| [17.14](part-d/17-asyncapi-channel-rules.md#1714-portable-capability-contract) | R | MUST | AsyncAPI | Portable capability contract |
-| [17.15](part-d/17-asyncapi-channel-rules.md#1715-machine-readable-delivery-extensions) | M+R | MUST | AsyncAPI | Machine-readable delivery extensions |
+| [17.11](part-d/17-asyncapi-channel-rules.md#1711-duplicate-delivery-contract) | R | MUST | AsyncAPI | Duplicate delivery contract |
+| [17.12](part-d/17-asyncapi-channel-rules.md#1712-ordering-only-when-promised) | R | MUST | AsyncAPI | Ordering only when promised |
+| [17.13](part-d/17-asyncapi-channel-rules.md#1713-public-delivery-management-capabilities) | R | MUST | AsyncAPI | Public delivery-management capabilities |
+| [17.14](part-d/17-asyncapi-channel-rules.md#1714-implementation-values-in-protocol-profiles) | R | MUST | AsyncAPI | Implementation values in protocol profiles |
+| [17.15](part-d/17-asyncapi-channel-rules.md#1715-no-universal-delivery-extensions) | R | MUST | AsyncAPI | No universal delivery extensions |
 | [17.16](part-d/17-asyncapi-channel-rules.md#1716-async-rejection-error-messages) | M+R | MUST | AsyncAPI | Async rejection error messages |
 | [17.17](part-d/17-asyncapi-channel-rules.md#1717-declared-request-reply-correlation) | M+R | MUST | AsyncAPI | Declared request-reply correlation |
 | [17.18](part-d/17-asyncapi-channel-rules.md#1718-correlated-completion-signals) | M+R | MUST | AsyncAPI | Correlated completion signals |

@@ -24,7 +24,7 @@ description: "Rules governing standard, custom, and rate-limit HTTP headers used
 
 ## 8.4 W3C Trace Context correlation <a href="#84-w3c-trace-context-correlation" id="84-w3c-trace-context-correlation"></a>
 
-**[M+R]** Every cross-service HTTP operation **MUST** declare the W3C Trace Context `traceparent` request header and **MAY** declare `tracestate`. A conforming implementation **MUST** propagate a valid received trace context on downstream calls and **MUST** create a valid new context when none is present or the received value is invalid. `tracestate` **MUST NOT** contain personal data. The RFC 9457 `traceId` extension in [§11.3](../part-c/11-errors.md#113-govstack-error-extension-fields) **MUST** equal the 32-hex-digit trace-id component of the request's effective `traceparent`. A separate business or support correlation identifier **MAY** be defined, but **MUST NOT** replace Trace Context.
+**[M+R]** Every cross-service HTTP operation **MUST** declare the W3C Trace Context `traceparent` request header and **MAY** declare `tracestate`. A conforming implementation **MUST** propagate a valid received trace context on downstream calls and **MUST** create a valid new context when none is present or the received value is invalid. `tracestate` **MUST NOT** contain personal data. The RFC 9457 `traceId` extension in [§11.3](../part-c/11-errors.md#113-trace-identifier) **MUST** equal the 32-hex-digit trace-id component of the request's effective `traceparent`. A separate business or support correlation identifier **MAY** be defined, but **MUST NOT** replace Trace Context.
 
 ## 8.5 No new X- prefixed headers <a href="#85-no-new-x--prefixed-headers" id="85-no-new-x--prefixed-headers"></a>
 

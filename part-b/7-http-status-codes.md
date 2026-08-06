@@ -20,7 +20,7 @@ description: "Rules mapping API outcomes to standard HTTP status codes, caching,
 
 ## 7.3 202 Accepted for async operations <a href="#73-202-accepted-for-async-operations" id="73-202-accepted-for-async-operations"></a>
 
-**[M+R]** Work accepted but not completed during the request **MUST** use `202 Accepted`. The response **MUST** include a `Location` header pointing to an Operation resource and **MUST** return that Operation representation using the shared schema in [§15](../part-d/15-asynchronous-operations.md). `202` **MUST NOT** claim that the requested work succeeded.
+**[M+R]** Work accepted but not completed during the request **MUST** use `202 Accepted`. The response **MUST** include a `Location` header pointing to an Operation resource and **MUST** return that Operation representation using the local schema defined under [§15](../part-d/15-asynchronous-operations.md). `202` **MUST NOT** claim that the requested work succeeded.
 
 ## 7.4 204 for void responses <a href="#74-204-for-void-responses" id="74-204-for-void-responses"></a>
 
@@ -52,7 +52,7 @@ description: "Rules mapping API outcomes to standard HTTP status codes, caching,
 
 ## 7.11 422 for semantic errors <a href="#711-422-for-semantic-errors" id="711-422-for-semantic-errors"></a>
 
-**[R]** A well-formed request that violates domain validation or other semantic constraints **MUST** use `422 Unprocessable Content` (RFC 9110; formerly "Unprocessable Entity"). The idempotency-fingerprint use of `422` is in [§14.5](../part-d/14-idempotency.md#145-key-reuse-and-fingerprint-mismatch). [`[OPEN-6-A]`](../appendix/b-open-questions.md)
+**[R]** A well-formed request that violates domain validation or other semantic constraints **MUST** use `422 Unprocessable Content` (RFC 9110; formerly "Unprocessable Entity"). The idempotency-fingerprint use of `422` is in [§14.5](../part-d/14-idempotency.md#145-key-reuse-and-fingerprint-mismatch). [`[OPEN-7-A]`](../appendix/b-open-questions.md)
 
 ## 7.12 429 for rate limits <a href="#712-429-for-rate-limits" id="712-429-for-rate-limits"></a>
 

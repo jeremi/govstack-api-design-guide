@@ -31,7 +31,9 @@ import envelopeShape from './envelopeShape.js';
  *                       `offset` parameter (that operation is covered by the
  *                       `offsetEnvelope` mode / §12.6 instead).
  *     - cursorEnvelope: the 200 response body schema MUST declare the §12.3
- *                       envelope `{ items, pageInfo: { nextCursor, hasMore } }`.
+ *                       envelope `{ items, pageInfo: { nextCursor } }`, with a
+ *                       nullable non-empty cursor and no declared `hasMore`
+ *                       member.
  *                       No-op when the operation has an `offset` parameter.
  *     - pageSizeBounds: the `pageSize` parameter MUST exist and declare both a
  *                       `default` and a `maximum` (guide §12.4).
@@ -68,6 +70,49 @@ function hasDeclaredBound(schema) {
   }
   if (arrays.length === 0) return false;
   return arrays.every((a) => Number.isInteger(a.maxItems));
+}
+
+/** Merge a schema's direct shape with one level of allOf composition. */
+function effective(schema) {
+  if (!isObject(schema)) return { required: new Set(), properties: {} };
+  const required = new Set(asArray(schema.required).filter((name) => typeof name === 'string'));
+  const properties = isObject(schema.properties) ? { ...schema.properties } : {};
+  for (const branch of asArray(schema.allOf)) {
+    if (!isObject(branch)) continue;
+    for (const name of asArray(branch.required)) {
+      if (typeof name === 'string') required.add(name);
+    }
+    if (isObject(branch.properties)) Object.assign(properties, branch.properties);
+  }
+  return { required, properties };
+}
+
+function nullableNonEmptyString(schema) {
+  if (!isObject(schema)) return false;
+  const directTypes = asArray(schema.type);
+  const directTypeSet = new Set(directTypes);
+  if (
+    directTypes.length === 2 &&
+    directTypeSet.size === 2 &&
+    directTypeSet.has('string') &&
+    directTypeSet.has('null')
+  ) {
+    return Number.isInteger(schema.minLength) && schema.minLength >= 1;
+  }
+
+  const oneOf = asArray(schema.oneOf);
+  const anyOf = asArray(schema.anyOf);
+  if ((oneOf.length > 0) === (anyOf.length > 0)) return false;
+  const branches = oneOf.length > 0 ? oneOf : anyOf;
+  if (branches.length !== 2 || !branches.every(isObject)) return false;
+  const stringBranch = branches.find((branch) => branch.type === 'string');
+  const nullBranch = branches.find((branch) => branch.type === 'null');
+  return Boolean(
+    stringBranch &&
+      nullBranch &&
+      Number.isInteger(stringBranch.minLength) &&
+      stringBranch.minLength >= 1,
+  );
 }
 
 export default function collectionPagination(targetVal, options, context) {
@@ -144,17 +189,32 @@ export default function collectionPagination(targetVal, options, context) {
 
   if (opts.mode === 'cursorEnvelope') {
     if (offsetMode) return undefined;
-    return envelopeShape(
+    const findings = envelopeShape(
       schema,
       {
         requiredProperties: ['items', 'pageInfo'],
         properties: {
           items: { type: 'array' },
-          pageInfo: { requiredProperties: ['nextCursor', 'hasMore'] },
+          pageInfo: {
+            requiredProperties: ['nextCursor'],
+            forbiddenProperties: ['hasMore'],
+          },
         },
       },
       { path: schemaPath },
-    );
+    ) ?? [];
+
+    const pageInfo = effective(schema).properties.pageInfo;
+    if (isObject(pageInfo)) {
+      const nextCursor = effective(pageInfo).properties.nextCursor;
+      if (!nullableNonEmptyString(nextCursor)) {
+        findings.push({
+          message: 'pageInfo.nextCursor must be an explicitly nullable, non-empty string',
+          path: [...schemaPath, 'properties', 'pageInfo', 'properties', 'nextCursor'],
+        });
+      }
+    }
+    return findings.length ? findings : undefined;
   }
 
   // mode === 'offsetEnvelope'

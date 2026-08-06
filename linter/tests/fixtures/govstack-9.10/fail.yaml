@@ -6,7 +6,7 @@ paths:
   /things:
     get:
       operationId: listThings
-      x-delivery: atLeastOnce
+      x-deprecated: true
       responses:
         '200':
           description: ok

@@ -18,7 +18,8 @@ operations:
 components:
   messages:
     PersonCreated:
-      # 17.6: payload is a bare domain object, not a structured CloudEvent.
+      # 17.6: the message declares CloudEvents but carries a bare domain object.
+      contentType: application/cloudevents+json
       payload:
         type: object
         properties:

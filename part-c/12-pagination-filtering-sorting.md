@@ -16,11 +16,11 @@ description: "Mandatory pagination for collections, cursor and offset envelopes,
 
 ## 12.2 Cursor pagination by default <a href="#122-cursor-pagination-by-default" id="122-cursor-pagination-by-default"></a>
 
-**[M+R]** Default pagination **MUST** be cursor-based, modelled on Google AIP-158, with optional query parameters `pageSize` and `cursor`. The `cursor` name is used in place of AIP-158's `pageToken`. A cursor **MUST** be URL-safe, opaque, and integrity-protected; base64 encoding of a transparent internal value is not sufficient. It **MUST NOT** contain personal data, grant authority, or bypass authorization on a later request. Clients **MUST NOT** parse or construct cursor values, and servers **MUST** re-authorize every page request. Except for `pageSize`, the filter and sort arguments on a follow-up request **MUST** equal those that produced the cursor; a mismatch, malformed cursor, or expired cursor **MUST** return `400` with a stable problem code. The specification **MUST** document cursor expiry and a deterministic default order with a unique tie-breaker so concurrent records do not create ambiguous page boundaries.
+**[M+R]** Default pagination **MUST** be cursor-based, modelled on Google AIP-158, with optional query parameters `pageSize` and `cursor`. The `cursor` name is used in place of AIP-158's `pageToken`. A cursor **MUST** be URL-safe, opaque, and integrity-protected; base64 encoding of a transparent internal value is not sufficient. It **MUST NOT** contain personal data, grant authority, or bypass authorization on a later request. Clients **MUST NOT** parse or construct cursor values, and servers **MUST** re-authorize every page request. Except for `pageSize`, the filter and sort arguments on a follow-up request **MUST** equal those that produced the cursor; a mismatch, malformed cursor, or expired cursor **MUST** return `400` with a stable Problem `type`. The specification **MUST** document cursor expiry and a deterministic default order with a unique tie-breaker so concurrent records do not create ambiguous page boundaries.
 
 ## 12.3 Cursor pagination envelope <a href="#123-cursor-pagination-envelope" id="123-cursor-pagination-envelope"></a>
 
-**[M]** The cursor-pagination response envelope **MUST** be `{ items: [...], pageInfo: { nextCursor, hasMore, total? } }`. `nextCursor` **MUST** be a non-empty string when `hasMore` is `true` and **MUST** be `null` when `hasMore` is `false`; its schema therefore **MUST** declare explicit nullability. `total`, when present, **MUST** state whether it is exact or estimated and whether it reflects the first-page snapshot or the current collection. The `pageInfo` wrapper is inspired by GraphQL Relay Connections but deliberately uses flat `items` and simplified continuation fields.
+**[M]** The cursor-pagination response envelope **MUST** be `{ items: [...], pageInfo: { nextCursor, total? } }`. `nextCursor` **MUST** be a non-empty string when another page is available and **MUST** be `null` on the final page; its schema therefore **MUST** declare explicit nullability. Clients determine whether another page is available from `nextCursor` and no separate `hasMore` field is used. `total`, when present, **MUST** state whether it is exact or estimated and whether it reflects the first-page snapshot or the current collection. The `pageInfo` wrapper is inspired by GraphQL Relay Connections but deliberately uses flat `items` and one continuation field.
 
 **Example (informative).** A cursor-paginated collection response (`total` omitted per [§12.5](#125-optional-total-count)):
 
@@ -31,8 +31,7 @@ description: "Mandatory pagination for collections, cursor and offset envelopes,
     { "id": "8a1f9c2b-7e64-4f0d-8a3b-2c5d9e0f1b47", "status": "PENDING_REVIEW" }
   ],
   "pageInfo": {
-    "nextCursor": "pgn_7JpQ9m2W4xK8fR3cT6vN1",
-    "hasMore": true
+    "nextCursor": "pgn_7JpQ9m2W4xK8fR3cT6vN1"
   }
 }
 ```

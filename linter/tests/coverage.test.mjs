@@ -1,6 +1,6 @@
 // Coverage drift checks. Opt-in: only runs under COVERAGE_ENFORCE=1, otherwise
 // every check is skipped (with a message). Reconciles three artefacts:
-//   ../rules.yaml       — the 166-rule catalogue (source of truth)
+//   ../rules.yaml       — the generated rule catalogue (source of truth)
 //   ./coverage.yaml     — the coverage contract (rule -> status -> spectral rules)
 //   ruleset.yaml/strict.yaml bundles — the rules actually shipped
 //
@@ -23,9 +23,9 @@ const opts = enforce ? {} : { skip: 'set COVERAGE_ENFORCE=1 to run coverage drif
 const IMPLEMENTED = new Set(['implemented', 'partial-proxy']);
 
 // ---- load artefacts (guarded so the skipped case never throws at import) ----
-function loadCatalogueIds() {
+function loadCatalogue() {
   const doc = YAML.parse(readFileSync(resolve(LINTER_DIR, '..', 'rules.yaml'), 'utf8'));
-  return (doc.rules || []).map((r) => String(r.id));
+  return doc.rules || [];
 }
 function loadCoverage() {
   const doc = YAML.parse(readFileSync(join(LINTER_DIR, 'coverage.yaml'), 'utf8'));
@@ -52,14 +52,24 @@ function assertSameSet(actual, expected, label) {
 }
 
 test('(a) rules.yaml and coverage.yaml list exactly the same rule ids, once each', opts, () => {
-  const catalogue = loadCatalogueIds();
+  const catalogue = loadCatalogue();
+  const catalogueIds = catalogue.map((rule) => String(rule.id));
   const coverage = loadCoverage();
   const covIds = coverage.map((e) => String(e.id));
 
   const dupes = covIds.filter((id, i) => covIds.indexOf(id) !== i);
   assert.equal(dupes.length, 0, `coverage.yaml has duplicate ids: ${JSON.stringify([...new Set(dupes)])}`);
 
-  assertSameSet(new Set(covIds), new Set(catalogue), 'rule id mismatch between rules.yaml and coverage.yaml:');
+  assertSameSet(new Set(covIds), new Set(catalogueIds), 'rule id mismatch between rules.yaml and coverage.yaml:');
+
+  const coverageById = new Map(coverage.map((entry) => [String(entry.id), entry]));
+  for (const rule of catalogue) {
+    assert.equal(
+      coverageById.get(String(rule.id))?.class,
+      rule.class,
+      `coverage class differs from rules.yaml for ${rule.id}`,
+    );
+  }
 });
 
 test('(b) implemented/partial-proxy spectral_rules == rules shipped in ruleset.yaml', opts, async () => {

@@ -1,6 +1,6 @@
 {
   "name": "govstack-api-lint",
-  "version": "0.2.0-draft",
+  "version": "0.1.0-draft",
   "private": true,
   "description": "GovStack Spectral ruleset and lint driver for the Cross-BB API Design Guide",
   "type": "module",
@@ -18,5 +18,9 @@
     "@stoplight/spectral-parsers": "^1.0.5",
     "@stoplight/spectral-ruleset-bundler": "^1.6.2",
     "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
   }
 }

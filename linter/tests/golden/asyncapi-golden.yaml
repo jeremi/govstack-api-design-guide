@@ -11,11 +11,11 @@
 # with send/receive perspective and complete metadata (§3.7/§17.1), CloudEvents
 # JSON payloads (§17.6) with camelCase properties (§3.9) and camelCase headers
 # (§17.8), message examples (§17.20), security covering every operation via the
-# server (§17.10), the machine-readable delivery/ordering/replay extensions
-# (§17.11/§17.12/§17.13/§17.15), an async rejection message using the §11 error
-# envelope with correlation (§17.16), a request-reply pair with a reply channel
-# and correlationId (§17.17), protocol bindings matching the server protocol
-# (§17.19), and the §20.3 conformance declaration.
+# server (§17.10), shared external envelope and error schemas (§17.7), an async
+# rejection message using the §11 error envelope with correlation (§17.16), a
+# request-reply pair with a reply channel and correlationId (§17.17), protocol
+# bindings matching the server protocol (§17.19), and the §20.3 conformance
+# declaration.
 #
 # Unlike the OpenAPI golden, this file lints to ZERO findings: AsyncAPI has no
 # unversioned /health analogue, so none of the rule-scoping contradictions apply.
@@ -36,8 +36,8 @@ info:
     name: CC-BY-4.0
     url: https://creativecommons.org/licenses/by/4.0/
   x-govstack-api-guide:
-    version: 0.2.0-draft
-    rulesetVersion: 0.2.0-draft
+    version: 0.1.0-draft
+    rulesetVersion: 0.1.0-draft
 servers:
   production:
     host: kafka.example.gov:9092
@@ -45,7 +45,7 @@ servers:
     description: Production Kafka broker for the Registry Building Block.
     security:
       - $ref: '#/components/securitySchemes/registryOAuth'
-defaultContentType: application/json
+defaultContentType: application/cloudevents+json
 channels:
   global.govstack.registry.v1.registrant.registered:
     address: registry.registrant.registered
@@ -91,30 +91,22 @@ operations:
     summary: Publish a registrant-registered event
     description: >-
       The Registry BB publishes a CloudEvents envelope whenever a registrant is
-      registered. Delivery is at-least-once and ordered per registrant; consumers
-      must de-duplicate on the event id.
+      registered. The broker may redeliver an event; consumers de-duplicate on
+      the CloudEvents source and id pair. No ordering guarantee is promised.
     tags:
       - name: Registrants
     channel:
       $ref: '#/channels/global.govstack.registry.v1.registrant.registered'
     messages:
       - $ref: '#/channels/global.govstack.registry.v1.registrant.registered/messages/registered'
-    x-govstack-delivery: atLeastOnce
-    x-govstack-ordering:
-      scope: partitionKey
-      key: registrantId
-    x-govstack-redelivery: supported
-    x-govstack-dead-letter: supported
-    x-govstack-retention: supported
-    x-govstack-replay: supported
   receiveDeregisterCommand:
     action: receive
     summary: Consume a deregister-registrant command
     description: >-
       The Registry BB consumes a deregister command for a registrant and replies
-      on the command-replies channel. Delivery is at-least-once; the command is
-      idempotent on its idempotencyKey header. This is a request-reply operation
-      correlated by correlationId.
+      on the command-replies channel. The broker may redeliver the command; the
+      command is idempotent on its CloudEvents idempotencykey attribute. This is
+      a request-reply operation correlated by correlationId.
     tags:
       - name: Registrants
     channel:
@@ -126,33 +118,19 @@ operations:
         $ref: '#/channels/global.govstack.registry.v1.registrant.command-replies'
       messages:
         - $ref: '#/channels/global.govstack.registry.v1.registrant.command-replies/messages/result'
-    x-govstack-delivery: atLeastOnce
-    x-govstack-ordering:
-      scope: partitionKey
-      key: registrantId
-    x-govstack-redelivery: supported
-    x-govstack-dead-letter: supported
-    x-govstack-retention: supported
-    x-govstack-replay: notApplicable
   sendDeregistrationRejected:
     action: send
     summary: Publish a deregistration-rejected error
     description: >-
       The Registry BB publishes a rejection using the §11 error envelope when a
       deregister command cannot be honoured. Correlated to the originating command
-      by correlationId. Delivery is at-least-once.
+      by correlationId.
     tags:
       - name: Registrants
     channel:
       $ref: '#/channels/global.govstack.registry.v1.registrant.command-replies'
     messages:
       - $ref: '#/channels/global.govstack.registry.v1.registrant.command-replies/messages/rejected'
-    x-govstack-delivery: atLeastOnce
-    x-govstack-ordering: none
-    x-govstack-redelivery: supported
-    x-govstack-dead-letter: supported
-    x-govstack-retention: supported
-    x-govstack-replay: notApplicable
 components:
   securitySchemes:
     registryOAuth:
@@ -172,69 +150,38 @@ components:
       name: registrantRegisteredEvent
       title: Registrant registered
       summary: Emitted when a registrant is registered.
-      contentType: application/json
-      headers:
-        type: object
-        description: Message metadata headers for the registrant-registered event.
-        properties:
-          idempotencyKey:
-            type: string
-            format: uuid
-            description: Producer-assigned key so consumers can de-duplicate redeliveries.
+      contentType: application/cloudevents+json
       payload:
-        type: object
-        description: CloudEvents 1.0 envelope wrapping the registrant-registered domain event.
-        required: [specversion, id, source, type, time, datacontenttype, data]
-        properties:
-          specversion:
-            type: string
-            description: CloudEvents specification version; always "1.0".
-            const: '1.0'
-          id:
-            type: string
-            description: Unique identifier of this event occurrence.
-          source:
-            type: string
-            description: Stable logical identifier of the publishing context.
-            const: /govstack/registry
-          type:
-            type: string
-            description: Reverse-DNS event type carrying no version segment.
-            const: global.govstack.registry.registrant.registered
-          time:
-            type: string
-            format: date-time
-            description: RFC 3339 timestamp at which the event occurred.
-          datacontenttype:
-            type: string
-            description: Media type of the data member.
-            const: application/json
-          subject:
-            type: string
-            description: Identifier of the registrant the event concerns.
-          data:
-            type: object
-            description: GovStack domain payload for the registrant-registered event.
-            required: [registrantId, registrationStatus, occurredAt]
+        allOf:
+          - $ref: '../../../../api/common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope'
+          - type: object
+            description: Registry-specific event type and domain payload.
+            required: [data]
             properties:
-              registrantId:
-                type: string
-                format: uuid
-                description: Identifier of the registrant that was registered.
-              registrationStatus:
-                type: string
-                description: Registration status at the time of the event.
-                enum: [ACTIVE, SUSPENDED, DEREGISTERED]
-                x-extensible-enum: true
-              occurredAt:
-                type: string
-                format: date-time
-                description: RFC 3339 timestamp when the registration occurred.
+              type:
+                description: Stable semantic event type.
+                const: global.govstack.registry.registrant.registered
+              data:
+                type: object
+                description: GovStack domain payload for the registrant-registered event.
+                required: [registrantId, registrationStatus, occurredAt]
+                properties:
+                  registrantId:
+                    type: string
+                    format: uuid
+                    description: Identifier of the registrant that was registered.
+                  registrationStatus:
+                    type: string
+                    description: Registration status at the time of the event.
+                    enum: [ACTIVE, SUSPENDED, DEREGISTERED]
+                    x-extensible-enum: true
+                  occurredAt:
+                    type: string
+                    format: date-time
+                    description: RFC 3339 timestamp when the registration occurred.
       examples:
         - name: registrantRegistered
           summary: A newly registered registrant.
-          headers:
-            idempotencyKey: 0b8c1d2e-3f4a-5b6c-7d8e-9f0a1b2c3d4e
           payload:
             specversion: '1.0'
             id: 0b8c1d2e-3f4a-5b6c-7d8e-9f0a1b2c3d4e
@@ -251,15 +198,11 @@ components:
       name: deregisterRegistrantCommand
       title: Deregister registrant command
       summary: Requests deregistration of a registrant.
-      contentType: application/json
+      contentType: application/cloudevents+json
       headers:
         type: object
         description: Message metadata headers for the deregister command.
         properties:
-          idempotencyKey:
-            type: string
-            format: uuid
-            description: Command idempotency key so redeliveries are processed once.
           correlationId:
             type: string
             format: uuid
@@ -268,50 +211,35 @@ components:
         location: $message.header#/correlationId
         description: Correlates the command with its reply on the command-replies channel.
       payload:
-        type: object
-        description: CloudEvents 1.0 envelope wrapping the deregister command.
-        required: [specversion, id, source, type, time, datacontenttype, data]
-        properties:
-          specversion:
-            type: string
-            description: CloudEvents specification version; always "1.0".
-            const: '1.0'
-          id:
-            type: string
-            description: Unique identifier of this command occurrence.
-          source:
-            type: string
-            description: Stable logical identifier of the command issuer.
-            const: /govstack/registry
-          type:
-            type: string
-            description: Reverse-DNS command type carrying no version segment.
-            const: global.govstack.registry.registrant.deregisterRequested
-          time:
-            type: string
-            format: date-time
-            description: RFC 3339 timestamp at which the command was issued.
-          datacontenttype:
-            type: string
-            description: Media type of the data member.
-            const: application/json
-          data:
-            type: object
-            description: GovStack domain payload for the deregister command.
-            required: [registrantId, reason]
+        allOf:
+          - $ref: '../../../../api/common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope'
+          - type: object
+            description: Registry-specific command type and domain payload.
+            required: [idempotencykey, data]
             properties:
-              registrantId:
+              type:
+                description: Stable semantic command type.
+                const: global.govstack.registry.registrant.deregisterRequested
+              idempotencykey:
                 type: string
                 format: uuid
-                description: Identifier of the registrant to deregister.
-              reason:
-                type: string
-                description: Human-readable reason for the deregistration.
+                description: CloudEvents extension used to de-duplicate command processing.
+              data:
+                type: object
+                description: GovStack domain payload for the deregister command.
+                required: [registrantId, reason]
+                properties:
+                  registrantId:
+                    type: string
+                    format: uuid
+                    description: Identifier of the registrant to deregister.
+                  reason:
+                    type: string
+                    description: Human-readable reason for the deregistration.
       examples:
         - name: deregisterRegistrant
           summary: A deregister command for a registrant.
           headers:
-            idempotencyKey: 2c3d4e5f-6a7b-8c9d-0e1f-2a3b4c5d6e7f
             correlationId: 7a8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d
           payload:
             specversion: '1.0'
@@ -320,6 +248,7 @@ components:
             type: global.govstack.registry.registrant.deregisterRequested
             time: '2026-07-10T12:40:00Z'
             datacontenttype: application/json
+            idempotencykey: 2c3d4e5f-6a7b-8c9d-0e1f-2a3b4c5d6e7f
             data:
               registrantId: 6f9619ff-8b86-d011-b42d-00cf4fc964ff
               reason: Requested by registrant.
@@ -327,7 +256,7 @@ components:
       name: deregisterRegistrantResult
       title: Deregister registrant result
       summary: Reports the outcome of a deregister command.
-      contentType: application/json
+      contentType: application/cloudevents+json
       headers:
         type: object
         description: Message metadata headers for the deregister result.
@@ -340,46 +269,28 @@ components:
         location: $message.header#/correlationId
         description: Correlates the reply back to the originating command.
       payload:
-        type: object
-        description: CloudEvents 1.0 envelope wrapping the deregister result.
-        required: [specversion, id, source, type, time, datacontenttype, data]
-        properties:
-          specversion:
-            type: string
-            description: CloudEvents specification version; always "1.0".
-            const: '1.0'
-          id:
-            type: string
-            description: Unique identifier of this result occurrence.
-          source:
-            type: string
-            description: Stable logical identifier of the publishing context.
-            const: /govstack/registry
-          type:
-            type: string
-            description: Reverse-DNS event type carrying no version segment.
-            const: global.govstack.registry.registrant.deregistered
-          time:
-            type: string
-            format: date-time
-            description: RFC 3339 timestamp at which the registrant was deregistered.
-          datacontenttype:
-            type: string
-            description: Media type of the data member.
-            const: application/json
-          data:
-            type: object
-            description: GovStack domain payload for the deregister result.
-            required: [registrantId, deregisteredAt]
+        allOf:
+          - $ref: '../../../../api/common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope'
+          - type: object
+            description: Registry-specific result type and domain payload.
+            required: [data]
             properties:
-              registrantId:
-                type: string
-                format: uuid
-                description: Identifier of the registrant that was deregistered.
-              deregisteredAt:
-                type: string
-                format: date-time
-                description: RFC 3339 timestamp when the registrant was deregistered.
+              type:
+                description: Stable semantic result type.
+                const: global.govstack.registry.registrant.deregistered
+              data:
+                type: object
+                description: GovStack domain payload for the deregister result.
+                required: [registrantId, deregisteredAt]
+                properties:
+                  registrantId:
+                    type: string
+                    format: uuid
+                    description: Identifier of the registrant that was deregistered.
+                  deregisteredAt:
+                    type: string
+                    format: date-time
+                    description: RFC 3339 timestamp when the registrant was deregistered.
       examples:
         - name: deregisterResult
           summary: A successful deregistration result.
@@ -412,35 +323,7 @@ components:
         location: $message.header#/correlationId
         description: Correlates the rejection back to the originating command.
       payload:
-        type: object
-        description: >-
-          RFC 9457 problem details envelope with GovStack extension fields, used
-          for asynchronous command rejections (§17.16).
-        required: [type, title, status, code, traceId, timestamp]
-        properties:
-          type:
-            type: string
-            format: uri
-            description: URI reference identifying the problem type.
-          title:
-            type: string
-            description: Short, human-readable summary of the problem type.
-          status:
-            type: integer
-            description: Nominal HTTP-equivalent status for the failure class.
-          detail:
-            type: string
-            description: Human-readable explanation specific to this rejection.
-          code:
-            type: string
-            description: Stable, namespaced GovStack error code.
-          traceId:
-            type: string
-            description: Distributed-trace identifier correlating this error to server logs.
-          timestamp:
-            type: string
-            format: date-time
-            description: RFC 3339 timestamp at which the rejection was produced.
+        $ref: '../../../../api/common/govstack-asyncapi-common.yaml#/components/schemas/GovStackAsyncError'
       examples:
         - name: deregistrationRejected
           summary: A rejected deregistration.
@@ -449,7 +332,6 @@ components:
           payload:
             type: https://docs.example.gov/registry/problems/deregistration-rejected
             title: Deregistration rejected
-            status: 409
             detail: The registrant has an active obligation and cannot be deregistered.
             code: global.govstack.registry.deregistrationRejected
             traceId: 9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c

@@ -1,11 +1,11 @@
 ---
-description: "Rules governing AsyncAPI channel addressing, payload structure, message headers, delivery and ordering guarantees, and examples for brokered and event-stream surfaces."
+description: "Rules governing AsyncAPI channel addressing, payload structure, message headers, protocol bindings, and examples for brokered and event-stream surfaces."
 ---
 
 # 17. AsyncAPI channel documentation rules
 
 {% hint style="info" %}
-**Intent.** AsyncAPI documents brokered CloudEvents channels and event streams other than HTTP push webhooks. It does not replace CloudEvents and does not solve every broker's operational playbook in this guide. It makes the portable contract complete enough that an integrator can see what a BB publishes or consumes, on which channels, under which security model, and with which delivery guarantees.
+**Intent.** AsyncAPI documents brokered CloudEvents channels and event streams other than HTTP push webhooks. It does not replace CloudEvents or turn broker operations into a universal abstraction. It makes the portable contract complete enough that an integrator can see what a BB publishes or consumes, on which channels, under which security model, and which transport behaviours are safe to rely on.
 
 **Applies to:** AsyncAPI surface. If a BB exposes no brokered or event-stream surface (only synchronous REST and/or HTTP push webhooks), [§3](../part-a/3-asyncapi-document-standards.md) and [§17](../part-d/17-asyncapi-channel-rules.md) do not apply.
 {% endhint %}
@@ -32,15 +32,36 @@ description: "Rules governing AsyncAPI channel addressing, payload structure, me
 
 ## 17.6 Structured CloudEvents JSON payloads <a href="#176-structured-cloudevents-json-payloads" id="176-structured-cloudevents-json-payloads"></a>
 
-**[M]** AsyncAPI message payloads for GovStack domain events **MUST** use structured CloudEvents JSON: the message payload is the complete CloudEvent, and GovStack-owned domain data lives under the CloudEvents `data` field. This provides one portable, schema-validatable event shape across brokered transports. [`[OPEN-15-E]`](../appendix/b-open-questions.md)
+**[M]** AsyncAPI Message Objects for GovStack domain events **MUST** use `contentType: application/cloudevents+json` and structured CloudEvents JSON: the message payload is the complete CloudEvent, and any GovStack-owned domain data **MUST** live under the CloudEvents `data` field. The base envelope does not require `data` or constrain its JSON shape; each local Message Object makes that decision for its event. This provides one portable, schema-validatable event shape across brokered transports. [`[OPEN-17-A]`](../appendix/b-open-questions.md)
 
-## 17.7 Shared CloudEvents message schema <a href="#177-shared-cloudevents-message-schema" id="177-shared-cloudevents-message-schema"></a>
+## 17.7 Shared CloudEvents envelope schema <a href="#177-shared-cloudevents-envelope-schema" id="177-shared-cloudevents-envelope-schema"></a>
 
-**[M]** AsyncAPI channel message entries **MUST** reference the shared CloudEvents message schema from `govstack-asyncapi-common.yaml` and specialise only the `data` schema for the BB-specific event payload. Operation message references **MUST** point to the relevant message entries under the operation's referenced channel, per AsyncAPI 3.0.
+**[M]** Each BB **MUST** define its Message Objects locally. A domain-event message payload **MUST** compose `#/components/schemas/CloudEventEnvelope` from the pinned `govstack-asyncapi-common.yaml` with a local schema that specialises the event `type` and, when present, `data`. A rejection message **MUST** either reference the shared `GovStackAsyncError` schema directly or use it as CloudEvent `data`. Operation message references **MUST** point to the relevant message entries under the operation's referenced channel, per AsyncAPI 3.0. Security schemes, headers, examples, correlation, and protocol bindings remain local because they require BB- or transport-specific values.
+
+**Example (informative).** A local Message Object using the shared envelope:
+
+```yaml
+components:
+  messages:
+    recordCreated:
+      contentType: application/cloudevents+json
+      payload:
+        allOf:
+          - $ref: './common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope'
+          - type: object
+            description: Registry-specific event type and domain payload.
+            required: [data]
+            properties:
+              type:
+                description: Stable semantic event type.
+                const: global.govstack.registry.record.created
+              data:
+                $ref: '#/components/schemas/RecordCreatedData'
+```
 
 ## 17.8 Message headers and idempotency metadata <a href="#178-message-headers-and-idempotency-metadata" id="178-message-headers-and-idempotency-metadata"></a>
 
-**[M+R]** GovStack-owned transport/application message headers **MUST** use camelCase and **MUST NOT** use the `X-` prefix. Structured CloudEvents messages that participate in a distributed trace **MUST** carry the standard CloudEvents distributed-tracing extension attribute `traceparent` and **MAY** carry `tracestate`; workflow metadata **MAY** use the extension attributes `correlationid` and `causationid`. CloudEvents extension names are lowercase; equivalent GovStack-owned transport/application headers are camelCase. Transport headers **MAY** mirror these values where broker tooling requires it, but the CloudEvent remains normative. The event-signature metadata name **MUST** follow [§16.6](../part-d/16-cloudevents-and-webhooks.md#166-govstack-signature-header). Command-like messages that create resources, move value, or trigger non-idempotent processing **MUST** carry an idempotency key: structured CloudEvents commands **MUST** use `idempotencykey`, while non-CloudEvents commands **MUST** use `idempotencyKey`.
+**[M+R]** GovStack-owned transport/application message headers **MUST** use camelCase and **MUST NOT** use the `X-` prefix. Structured CloudEvents messages that participate in a distributed trace **MUST** carry the standard CloudEvents distributed-tracing extension attribute `traceparent` and **MAY** carry `tracestate`; workflow metadata **MAY** use the extension attributes `correlationid` and `causationid`. CloudEvents extension names are lowercase; equivalent GovStack-owned transport/application headers are camelCase. Transport headers **MAY** mirror these values where broker tooling requires it, but the CloudEvent remains normative. If optional signing is adopted, signature metadata **MUST** follow [§16.6](../part-d/16-cloudevents-and-webhooks.md#166-signature-metadata-when-used). Command-like messages that create resources, move value, or trigger non-idempotent processing **MUST** carry an idempotency key: structured CloudEvents commands **MUST** use `idempotencykey`, while non-CloudEvents commands **MUST** use `idempotencyKey`.
 
 ## 17.9 Message localisation headers <a href="#179-message-localisation-headers" id="179-message-localisation-headers"></a>
 
@@ -48,31 +69,31 @@ description: "Rules governing AsyncAPI channel addressing, payload structure, me
 
 ## 17.10 Security schemes cover every operation <a href="#1710-security-schemes-cover-every-operation" id="1710-security-schemes-cover-every-operation"></a>
 
-**[M+R]** AsyncAPI security schemes **MUST** be declared under `components.securitySchemes` and applied on `servers`, `operations`, or both so every operation is covered. Message signing ([§16.5](../part-d/16-cloudevents-and-webhooks.md#165-signed-event-delivery)) is message-level integrity and **MUST NOT** be treated as a substitute for broker, server, or operation authentication.
+**[M+R]** AsyncAPI security schemes **MUST** be declared under `components.securitySchemes` and applied on `servers`, `operations`, or both so every operation is covered. Optional message signing ([§16.5](../part-d/16-cloudevents-and-webhooks.md#165-optional-signed-event-delivery)) is message-level integrity and **MUST NOT** be treated as a substitute for broker, server, or operation authentication.
 
-## 17.11 Documented delivery guarantees <a href="#1711-documented-delivery-guarantees" id="1711-documented-delivery-guarantees"></a>
+## 17.11 Duplicate delivery contract <a href="#1711-duplicate-delivery-contract" id="1711-duplicate-delivery-contract"></a>
 
-**[M+R]** Each operation **MUST** document its delivery guarantee: `atMostOnce`, `atLeastOnce`, or `effectivelyOnce`. `effectivelyOnce` **MUST** be backed by an idempotency contract, duplicate detection, or a documented resource-state invariant; it **MUST NOT** imply the transport literally delivers a message exactly once.
+**[R]** When the selected protocol or deployment can redeliver a message and consumers need to handle duplicates, the operation **MUST** document the duplicate-handling contract. For CloudEvents, the default duplicate identity is the pair `source` plus `id`. Protocol QoS, acknowledgement, and redelivery fields **MUST** use the applicable AsyncAPI binding when available. Specifications **MUST NOT** claim `effectivelyOnce` as a portable transport guarantee; they **MAY** document application-level idempotency or de-duplication instead.
 
-## 17.12 Documented ordering guarantees <a href="#1712-documented-ordering-guarantees" id="1712-documented-ordering-guarantees"></a>
+## 17.12 Ordering only when promised <a href="#1712-ordering-only-when-promised" id="1712-ordering-only-when-promised"></a>
 
-**[M+R]** Each operation **MUST** document ordering guarantees, if any. If ordering is partitioned, keyed, or scoped, the key or scope **MUST** be declared. If no ordering is guaranteed, the spec **MUST** state that explicitly.
+**[R]** Ordering **MUST** be documented only when consumers are allowed to rely on it. When ordering is promised, the applicable protocol binding or operation description **MUST** identify its scope and key, such as a Kafka partition key or an ordered queue. A specification with no ordering promise does not need a placeholder declaration.
 
-## 17.13 Declared delivery-management capabilities <a href="#1713-declared-delivery-management-capabilities" id="1713-declared-delivery-management-capabilities"></a>
+## 17.13 Public delivery-management capabilities <a href="#1713-public-delivery-management-capabilities" id="1713-public-delivery-management-capabilities"></a>
 
-**[M+R]** Each operation **MUST** declare which delivery-management capabilities the chosen transport contract exposes: redelivery, dead-letter handling, retention, and replay. The declaration **MUST** state whether each capability is supported, unsupported, or not applicable.
+**[R]** Redelivery, dead-letter handling, retention, and replay **MUST** be documented when they are part of the public contract available to a consumer. The specification **MUST** use the applicable protocol binding, channel configuration, or a linked protocol profile where one exists. Capabilities that are deployment-internal or unavailable to consumers **MAY** be omitted.
 
-## 17.14 Portable capability contract <a href="#1714-portable-capability-contract" id="1714-portable-capability-contract"></a>
+## 17.14 Implementation values in protocol profiles <a href="#1714-implementation-values-in-protocol-profiles" id="1714-implementation-values-in-protocol-profiles"></a>
 
-**[R]** A reference specification **MUST** define the portable contract shape, defaults, and allowed bounds for supported delivery-management capabilities. Concrete retry counts, backoff intervals, retention periods, replay windows, and dead-letter store settings belong in implementation profiles.
+**[R]** Concrete retry counts, backoff intervals, retention periods, replay windows, and dead-letter store settings **SHOULD** live in protocol or implementation profiles unless a value is a stable promise to every conforming consumer. The core cross-BB specification **MUST NOT** imply that a broker-specific setting is portable across protocols.
 
-## 17.15 Machine-readable delivery extensions <a href="#1715-machine-readable-delivery-extensions" id="1715-machine-readable-delivery-extensions"></a>
+## 17.15 No universal delivery extensions <a href="#1715-no-universal-delivery-extensions" id="1715-no-universal-delivery-extensions"></a>
 
-**[M+R]** Delivery, ordering, and delivery-management capability declarations **MUST** be machine-readable using GovStack specification extensions declared in `govstack-asyncapi-common.yaml` (for example, `x-govstack-delivery`, `x-govstack-ordering`, and `x-govstack-replay`) as well as human-readable in `description`. [`[OPEN-15-G]`](../appendix/b-open-questions.md)
+**[R]** `govstack-asyncapi-common.yaml` does not define universal delivery, ordering, redelivery, dead-letter, retention, or replay extensions. A specification **MUST** use standard AsyncAPI bindings first and **MUST** state any remaining consumer-visible promise in `description` or a linked protocol profile. The presence of a custom extension alone **MUST NOT** be treated as an interoperable delivery contract.
 
 ## 17.16 Async rejection error messages <a href="#1716-async-rejection-error-messages" id="1716-async-rejection-error-messages"></a>
 
-**[M+R]** Command-like messages that can be rejected asynchronously **MUST** define a rejection or failure message using `GovStackAsyncError` from [§11.8](../part-c/11-errors.md#118-transport-neutral-asynchronous-errors), not an artificial RFC 9457 HTTP `status`. The error message **MUST** be correlated to the original message using [§17.8](#178-message-headers-and-idempotency-metadata) or an equivalent protocol binding.
+**[M+R]** Command-like messages that can be rejected asynchronously **MUST** define a rejection or failure message using `GovStackAsyncError` from [§11.6](../part-c/11-errors.md#116-transport-neutral-asynchronous-errors), not an artificial RFC 9457 HTTP `status`. The error message **MUST** be correlated to the original message using [§17.8](#178-message-headers-and-idempotency-metadata) or an equivalent protocol binding.
 
 ## 17.17 Declared request-reply correlation <a href="#1717-declared-request-reply-correlation" id="1717-declared-request-reply-correlation"></a>
 
@@ -84,7 +105,7 @@ description: "Rules governing AsyncAPI channel addressing, payload structure, me
 
 ## 17.19 Protocol bindings where relevant <a href="#1719-protocol-bindings-where-relevant" id="1719-protocol-bindings-where-relevant"></a>
 
-**[M+R]** Protocol bindings **MUST** be present where protocol-specific fields affect interoperability. At minimum, Kafka-like bindings **SHOULD** declare topic and key semantics; MQTT bindings **SHOULD** declare QoS and retained-message policy; AMQP bindings **SHOULD** declare exchange, queue, and routing-key semantics; WebSocket and SSE bindings **SHOULD** declare connection and message framing. Detailed broker operations remain out of scope for this guide. [`[OPEN-15-F]`](../appendix/b-open-questions.md)
+**[M+R]** Protocol bindings **MUST** be present where protocol-specific fields affect interoperability. At minimum, Kafka-like bindings **SHOULD** declare topic and key semantics; MQTT bindings **SHOULD** declare QoS and retained-message policy; AMQP bindings **SHOULD** declare exchange, queue, and routing-key semantics; WebSocket and SSE bindings **SHOULD** declare connection and message framing. Detailed broker operations remain out of scope for this guide. [`[OPEN-17-B]`](../appendix/b-open-questions.md)
 
 ## 17.20 Examples for every message <a href="#1720-examples-for-every-message" id="1720-examples-for-every-message"></a>
 

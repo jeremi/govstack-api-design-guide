@@ -6,7 +6,7 @@ import { isObject } from './lib/util.js';
  * look GovStack-defined but are not prefixed exactly `x-govstack-`:
  *
  *   1. an `x-<token>` whose token is a known GovStack extension concept
- *      (delivery, ordering, replay, deprecated, api-guide) -> should be
+ *      (deprecated, api-guide) -> should be
  *      `x-govstack-<token>`;
  *   2. any `x-*` key that mentions "govstack" but is not prefixed
  *      `x-govstack-` (typos / wrong casing / wrong separator).
@@ -26,7 +26,7 @@ import { isObject } from './lib/util.js';
  * @param {{path?: (string|number)[]}} [context]
  * @returns {{message:string, path:(string|number)[]}[]|undefined}
  */
-const DEFAULT_KNOWN = ['delivery', 'ordering', 'replay', 'deprecated', 'api-guide'];
+const DEFAULT_KNOWN = ['deprecated', 'api-guide'];
 
 export default function s09ExtensionPrefix(targetVal, options, context) {
   if (!isObject(targetVal) && !Array.isArray(targetVal)) return;

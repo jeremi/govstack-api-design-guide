@@ -112,7 +112,8 @@ Recursively assert every declared **property name** obeys a casing/pattern.
 Recursively assert schema nodes carry a non-empty `description`.
 - **Given:** a JSON Schema.
 - **Options:** `mode` — `"properties"` (default: every declared property needs a
-  description) or `"all"` (every subschema node except pure combinator wrappers);
+  description) or `"all"` (every subschema node except pure combinator wrappers
+  and required-only assertions below `not`);
   `includeRoot` (properties mode only: also require a description on the root).
 - **Example (4.1):**
   ```yaml
@@ -171,7 +172,8 @@ object/array shapes, const/enum/type on leaves). Inspects the schema, does not
 validate a data instance. One level of top-level `allOf` is merged.
 - **Given:** the schema (a response schema, `$.components.schemas.Foo`).
 - **Options (a recursive spec node):** `requiredProperties` (names that must be
-  in `required`), `properties` (`name -> child spec`; each named property must
+  in `required`), `forbiddenProperties` (names that must not be declared),
+  `properties` (`name -> child spec`; each named property must
   be declared and is validated by its child), `type`, `const`, `enum` (schema's
   `enum` must equal this as a set), `items` (child spec for array `items`).
 - **Example (12.3 page envelope):**
@@ -180,12 +182,12 @@ validate a data instance. One level of top-level `allOf` is merged.
     requiredProperties: [items, pageInfo]
     properties:
       items: { type: array }
-      pageInfo: { requiredProperties: [nextCursor, hasMore] }
+      pageInfo: { requiredProperties: [nextCursor] }
   ```
 - **Example (16.2 CloudEvents payload):**
   ```yaml
   functionOptions:
-    requiredProperties: [specversion, id, source, type, data]
+    requiredProperties: [specversion, id, source, type]
     properties: { specversion: { const: "1.0" } }
   ```
 
@@ -227,9 +229,8 @@ Validate presence and shape of an `x-govstack-*` extension on a container.
   `requiredKeys` (object keys that must be present), `semverKeys` (object keys
   whose value must be SemVer), `keyEnums` (`{ key: [values] }`), `keyPatterns`
   (`{ key: regexString }`).
-- **Example (17.11 delivery enum; 20.3 guide metadata):**
+- **Example (20.3 guide metadata):**
   ```yaml
-  functionOptions: { extension: x-govstack-delivery, enum: [atMostOnce, atLeastOnce, effectivelyOnce] }
   functionOptions: { extension: x-govstack-api-guide, valueType: object, requiredKeys: [version], semverKeys: [version] }
   ```
 

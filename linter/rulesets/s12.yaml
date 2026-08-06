@@ -62,12 +62,14 @@ rules:
         mode: cursorParams
 
   # 12.3 [M] — cursor pagination envelope MUST be { items, pageInfo:
-  # { nextCursor, hasMore } } (total is optional per 12.5, not checked here).
+  # { nextCursor } } with an explicitly nullable, non-empty cursor and no
+  # declared hasMore field. total is optional per
+  # 12.5 and its BB-specific semantics remain a review concern.
   # No-op on operations that declared an `offset` parameter: those use the
   # distinct §12.6 flat envelope instead. The /health and /ready operational
   # endpoints (guide 5.9) are exempted inside `s12-collectionPagination`.
   govstack-12.3:
-    description: "collection GET 200 response must use the cursor envelope {items, pageInfo{nextCursor, hasMore}} (guide 12.3, [M])."
+    description: "collection GET 200 response must use {items, pageInfo{nextCursor}}, with nullable non-empty nextCursor and no hasMore (guide 12.3, [M])."
     message: "[12.3][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#123-cursor-pagination-envelope
     severity: error
@@ -202,11 +204,8 @@ rules:
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#129-complex-filtering-via-search
     severity: warn
     formats: [oas3_1]
-    given: '$.paths[?(@property.match(/\/search$/))].post.responses["200"].content["application/json"].schema'
+    given: '$.paths[?(@property.match(/\/search$/))].post'
     then:
-      function: envelopeShape
+      function: s12-collectionPagination
       functionOptions:
-        requiredProperties: [items, pageInfo]
-        properties:
-          items: { type: array }
-          pageInfo: { requiredProperties: [nextCursor, hasMore] }
+        mode: cursorEnvelope

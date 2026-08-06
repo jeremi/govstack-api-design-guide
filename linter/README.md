@@ -5,7 +5,7 @@ The GovStack Spectral ruleset and lint tooling for the
 behind rule [20.2](../part-e/20-conformance-and-validation.md) (draft; the
 formal companion publication is tracked in
 [Appendix A](../appendix/a-companion-documents.md)). It implements guide
-version **0.2.0-draft** (`guide_version` in [coverage.yaml](coverage.yaml)).
+version **0.1.0-draft** (`guide_version` in [coverage.yaml](coverage.yaml)).
 
 ## Quick start
 
@@ -66,8 +66,8 @@ the following shape. `record` must be HTTPS, dates use `YYYY-MM-DD`, and
 ```yaml
 info:
   x-govstack-api-guide:
-    version: 0.2.0-draft
-    rulesetVersion: 0.2.0-draft
+    version: 0.1.0-draft
+    rulesetVersion: 0.1.0-draft
     exceptions:
       - rule: "9.5"
         scope: /components/schemas/LegacyRecord
