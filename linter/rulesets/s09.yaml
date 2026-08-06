@@ -47,12 +47,12 @@ rules:
       functionOptions:
         requireOneOf: ['json']
 
-  # 9.2 [M] — every declared property name (recursively) MUST be camelCase.
+  # 9.2 [M] — GovStack-owned property names SHOULD be camelCase.
   govstack-9.2:
-    description: "JSON field names must be camelCase (guide 9.2, [M])."
+    description: "GovStack-owned JSON field names should be camelCase (guide 9.2, [M])."
     message: "[9.2][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#92-camelcase-field-names
-    severity: error
+    severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
     then:
@@ -89,12 +89,12 @@ rules:
     then:
       function: undefined
 
-  # 9.5 [M] — field names MUST NOT contain spaces or non-ASCII characters.
+  # 9.5 [M] — GovStack-owned field names SHOULD use ASCII without spaces.
   govstack-9.5:
-    description: "Field names must not contain spaces or non-ASCII characters (guide 9.5, [M])."
+    description: "GovStack-owned field names should use ASCII without spaces (guide 9.5, [M])."
     message: "[9.5][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#95-no-spaces-or-non-ascii-names
-    severity: error
+    severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
     then:
@@ -109,7 +109,7 @@ rules:
   # and §12.7 sort keys are lowerCamelCase field names indistinguishable from a
   # mis-cased state name, so a sort-key schema is a known false positive.
   govstack-9.7:
-    description: "Enum values must be SCREAMING_SNAKE_CASE (guide 9.7, [M], proxy)."
+    description: "BB-defined enum values should be SCREAMING_SNAKE_CASE (guide 9.7, [M], proxy)."
     message: "[9.7][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#97-screaming-snake-case-enum-values
     severity: warn

@@ -14,16 +14,16 @@ functions:
   - s04-bodyExamplesEnums
   - s04-noPlaceholderText
 rules:
-  # 4.1 [M] — every schema MUST have a description. Recursive: every subschema
-  # node (not just declared properties) needs one, via schemaDescriptions'
+  # 4.1 [M] — schema descriptions are conditional/advisory. This heuristic warns
+  # on every missing description because semantic obviousness is not decidable.
   # mode "all". Scope: components.schemas plus inline request/response body
   # schemas (OpenAPI) and message payload schemas (AsyncAPI). Parameter/header
   # schemas are out of scope (not swept).
   govstack-4.1:
-    description: "every schema must have a description (guide 4.1, [M])."
+    description: "schemas should have useful descriptions where semantics are not obvious (guide 4.1, [M], proxy)."
     message: "[4.1][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#41-every-schema-described
-    severity: error
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#41-useful-schema-descriptions
+    severity: warn
     formats: [oas3_1, aas3]
     given:
       - $.components.schemas[*]

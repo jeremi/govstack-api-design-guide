@@ -16,7 +16,7 @@ description: "Rules governing AsyncAPI channel addressing, payload structure, me
 
 ## 17.2 Stable logical channel IDs and native addresses <a href="#172-stable-logical-channel-ids-and-native-addresses" id="172-stable-logical-channel-ids-and-native-addresses"></a>
 
-**[M+R]** Each entry under AsyncAPI `channels` **MUST** use a stable logical channel ID with reverse-DNS shape `global.govstack.{bb-code}.v{major}.{resource}.{event}`. The `{bb-code}` segment **MUST** be the registered code from [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The Channel Object `address` **MUST** use the chosen protocol's native destination syntax, such as an MQTT topic, AMQP routing key, Kafka topic, or WebSocket/SSE path, and **MUST NOT** be forced into reverse-DNS form when that would change protocol semantics. Protocol bindings **MUST** document the mapping from logical ID to native address.
+**[M+R]** Each entry under AsyncAPI `channels` **MUST** use a stable logical ID and document its mapping to the protocol-native address. New GovStack channel IDs **SHOULD** use `global.govstack.{bb-code}.v{major}.{resource}.{event}`, with the registered code from [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The Channel Object `address` **MUST** use the chosen protocol's native destination syntax, such as an MQTT topic, AMQP routing key, Kafka topic, or WebSocket/SSE path, and **MUST NOT** be forced into reverse-DNS form when that would change protocol semantics.
 
 ## 17.3 No personal data in channels <a href="#173-no-personal-data-in-channels" id="173-no-personal-data-in-channels"></a>
 
@@ -32,7 +32,7 @@ description: "Rules governing AsyncAPI channel addressing, payload structure, me
 
 ## 17.6 Structured CloudEvents JSON payloads <a href="#176-structured-cloudevents-json-payloads" id="176-structured-cloudevents-json-payloads"></a>
 
-**[M]** AsyncAPI Message Objects for GovStack domain events **MUST** use `contentType: application/cloudevents+json` and structured CloudEvents JSON: the message payload is the complete CloudEvent, and any GovStack-owned domain data **MUST** live under the CloudEvents `data` field. The base envelope does not require `data` or constrain its JSON shape; each local Message Object makes that decision for its event. This provides one portable, schema-validatable event shape across brokered transports. [`[OPEN-17-A]`](../appendix/b-open-questions.md)
+**[M]** AsyncAPI Message Objects for GovStack domain events **MUST** use `contentType: application/cloudevents+json` and structured CloudEvents JSON: the message payload is the complete CloudEvent, and any GovStack-owned domain data **MUST** live under the CloudEvents `data` field. The base envelope does not require `data` or constrain its JSON shape; each local Message Object makes that decision for its event. This provides one portable, schema-validatable event shape across brokered transports.
 
 ## 17.7 Shared CloudEvents envelope schema <a href="#177-shared-cloudevents-envelope-schema" id="177-shared-cloudevents-envelope-schema"></a>
 
@@ -61,7 +61,7 @@ components:
 
 ## 17.8 Message headers and idempotency metadata <a href="#178-message-headers-and-idempotency-metadata" id="178-message-headers-and-idempotency-metadata"></a>
 
-**[M+R]** GovStack-owned transport/application message headers **MUST** use camelCase and **MUST NOT** use the `X-` prefix. Structured CloudEvents messages that participate in a distributed trace **MUST** carry the standard CloudEvents distributed-tracing extension attribute `traceparent` and **MAY** carry `tracestate`; workflow metadata **MAY** use the extension attributes `correlationid` and `causationid`. CloudEvents extension names are lowercase; equivalent GovStack-owned transport/application headers are camelCase. Transport headers **MAY** mirror these values where broker tooling requires it, but the CloudEvent remains normative. If optional signing is adopted, signature metadata **MUST** follow [§16.6](../part-d/16-cloudevents-and-webhooks.md#166-signature-metadata-when-used). Command-like messages that create resources, move value, or trigger non-idempotent processing **MUST** carry an idempotency key: structured CloudEvents commands **MUST** use `idempotencykey`, while non-CloudEvents commands **MUST** use `idempotencyKey`.
+**[M+R]** GovStack-owned transport/application message headers **SHOULD** use camelCase and **MUST NOT** use the `X-` prefix. Structured CloudEvents messages that participate in a distributed trace **MUST** carry the standard CloudEvents distributed-tracing extension attribute `traceparent` and **MAY** carry `tracestate`; workflow metadata **MAY** use the extension attributes `correlationid` and `causationid`. CloudEvents extension names are lowercase. Transport headers **MAY** mirror these values where broker tooling requires it, but the CloudEvent remains normative. If optional signing is adopted, signature metadata **MUST** follow [§16.6](../part-d/16-cloudevents-and-webhooks.md#166-signature-metadata-when-used). Command-like messages that create resources, move value, or trigger non-idempotent processing **MUST** carry an idempotency key: structured CloudEvents commands **MUST** use `idempotencykey`, while non-CloudEvents commands **SHOULD** use `idempotencyKey`.
 
 ## 17.9 Message localisation headers <a href="#179-message-localisation-headers" id="179-message-localisation-headers"></a>
 
@@ -105,8 +105,8 @@ components:
 
 ## 17.19 Protocol bindings where relevant <a href="#1719-protocol-bindings-where-relevant" id="1719-protocol-bindings-where-relevant"></a>
 
-**[M+R]** Protocol bindings **MUST** be present where protocol-specific fields affect interoperability. At minimum, Kafka-like bindings **SHOULD** declare topic and key semantics; MQTT bindings **SHOULD** declare QoS and retained-message policy; AMQP bindings **SHOULD** declare exchange, queue, and routing-key semantics; WebSocket and SSE bindings **SHOULD** declare connection and message framing. Detailed broker operations remain out of scope for this guide. [`[OPEN-17-B]`](../appendix/b-open-questions.md)
+**[M+R]** Protocol bindings **MUST** be present where protocol-specific fields affect interoperability. At minimum, Kafka-like bindings **SHOULD** declare topic and key semantics; MQTT bindings **SHOULD** declare QoS and retained-message policy; AMQP bindings **SHOULD** declare exchange, queue, and routing-key semantics; WebSocket and SSE bindings **SHOULD** declare connection and message framing. Detailed broker operations remain out of scope for this guide.
 
-## 17.20 Examples for every message <a href="#1720-examples-for-every-message" id="1720-examples-for-every-message"></a>
+## 17.20 Representative message examples <a href="#1720-representative-message-examples" id="1720-representative-message-examples"></a>
 
-**[M+R]** AsyncAPI documents **MUST** define examples for every message and **SHOULD** include at least one example showing headers plus payload for each common message family: command, event, error, and operation-completion where applicable.
+**[M+R]** AsyncAPI documents **SHOULD** define representative message examples, including headers plus payload where the interaction is not obvious from the schema. Examples for command, event, error, and operation-completion families are especially useful, but filler examples are not required.

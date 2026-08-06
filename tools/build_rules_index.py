@@ -5,7 +5,7 @@ This script is part of the guide's machine layer. It scans every rule page under
 `part-*/` and regenerates two artifacts at the book root:
 
   * `rules.yaml`     - one structured entry per rule (id, class, strengths,
-                       surface, page, anchor, rule text, open questions).
+                       surface, page, anchor, and rule text).
   * `all-rules.md`   - a human-facing "rules at a glance" page with one GFM
                        table per section.
 
@@ -46,9 +46,6 @@ RULE_TEXT_RE = re.compile(r"^(?P<id>\d+\.\d+) (?P<title>.+)$")
 LOOKS_LIKE_RULE_RE = re.compile(r"^## \d+\.\d+(\s|$)")
 # Enforcement-class badge at the very start of a rule body.
 BADGE_RE = re.compile(r"^\*\*\[(?P<cls>M\+R|M|R)\]\*\* ")
-# Open-question identifiers.
-OPEN_QUESTION_RE = re.compile(r"OPEN-\d+-[A-Z]")
-
 # RFC 2119 strength keywords, in output order. Longer forms are listed before
 # their prefixes so "MUST NOT" is considered before "MUST".
 STRENGTH_TOKENS = [
@@ -88,7 +85,7 @@ def unwrap_links(text):
     """Replace every markdown link `[text](target)` with its link text.
 
     The scanner tracks bracket and paren depth so link text that itself contains
-    brackets (for example ``[`[OPEN-4-B]`](...)``) is handled correctly.
+    nested brackets is handled correctly.
     """
     result = []
     i = 0
@@ -191,18 +188,8 @@ def strongest_strength(strengths):
     return "—"  # em dash placeholder rendered as a single character
 
 
-def extract_open_questions(text):
-    """OPEN-N-X ids referenced in the rule text, deduplicated, first-seen order."""
-    seen = []
-    for match in OPEN_QUESTION_RE.finditer(text):
-        oid = match.group(0)
-        if oid not in seen:
-            seen.append(oid)
-    return seen
-
-
 def parse_body(body_lines):
-    """Return (class, strengths, text, open_questions) for one rule body."""
+    """Return (class, strengths, text) for one rule body."""
     kept = strip_example_blocks(body_lines)
     paragraphs = [unwrap_links(p) for p in group_paragraphs(kept)]
     rule_class = "informative"
@@ -212,7 +199,7 @@ def parse_body(body_lines):
             rule_class = match.group("cls")
             paragraphs[0] = paragraphs[0][match.end() :]
     text = "\n".join(paragraphs)
-    return rule_class, extract_strengths(text), text, extract_open_questions(text)
+    return rule_class, extract_strengths(text), text
 
 
 def parse_section_number(filename):
@@ -316,7 +303,7 @@ def collect_page(book_root, page, seen_ids):
         next_heads = [h for h in all_heads if h > idx]
         end = next_heads[0] if next_heads else len(lines)
         body_lines = lines[idx + 1 : end]
-        rule_class, strengths, text, open_qs = parse_body(body_lines)
+        rule_class, strengths, text = parse_body(body_lines)
 
         rules.append(
             {
@@ -328,7 +315,6 @@ def collect_page(book_root, page, seen_ids):
                 "page": page_rel,
                 "anchor": anchor_id,
                 "text": text,
-                "open_questions": open_qs,
             }
         )
     return {"page": page_rel, "h1_title": h1_title, "rules": rules}
@@ -375,7 +361,6 @@ def render_rules_yaml(rules):
         lines.append(f"  page: {rule['page']}")
         lines.append(f"  anchor: {rule['anchor']}")
         lines.append(f"  text: {js(rule['text'])}")
-        lines.append(f"  open_questions: {inline_list(rule['open_questions'])}")
     return "\n".join(lines) + "\n"
 
 

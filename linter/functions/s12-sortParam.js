@@ -5,7 +5,7 @@ import { isObject, asArray } from './lib/util.js';
  * assert its schema is a string carrying a `pattern` (guide 12.7's
  * `field` / `-field`, comma-separated grammar). A no-op when the operation
  * declares no `sort` parameter at all: sorting support is optional per
- * operation, only its shape is mandated once offered.
+ * operation. The guide recommends this shape once sorting is offered.
  *
  * Does NOT verify that the declared `pattern` actually encodes the exact
  * field/-field/comma grammar, only that a pattern is present; validating an
@@ -31,11 +31,11 @@ export default function sortParamShape(targetVal, options, context) {
   const results = [];
 
   if (schema.type !== 'string') {
-    results.push({ message: '"sort" parameter schema must declare type "string"', path });
+    results.push({ message: '"sort" parameter schema should declare type "string"', path });
   }
   if (typeof schema.pattern !== 'string' || schema.pattern.length === 0) {
     results.push({
-      message: '"sort" parameter schema must declare a "pattern" encoding the field/-field, comma-separated grammar (guide 12.7)',
+      message: '"sort" parameter schema should declare a "pattern" encoding the field/-field, comma-separated grammar (guide 12.7)',
       path,
     });
   }

@@ -12,11 +12,11 @@ description: "Rules governing SemVer versioning, backward-compatible and breakin
 
 ## 18.1 SemVer versioning <a href="#181-semver-versioning" id="181-semver-versioning"></a>
 
-**[M]** `info.version` **MUST** follow SemVer. As a GovStack convention, it is the version of that surface's published API contract and its canonical description together; the major component **MUST** match the major version exposed under [§18.2](#182-major-version-in-path-or-channel). An API served under `/v1` therefore carries an `info.version` of `1.x.y`. The version of the software that implements the contract is a separate number that this guide does not constrain: an implementation may be at `0.16.3` while the contract it serves is at `1.4.0`, and `info.version` **MUST NOT** be set to the implementation version.
+**[M]** `info.version` **MUST** follow SemVer and identify the version of that surface's published contract, not the implementation version. When a surface also exposes a major version in a path, channel, or protocol field, the two **MUST** agree. An implementation may therefore be at `0.16.3` while the contract it serves is at `1.4.0`.
 
 ## 18.2 Major version in path or channel <a href="#182-major-version-in-path-or-channel" id="182-major-version-in-path-or-channel"></a>
 
-**[M]** A major version increment **MUST** be reflected in every versioned OpenAPI path key (`/v2/`) and **MUST NOT** be duplicated in the OpenAPI `servers` URL. The unversioned operational endpoints of [§5.9](../part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint) carry no major version and are unaffected by an increment. On AsyncAPI, the major version **MUST** appear in the logical channel ID defined by [§17.2](../part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses); protocol-native channel addresses **MUST NOT** be rewritten solely to carry it.
+**[M]** A major version increment **MUST** be visible in the canonical contract through the surface's declared versioning mechanism. New GovStack OpenAPI surfaces **SHOULD** carry it in each versioned path key (`/v2/`) rather than duplicating it in `servers`. New AsyncAPI surfaces **SHOULD** carry it in the logical channel ID defined by [§17.2](../part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses). Protocol-native addresses **MUST NOT** be rewritten solely to carry a guide-specific version shape.
 
 ## 18.3 Backward-compatible minor changes <a href="#183-backward-compatible-minor-changes" id="183-backward-compatible-minor-changes"></a>
 
@@ -28,7 +28,7 @@ description: "Rules governing SemVer versioning, backward-compatible and breakin
 
 ## 18.5 Deprecation and Sunset headers <a href="#185-deprecation-and-sunset-headers" id="185-deprecation-and-sunset-headers"></a>
 
-**[M+R]** Deprecated HTTP endpoints **MUST** return a `Deprecation` header per RFC 9745 (a Structured Field date carrying the deprecation timestamp, for example `Deprecation: @1735689600`) and a `Link` with relation `deprecation` pointing to migration documentation. When removal is planned, they **MUST** additionally return a `Sunset` header per RFC 8594; its timestamp **MUST NOT** precede the deprecation timestamp. The minimum deprecation window and maximum concurrent major versions remain policy for the Lifecycle & Governance companion.
+**[M+R]** Deprecated HTTP endpoints **MUST** return a `Deprecation` header per RFC 9745 (a Structured Field date carrying the deprecation timestamp, for example `Deprecation: @1735689600`) and a `Link` with relation `deprecation` pointing to migration documentation. When removal is planned, they **MUST** additionally return a `Sunset` header per RFC 8594; its timestamp **MUST NOT** precede the deprecation timestamp. The GovStack governance process owns the minimum deprecation window and maximum number of concurrent major versions.
 
 ## 18.6 Clients ignore unknown fields <a href="#186-clients-ignore-unknown-fields" id="186-clients-ignore-unknown-fields"></a>
 
@@ -36,8 +36,8 @@ description: "Rules governing SemVer versioning, backward-compatible and breakin
 
 ## 18.7 AsyncAPI deprecation metadata <a href="#187-asyncapi-deprecation-metadata" id="187-asyncapi-deprecation-metadata"></a>
 
-**[M+R]** AsyncAPI channels, operations, and messages **MUST** declare deprecation in their `description` and, where supported by tooling, with a specification extension `x-govstack-deprecated` containing `since`, `sunset`, `replacement`, and `reason`. [`[OPEN-18-A]`](../appendix/b-open-questions.md)
+**[M+R]** AsyncAPI channels, operations, and messages **MUST** declare consumer-visible deprecation and replacement guidance in their `description`. They **MAY** also use the experimental `x-govstack-deprecated` extension with `since`, `sunset`, `replacement`, and `reason` where supported by tooling.
 
 ## Note on retrofitting <a href="#note-on-retrofitting" id="note-on-retrofitting"></a>
 
-Bringing an existing BB into conformance with the JSON conventions ([§9.2](../part-c/9-json-conventions-and-naming.md#92-camelcase-field-names), [§10.x](../part-c/10-data-types-and-formats.md)) or the opaque-identifier rule ([§10.1](../part-c/10-data-types-and-formats.md#101-opaque-server-generated-identifiers)) changes the wire contract and is therefore a breaking change under [§18.4](#184-breaking-changes-bump-major-version): it **MUST** be released as a new major version. The transition schedule for existing BBs is governance, not design (Lifecycle & Governance companion).
+Bringing an existing BB into conformance with the JSON conventions ([§9.2](../part-c/9-json-conventions-and-naming.md#92-camelcase-field-names), [§10.x](../part-c/10-data-types-and-formats.md)) or the opaque-identifier rule ([§10.1](../part-c/10-data-types-and-formats.md#101-opaque-server-generated-identifiers)) changes the wire contract and is therefore a breaking change under [§18.4](#184-breaking-changes-bump-major-version): it **MUST** be released as a new major version. The transition schedule for existing BBs is governance, not design.

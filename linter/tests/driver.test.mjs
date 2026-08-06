@@ -25,11 +25,17 @@ function makeRepo(files) {
   }
   if (files['api/coverage.yaml'] && !files['spec/requirements.md']) {
     const ids = [
-      ...files['api/coverage.yaml'].matchAll(/\bid:\s*["']?([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)/g),
-    ].map((match) => match[1]);
+      ...files['api/coverage.yaml'].matchAll(
+        /\bid:\s*["']?(govstack-[a-z0-9]+(?:[-.][a-z0-9]+)*#req-([1-9][0-9]*))["']?/g,
+      ),
+    ].map((match) => ({ id: match[1], number: match[2] }));
     if (ids.length) {
-      const requirements = [...new Set(ids)]
-        .map((id) => `- **${id}** **REQUIRED**: Test requirement ${id}.`)
+      const requirements = [...new Map(ids.map((item) => [item.id, item])).values()]
+        .map(
+          ({ id, number }) =>
+            `### #${number} Test requirement ${number} (REQUIRED EXTENSIBLE OBSERVABLE)\n\n` +
+            `\`${id}\`\n\nTest requirement ${number}.`,
+        )
         .join('\n');
       const abs = path.join(dir, 'spec', 'requirements.md');
       fs.mkdirSync(path.dirname(abs), { recursive: true });
@@ -73,7 +79,7 @@ function fakeOpenapiValidator(dir) {
 
 const VALID_COVERAGE = `version: 1
 requirements:
-  - id: REQ-TEST-001
+  - id: "govstack-bb-test-fr#req-1"
     disposition: external
     reference: https://example.org/requirements/test
 `;
@@ -180,10 +186,10 @@ apis:
     'api/events.yaml': cleanAsyncapi(),
     'api/coverage.yaml': `version: 1
 requirements:
-  - id: REQ-API-001
+  - id: "govstack-bb-test-fr#req-1"
     disposition: operation
     operations: [listThings, receiveThing]
-  - id: REQ-API-002
+  - id: "govstack-bb-test-fr#req-2"
     disposition: message
     messages: [ThingReceived]
 `,
@@ -192,6 +198,88 @@ requirements:
     const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
     assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
     assert.equal(r.json.summary.filesLinted, 2);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('api/index.yaml supports a protocol-standard surface without synthetic OpenAPI', () => {
+  const dir = makeRepo({
+    'api/index.yaml': `version: 1
+apis:
+  - type: standard
+    name: OpenID Connect
+    reference: https://openid.net/specs/openid-connect-core-1_0.html
+    discovery: /.well-known/openid-configuration
+`,
+    'api/coverage.yaml': `version: 1
+requirements:
+  - id: "govstack-bb-test-fr#req-1"
+    disposition: external
+    reference: https://openid.net/specs/openid-connect-core-1_0.html
+`,
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
+    assert.equal(r.json.summary.filesLinted, 0);
+    assert.ok(r.json.notices.some((notice) => notice.includes('Standard-defined API surface')));
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('protocol-standard surfaces remain blocked in conformance until a registry is approved', () => {
+  const dir = makeRepo({
+    'api/index.yaml': `version: 1
+apis:
+  - type: standard
+    name: Example protocol
+    reference: https://example.org/specification
+`,
+    'api/coverage.yaml': VALID_COVERAGE,
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET]);
+    assert.equal(r.status, 1);
+    assert.ok(codes(r.json).includes('standard-surface-unverified'));
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('standard surface inventory requires an HTTPS normative reference', () => {
+  const dir = makeRepo({
+    'api/index.yaml': `version: 1
+apis:
+  - type: standard
+    name: OpenID Connect
+    reference: http://example.org/oidc
+`,
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 1);
+    assert.ok(codes(r.json).includes('api-index-invalid'));
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('api/index.yaml rejects a noApi field alongside declared surfaces', () => {
+  const dir = makeRepo({
+    'api/index.yaml': `version: 1
+noApi: false
+apis:
+  - type: openapi
+    path: api/openapi.yaml
+`,
+    'api/openapi.yaml': cleanOpenapi(),
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 1);
+    assert.ok(codes(r.json).includes('api-index-invalid'));
   } finally {
     cleanup(dir);
   }
@@ -315,7 +403,7 @@ apis:
     'api/b.yaml': cleanAsyncapi('sameOperation', 'SameMessage'),
     'api/coverage.yaml': `version: 1
 requirements:
-  - { id: REQ-API-001, disposition: operation, operations: [sameOperation] }
+  - { id: "govstack-bb-test-fr#req-1", disposition: operation, operations: [sameOperation] }
 `,
   });
   try {
@@ -332,14 +420,24 @@ test('coverage is an exact projection of keyed Markdown requirements and flags l
     'api/openapi.yaml': cleanOpenapi(),
     'api/coverage.yaml': `version: 1
 requirements:
-  - { id: REQ-SPEC-001, disposition: external, reference: https://example.org/one }
-  - { id: REQ-EXTRA-001, disposition: external, reference: https://example.org/extra }
+  - { id: "govstack-bb-test-fr#req-1", disposition: external, reference: https://example.org/one }
+  - { id: "govstack-bb-extra-fr#req-1", disposition: external, reference: https://example.org/extra }
 `,
     'spec/requirements.md': `# Requirements
 
-- **REQ-SPEC-001** **REQUIRED**: The API exposes the first contract.
-- **REQ-SPEC-002** **RECOMMENDED**: The API exposes the second contract.
-- Old prose requirement (REQUIRED)
+### #1 The API exposes the first contract (REQUIRED EXTENSIBLE OBSERVABLE)
+
+\`govstack-bb-test-fr#req-1\`
+
+The API exposes the first contract.
+
+### #2 The API exposes the second contract (RECOMMENDED EXTENSIBLE OBSERVABLE)
+
+\`govstack-bb-test-fr#req-2\`
+
+The API exposes the second contract.
+
+- **OLD-FR-003** **OPTIONAL**: Old prose requirement.
 `,
   });
   try {
@@ -353,12 +451,51 @@ requirements:
   }
 });
 
+test('draft, deprecated, and inapplicable requirements are not active coverage obligations', () => {
+  const dir = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'api/coverage.yaml': VALID_COVERAGE,
+    'spec/requirements.md': `# Requirements
+
+### #1 Active requirement (REQUIRED EXTENSIBLE OBSERVABLE)
+
+\`govstack-bb-test-fr#req-1\`
+
+Active contract.
+
+### #2 Proposed requirement (DRAFT EXTENSIBLE OBSERVABLE)
+
+\`govstack-bb-test-fr#req-2\`
+
+Proposed contract.
+
+### #3 Retired requirement (DEPRECATED REPLACEABLE AUDITABLE)
+
+\`govstack-bb-test-fr#req-3\`
+
+Retired contract.
+
+### #4 Inherited exclusion (RECOMMENDED INAPPLICABLE AUDITABLE)
+
+\`govstack-bb-test-cfr#req-4 replaces govstack-cfr-quality#req-4\`
+
+The parent does not apply because this surface uses a protocol-native contract.
+`,
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
+  } finally {
+    cleanup(dir);
+  }
+});
+
 test('planned coverage is blocking in conformance and advisory-only in advisory mode', () => {
   const dir = makeRepo({
     'api/openapi.yaml': cleanOpenapi(),
     'api/coverage.yaml': `version: 1
 requirements:
-  - id: REQ-PLAN-001
+  - id: "govstack-bb-test-fr#req-1"
     disposition: planned
     issue: https://example.org/issues/123
 `,
@@ -390,7 +527,7 @@ test('coverage rejects disposition-incompatible extra fields', () => {
     'api/openapi.yaml': cleanOpenapi(),
     'api/coverage.yaml': `version: 1
 requirements:
-  - id: REQ-EXTERNAL-001
+  - id: "govstack-bb-test-fr#req-1"
     disposition: external
     reference: https://example.org/requirement
     operations: [listThings]
@@ -405,22 +542,72 @@ requirements:
   }
 });
 
-test('coverage cannot mark a REQUIRED requirement not-applicable', () => {
+test('coverage can trace a REQUIRED requirement to non-API verification', () => {
   const dir = makeRepo({
     'api/openapi.yaml': cleanOpenapi(),
     'api/coverage.yaml': `version: 1
 requirements:
-  - id: REQ-NA-001
-    disposition: not-applicable
-    rationale: This is incorrectly excluded.
+  - id: "govstack-bb-test-fr#req-1"
+    disposition: non-api
+    rationale: This requirement is verified through the BB audit procedure.
 `,
   });
   try {
     const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
-    assert.equal(r.status, 1);
-    assert.ok(codes(r.json).includes('coverage-required-not-applicable'));
+    assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
   } finally {
     cleanup(dir);
+  }
+});
+
+test('coverage accepts version-qualified CFR requirement identifiers', () => {
+  const dir = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'api/coverage.yaml': `version: 1
+requirements:
+  - id: "govstack-bb-test-fr-2.3.0#req-7"
+    disposition: external
+    reference: https://example.org/requirements/7
+`,
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('requirement markers require an exact level-three heading and body text', () => {
+  const wrongDepth = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'spec/requirements.md': `## #1 Wrong depth (REQUIRED EXTENSIBLE OBSERVABLE)
+
+\`govstack-bb-test-fr#req-1\`
+
+This requirement has body text.
+`,
+  });
+  const missingBody = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'spec/requirements.md': `### #1 Empty requirement (REQUIRED EXTENSIBLE OBSERVABLE)
+
+\`govstack-bb-test-fr#req-1\`
+
+### Notes
+`,
+  });
+  try {
+    const depthResult = runCliJson(['--repo-root', wrongDepth, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(depthResult.status, 1);
+    assert.ok(codes(depthResult.json).includes('requirements-invalid-marker'));
+
+    const bodyResult = runCliJson(['--repo-root', missingBody, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(bodyResult.status, 1);
+    assert.ok(codes(bodyResult.json).includes('requirements-invalid-marker'));
+  } finally {
+    cleanup(wrongDepth);
+    cleanup(missingBody);
   }
 });
 

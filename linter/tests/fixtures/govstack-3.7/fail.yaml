@@ -1,4 +1,4 @@
-# 3.7 fail: the operation is missing summary, description and tags. Its action,
+# 3.7 fail: the operation is missing its required description. Its action,
 # channel reference and message reference are otherwise valid and resolvable.
 asyncapi: 3.0.0
 info:

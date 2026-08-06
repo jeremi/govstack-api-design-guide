@@ -14,7 +14,5 @@ Four guides live here today:
 - [Maintaining this guide](../guides/maintaining-this-guide.md): where the canonical copy lives, how to edit a rule without breaking its anchor, and how to regenerate the machine-readable index.
 
 {% hint style="info" %}
-This book is exact draft version `0.1.0-draft` and is not yet ratified. The matching draft Spectral ruleset ships in this repository; the common OpenAPI/AsyncAPI component files and conformance test pack remain publication prerequisites (see [Appendix A](../appendix/a-companion-documents.md)).
+This book is exact draft version `0.1.0-draft` and is not yet ratified. The matching draft Spectral ruleset and common OpenAPI/AsyncAPI component files ship in this repository.
 {% endhint %}
-
-Before ratification, this section is expected to gain worked positive and negative examples for every numbered rule and a conformance walkthrough that takes one reference BB specification from a blank file to a passing run.

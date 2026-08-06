@@ -8,18 +8,18 @@ Run this before submitting a BB specification for review. Each item links to the
 
 ## Every specification
 
-- [ ] `info` block is complete: SemVer `version`, `title`, `description`, and `contact` are all present. ([2.5](../part-a/2-openapi-document-standards.md#25-complete-info-block), [3.5](../part-a/3-asyncapi-document-standards.md#35-complete-asyncapi-info-block))
+- [ ] `info` has a SemVer `version`, `title`, and useful `description`; add `contact` when the contract is the right place for maintainer metadata. ([2.5](../part-a/2-openapi-document-standards.md#25-complete-info-block), [3.5](../part-a/3-asyncapi-document-standards.md#35-complete-asyncapi-info-block))
 - [ ] `servers` is non-empty and meaningful: no `localhost`, no personal machines, no fake production domains; reference specs use parameterised template URLs. ([2.6](../part-a/2-openapi-document-standards.md#26-meaningful-servers-block), [3.6](../part-a/3-asyncapi-document-standards.md#36-servers-channels-operations-and-messages))
-- [ ] Every operation has complete metadata: an `operationId` (or AsyncAPI operation key), `summary`, `description`, and at least one `tag`. ([2.7](../part-a/2-openapi-document-standards.md#27-complete-operation-metadata), [3.7](../part-a/3-asyncapi-document-standards.md#37-complete-asyncapi-operation-metadata))
-- [ ] Every schema has a `description`. ([4.1](../part-a/4-documentation-requirements.md#41-every-schema-described))
-- [ ] Every request and response body has at least one `example`; every `enum` documents what its values mean. ([4.2](../part-a/4-documentation-requirements.md#42-examples-for-bodies-and-enums))
+- [ ] Every operation has a stable `operationId` (or AsyncAPI operation key), its required contract references, and an accurate `description`; add `summary` and tags when useful for navigation. ([2.7](../part-a/2-openapi-document-standards.md#27-complete-operation-metadata), [3.7](../part-a/3-asyncapi-document-standards.md#37-complete-asyncapi-operation-metadata))
+- [ ] Add useful schema descriptions where names and structure do not make semantics clear. ([4.1](../part-a/4-documentation-requirements.md#41-useful-schema-descriptions))
+- [ ] Add representative request and response examples where useful; document enum values that are not self-explanatory. ([4.2](../part-a/4-documentation-requirements.md#42-examples-for-bodies-and-enums))
 - [ ] No placeholder text anywhere: no `TBD`, no `Lorem ipsum`, no `a, b, c`, no leftover content copied from another BB. ([4.3](../part-a/4-documentation-requirements.md#43-no-placeholder-text))
 - [ ] Canonical surfaces are discoverable at the default paths or through a valid `api/index.yaml`; `api/coverage.yaml` exactly traces every marked functional requirement to an operation, message, external contract, rationale, or tracked plan. ([4.5](../part-a/4-documentation-requirements.md#45-api-surface-inventory), [4.6](../part-a/4-documentation-requirements.md#46-functional-requirement-traceability))
 - [ ] A security scheme is declared and applied to every operation by default, with per-operation overrides explicit. ([13.1](../part-d/13-authentication-and-authorisation.md#131-default-security-on-every-operation))
 - [ ] `info.x-govstack-api-guide` pins exact guide and ruleset versions (`0.1.0-draft`) and every exception has all seven §20.3 fields: `rule`, `scope`, `rationale`, `record`, `reviewedBy`, `reviewedAt`, and `expiresAt`. ([20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version))
 - [ ] The file passes its validator (see [Validating your spec](../guides/validating-your-spec.md)). ([20.1](../part-e/20-conformance-and-validation.md#201-every-file-passes-validation))
 - [ ] `info.version` follows SemVer. ([18.1](../part-d/18-compatibility-and-lifecycle.md#181-semver-versioning))
-- [ ] JSON field names are `camelCase`, applied consistently; check the [carve-outs](../part-c/9-json-conventions-and-naming.md#carve-out-from-92) before flagging fields imported from an external standard (RFC 9457, CloudEvents) as violations. ([9.2](../part-c/9-json-conventions-and-naming.md#92-camelcase-field-names))
+- [ ] GovStack-owned JSON field names use the recommended `camelCase` convention consistently; fields imported from an external standard retain their standard spelling. ([9.2](../part-c/9-json-conventions-and-naming.md#92-camelcase-field-names))
 - [ ] Resource identifiers are opaque, server-generated strings; citizen records are never referred to by a personal identifier in a URL. ([10.1](../part-c/10-data-types-and-formats.md#101-opaque-server-generated-identifiers))
 
 ## REST surfaces (OpenAPI 3.1)
@@ -50,6 +50,6 @@ Run this before submitting a BB specification for review. Each item links to the
 - [ ] Logical channel IDs follow the versioned reverse-DNS convention, while Channel Object addresses use protocol-native syntax and bindings document the mapping. ([17.2](../part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses))
 - [ ] No logical channel ID, native address, topic, queue name, routing key, or channel parameter carries personal data. ([17.3](../part-d/17-asyncapi-channel-rules.md#173-no-personal-data-in-channels))
 - [ ] Delivery, duplicate-handling, ordering, retention, and replay behaviour is documented only where consumers may rely on it, using standard protocol bindings where available. ([17.11](../part-d/17-asyncapi-channel-rules.md#1711-duplicate-delivery-contract)–[17.15](../part-d/17-asyncapi-channel-rules.md#1715-no-universal-delivery-extensions))
-- [ ] Every message has an example. ([17.20](../part-d/17-asyncapi-channel-rules.md#1720-examples-for-every-message))
+- [ ] Add representative message examples where the schema alone does not make the interaction clear. ([17.20](../part-d/17-asyncapi-channel-rules.md#1720-representative-message-examples))
 
 Ticking every box above is the human half of conformance. See [Validating your spec](../guides/validating-your-spec.md) for the mechanical half.

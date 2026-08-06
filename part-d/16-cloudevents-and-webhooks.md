@@ -22,7 +22,7 @@ description: "Rules governing the CloudEvents envelope, event-type and source na
 
 ## 16.3 Reverse-DNS event types <a href="#163-reverse-dns-event-types" id="163-reverse-dns-event-types"></a>
 
-**[M]** Event `type` names **MUST** follow a single ecosystem-wide convention. The default shape is reverse-DNS: `global.govstack.{bb-code}.{resource}.{action}`. The `{bb-code}` segment is the BB's single registered code per [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). The event type identifies the semantic event kind and **MUST NOT** include the major API version; the versioned transport contract is carried by the AsyncAPI logical channel ID or equivalent version metadata ([§18.2](../part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel)). [`[OPEN-16-A]`](../appendix/b-open-questions.md)
+**[M]** Event `type` names **MUST** be stable, globally collision-resistant, and include the BB's registered code from [§9.11](../part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code). New GovStack event types **SHOULD** use the reverse-DNS shape `global.govstack.{bb-code}.{resource}.{action}`. The event type identifies the semantic event kind and **MUST NOT** include the major API version; transport-contract versioning is carried separately ([§18.2](../part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel)).
 
 ## 16.4 Stable CloudEvents source <a href="#164-stable-cloudevents-source" id="164-stable-cloudevents-source"></a>
 
@@ -64,7 +64,7 @@ description: "Rules governing the CloudEvents envelope, event-type and source na
 
 ## 16.9 Readiness for a shared signature profile <a href="#169-readiness-for-a-shared-signature-profile" id="169-readiness-for-a-shared-signature-profile"></a>
 
-A future guide version should promote a shared signature profile only after it defines key discovery, key rotation, replay-window enforcement, protocol mappings, conformance test vectors, and interoperable implementations in at least two commonly used GovStack implementation languages. Those operational concerns belong in the Security & Operations companion ([§1.2](../1-introduction.md#12-scope)).
+A shared signature profile is outside the baseline. It should be considered only after key discovery, key rotation, replay-window enforcement, protocol mappings, conformance test vectors, and interoperable implementations in at least two commonly used GovStack implementation languages exist. Operational signing controls remain outside this guide ([§1.2](../1-introduction.md#12-scope)).
 
 ## 16.10 Documented delivery-failure contract <a href="#1610-documented-delivery-failure-contract" id="1610-documented-delivery-failure-contract"></a>
 

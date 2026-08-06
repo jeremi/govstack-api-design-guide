@@ -31,10 +31,10 @@ rules:
   # enumerated here (not decidable which ones are "wrong" in general), so
   # this forbid list is illustrative, not exhaustive.
   govstack-6.4:
-    description: "PATCH request bodies must use application/merge-patch+json (guide 6.4, [M+R])."
+    description: "PATCH request bodies should use application/merge-patch+json by default (guide 6.4, [M+R])."
     message: "[6.4][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/6-http-methods.md#64-patch-uses-json-merge-patch
-    severity: error
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/6-http-methods.md#64-patch-uses-a-registered-patch-format
+    severity: warn
     formats: [oas3_1]
     given: $.paths[*].patch.requestBody.content
     then:

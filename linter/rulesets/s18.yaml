@@ -42,10 +42,10 @@ rules:
   # info.version's major segment. Paths lacking a version prefix entirely are
   # guide 5.1's concern, not this rule's.
   govstack-18.2-openapi:
-    description: "OpenAPI path version prefixes must match info.version's major segment (guide 18.2, [M])."
+    description: "OpenAPI path version prefixes should match info.version's major segment (guide 18.2, [M], default convention)."
     message: "[18.2][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel
-    severity: error
+    severity: warn
     formats: [oas3_1]
     given: $
     then:
@@ -59,10 +59,10 @@ rules:
   # govstack-asyncapi-common.yaml" (needs the vendored common file, out of
   # scope here); only the logical-ID convention is checked.
   govstack-18.2-asyncapi:
-    description: "AsyncAPI logical channel IDs must include a major version matching info.version's major segment (guide 18.2, [M])."
+    description: "AsyncAPI logical channel IDs should include a major version matching info.version (guide 18.2, [M], default convention)."
     message: "[18.2][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel
-    severity: error
+    severity: warn
     formats: [aas3]
     given: $
     then:

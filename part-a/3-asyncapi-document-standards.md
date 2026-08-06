@@ -30,7 +30,7 @@ An operation-free shared component library under `api/common/` is referenced sup
 
 ## 3.5 Complete AsyncAPI info block <a href="#35-complete-asyncapi-info-block" id="35-complete-asyncapi-info-block"></a>
 
-**[M]** The `info` block of each canonical AsyncAPI file **MUST** include `title`, `version` (SemVer), `description`, and `contact`.
+**[M]** The `info` block of each canonical AsyncAPI file **MUST** include `title`, `version` (SemVer), and a useful `description`. It **SHOULD** include `contact`; repository governance may supply the maintainer contact when it does not belong in the API contract.
 
 ## 3.6 Servers channels operations and messages <a href="#36-servers-channels-operations-and-messages" id="36-servers-channels-operations-and-messages"></a>
 
@@ -38,7 +38,7 @@ An operation-free shared component library under `api/common/` is referenced sup
 
 ## 3.7 Complete AsyncAPI operation metadata <a href="#37-complete-asyncapi-operation-metadata" id="37-complete-asyncapi-operation-metadata"></a>
 
-**[M+R]** Every AsyncAPI operation **MUST** include an operation identifier (the key under `operations`), `action` (`send` or `receive`), `summary`, `description`, at least one `tag`, a referenced `channel`, and at least one referenced message. In AsyncAPI 3.0, root-level operation `messages` **MUST** reference message entries defined on the operation's referenced channel. Channel message entries **MAY** in turn reference reusable message definitions under `components.messages`. [§17.6](../part-d/17-asyncapi-channel-rules.md#176-structured-cloudevents-json-payloads)–[§17.7](../part-d/17-asyncapi-channel-rules.md#177-shared-cloudevents-envelope-schema) define which domain messages use CloudEvents and how asynchronous rejection messages reuse the common error schema.
+**[M+R]** Every AsyncAPI operation **MUST** have a stable operation identifier (the key under `operations`), an `action` (`send` or `receive`), an accurate `description`, a referenced `channel`, and at least one referenced message. A concise `summary` and at least one useful `tag` **SHOULD** be present when they improve navigation or generated documentation. In AsyncAPI 3.0, root-level operation `messages` **MUST** reference message entries defined on the operation's referenced channel. Channel message entries **MAY** in turn reference reusable message definitions under `components.messages`. [§17.6](../part-d/17-asyncapi-channel-rules.md#176-structured-cloudevents-json-payloads)–[§17.7](../part-d/17-asyncapi-channel-rules.md#177-shared-cloudevents-envelope-schema) define which domain messages use CloudEvents and how asynchronous rejection messages reuse the common error schema.
 
 ## 3.8 Pinned vendored AsyncAPI components <a href="#38-pinned-vendored-asyncapi-components" id="38-pinned-vendored-asyncapi-components"></a>
 

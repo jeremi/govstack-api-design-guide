@@ -22,9 +22,9 @@ description: "Rules defining the meaning, safety, and idempotency guarantees of 
 
 **[R]** `PUT` **MUST** replace the entire resource and **MUST** be idempotent.
 
-## 6.4 PATCH uses JSON Merge Patch <a href="#64-patch-uses-json-merge-patch" id="64-patch-uses-json-merge-patch"></a>
+## 6.4 PATCH uses a registered patch format <a href="#64-patch-uses-a-registered-patch-format" id="64-patch-uses-a-registered-patch-format"></a>
 
-**[M+R]** `PATCH` partially updates a resource. Request bodies **MUST** use JSON Merge Patch (RFC 7396) with media type `application/merge-patch+json`. Note that under RFC 7396 a member set to `null` means "remove this member", so Merge Patch cannot set a nullable field ([§9.4](../part-c/9-json-conventions-and-naming.md#94-explicit-nullability)) *to* JSON `null`; it can only remove it. Endpoints where setting a field to `null` must be distinguishable from removing it, or which need element-wise array mutation, **MAY** additionally support RFC 6902 JSON Patch via `application/json-patch+json`; such endpoints **MUST** document which media type carries which semantics.
+**[M+R]** `PATCH` partially updates a resource. Its request body **MUST** use a registered patch media type and the operation **MUST** document the selected patch semantics. JSON Merge Patch (RFC 7396) with `application/merge-patch+json` **SHOULD** be the default for simple object updates. Under RFC 7396 a member set to `null` means "remove this member", so Merge Patch cannot set a nullable field ([§9.4](../part-c/9-json-conventions-and-naming.md#94-explicit-nullability)) *to* JSON `null`; it can only remove it. Endpoints where setting a field to `null` must be distinguishable from removing it, or which need element-wise array mutation, **MAY** use RFC 6902 JSON Patch via `application/json-patch+json` or another registered format suited to the contract.
 
 ## 6.5 DELETE response semantics <a href="#65-delete-response-semantics" id="65-delete-response-semantics"></a>
 

@@ -52,7 +52,7 @@ description: "Rules mapping API outcomes to standard HTTP status codes, caching,
 
 ## 7.11 422 for semantic errors <a href="#711-422-for-semantic-errors" id="711-422-for-semantic-errors"></a>
 
-**[R]** A well-formed request that violates domain validation or other semantic constraints **MUST** use `422 Unprocessable Content` (RFC 9110; formerly "Unprocessable Entity"). The idempotency-fingerprint use of `422` is in [§14.5](../part-d/14-idempotency.md#145-key-reuse-and-fingerprint-mismatch). [`[OPEN-7-A]`](../appendix/b-open-questions.md)
+**[R]** A well-formed request that violates domain validation or other semantic constraints **MUST** use `422 Unprocessable Content` (RFC 9110; formerly "Unprocessable Entity"). The idempotency-fingerprint use of `422` is in [§14.5](../part-d/14-idempotency.md#145-key-reuse-and-fingerprint-mismatch).
 
 ## 7.12 429 for rate limits <a href="#712-429-for-rate-limits" id="712-429-for-rate-limits"></a>
 
@@ -84,7 +84,7 @@ description: "Rules mapping API outcomes to standard HTTP status codes, caching,
 
 ## 7.19 415 for unsupported media types <a href="#719-415-for-unsupported-media-types" id="719-415-for-unsupported-media-types"></a>
 
-**[M+R]** `415 Unsupported Media Type`: the request payload media type is not supported. PATCH endpoints ([§6.4](../part-b/6-http-methods.md#64-patch-uses-json-merge-patch)) **MUST** return `415` when the patch media type is neither `application/merge-patch+json` nor a documented `application/json-patch+json`. `406 Not Acceptable` **MAY** be returned when no representation matches the request `Accept` header.
+**[M+R]** `415 Unsupported Media Type`: the request payload media type is not supported. PATCH endpoints ([§6.4](../part-b/6-http-methods.md#64-patch-uses-a-registered-patch-format)) **MUST** return `415` when the request does not use one of the registered patch media types documented by that operation. `406 Not Acceptable` **MAY** be returned when no representation matches the request `Accept` header.
 
 ## 7.20 No-store on error responses <a href="#720-no-store-on-error-responses" id="720-no-store-on-error-responses"></a>
 

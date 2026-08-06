@@ -36,11 +36,11 @@ description: "The local Operation resource shape and polling pattern BBs use for
 
 ## 15.4 Polling the Operation resource <a href="#154-polling-the-operation-resource" id="154-polling-the-operation-resource"></a>
 
-**[M+R]** A BB exposing an Operation resource **MUST** expose polling via `GET /v{major}/operations/{operationId}`. A non-terminal polling response **SHOULD** include `Retry-After` when the server can advise a useful minimum polling interval.
+**[M+R]** A BB exposing an Operation resource **MUST** make it pollable with `GET` at the URI returned in `Location`. The conventional path **SHOULD** be `/v{major}/operations/{operationId}`. A non-terminal polling response **SHOULD** include `Retry-After` when the server can advise a useful minimum polling interval.
 
 ## 15.5 Cancellation via cancel sub-resource <a href="#155-cancellation-via-cancel-sub-resource" id="155-cancellation-via-cancel-sub-resource"></a>
 
-**[M+R]** Cancellation, when supported, **MUST** be `POST /v{major}/operations/{operationId}/cancel`.
+**[M+R]** Cancellation, when supported, **MUST** be documented and discoverable from the Operation contract. The conventional action **SHOULD** be `POST /v{major}/operations/{operationId}/cancel`.
 
 ## 15.6 Webhook completion notification <a href="#156-webhook-completion-notification" id="156-webhook-completion-notification"></a>
 

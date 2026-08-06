@@ -111,16 +111,15 @@ rules:
       functionOptions:
         mode: offsetEnvelope
 
-  # 12.7 [M] — the sort parameter MUST be named `sort` (not `orderBy`/
-  # `sortBy`), values `field`/`-field`, comma-separated. Split into a naming
-  # check (any operation, not just collection GETs: the wrong name is wrong
-  # wherever it appears) and a shape check (only fires when a `sort`
-  # parameter exists; does not require every collection to support sorting).
+  # 12.7 [M] — ADVISORY PROXY: the sort parameter SHOULD be named `sort`
+  # (rather than `orderBy`/`sortBy`) and use comma-separated `field`/`-field`
+  # values. Split into a naming check and a shape check. Neither check proves
+  # that allowed fields, default order, or a stable tie-breaker are documented.
   govstack-12.7-name:
-    description: "sort parameter must be named 'sort', not 'orderBy'/'sortBy' (guide 12.7, [M])."
-    message: "[12.7][M] parameter name must be \"sort\", not \"orderBy\"/\"sortBy\" (guide 12.7)"
+    description: "sort parameter should use the GovStack default name 'sort' (guide 12.7, [M])."
+    message: "[12.7][M] parameter name should use the GovStack default \"sort\" (guide 12.7)"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#127-sort-parameter-convention
-    severity: error
+    severity: warn
     formats: [oas3_1]
     given: "$.paths[*][get,put,post,delete,options,head,patch,trace]"
     then:
@@ -139,10 +138,10 @@ rules:
                       enum: [orderBy, sortBy]
 
   govstack-12.7-grammar:
-    description: "sort parameter schema must be a string with a field/-field, comma-separated pattern (guide 12.7, [M])."
+    description: "sort parameter should use the GovStack field/-field comma-separated grammar (guide 12.7, [M])."
     message: "[12.7][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#127-sort-parameter-convention
-    severity: error
+    severity: warn
     formats: [oas3_1]
     given: "$.paths[*][get,put,post,delete,options,head,patch,trace]"
     then:

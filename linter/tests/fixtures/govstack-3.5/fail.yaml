@@ -1,9 +1,8 @@
-# 3.5 fail: info block is missing `contact` (title/version/description present).
+# 3.5 fail: info block is missing the required description.
 asyncapi: 3.0.0
 info:
   title: Identity Events
   version: 1.2.0
-  description: Emits identity lifecycle events for the Identity building block.
 servers:
   production:
     host: '{brokerHost}'

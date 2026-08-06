@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Payments Events API
   version: 1.0.0
-  description: Event type embeds a version segment (v1), which is forbidden.
+  description: Event type does not use the recommended GovStack reverse-DNS shape.
   contact:
     name: Sample BB Team
     url: https://example.org/contact
@@ -25,7 +25,7 @@ webhooks:
                   type: string
                 type:
                   type: string
-                  const: "global.govstack.payments.v1.payment.completed"
+                  const: "payments.payment.completed"
                 data:
                   type: object
       responses:

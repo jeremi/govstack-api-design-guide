@@ -23,7 +23,7 @@ The test for inclusion: *would two BB editors writing two different specs need t
 - The schema-only companion files `govstack-openapi-common.yaml` (`Problem`, `ValidationProblem`, `FieldError`, and `PageInfo`) and `govstack-asyncapi-common.yaml` (the reusable event envelope and transport-neutral asynchronous error schemas). OpenAPI reuse is optional; BBs keep security schemes, parameters, headers, responses, examples, and Operation resources local.
 - The repository-level API inventory (`api/index.yaml`, when the default canonical paths are insufficient) and functional-requirement traceability file (`api/coverage.yaml`).
 
-CloudEvents is the normative GovStack event contract across transports. It defines the common event envelope and stable event metadata (`id`, `source`, `type`, `time`, `data`, and extensions). AsyncAPI 3.0 is the required machine-readable documentation format for brokered event channels and event streams other than HTTP push webhooks: it describes channels, operations, messages, security, protocol bindings, examples, and delivery semantics. OpenAPI 3.1 `webhooks` remains the documentation format for HTTP push webhooks. Where AsyncAPI and CloudEvents overlap on event payload fields, CloudEvents takes precedence. GovStack domain events use structured CloudEvents JSON so the full event envelope is visible in the message payload and can be validated consistently across brokers. Protocol-specific depth for Kafka, MQTT, AMQP, WebSockets, and SSE is intentionally limited: BBs declare the relevant bindings where they affect the contract, while detailed broker-operation guidance belongs in the Security & Operations companion or a protocol profile. This reflects the current BB landscape being predominantly REST, not a judgement that the ecosystem should remain so.
+CloudEvents is the normative GovStack event contract across transports. It defines the common event envelope and stable event metadata (`id`, `source`, `type`, `time`, `data`, and extensions). AsyncAPI 3.0 is the required machine-readable documentation format for brokered event channels and event streams other than HTTP push webhooks: it describes channels, operations, messages, security, protocol bindings, examples, and delivery semantics. OpenAPI 3.1 `webhooks` remains the documentation format for HTTP push webhooks. Where AsyncAPI and CloudEvents overlap on event payload fields, CloudEvents takes precedence. GovStack domain events use structured CloudEvents JSON so the full event envelope is visible in the message payload and can be validated consistently across brokers. Protocol-specific depth for Kafka, MQTT, AMQP, WebSockets, and SSE is intentionally limited: BBs declare the relevant bindings where they affect the contract, while detailed broker-operation guidance is outside this guide or belongs in a protocol profile. This reflects the current BB landscape being predominantly REST, not a judgement that the ecosystem should remain so.
 
 The decision tree below summarises which artifact documents which kind of surface (informative). The document-level rules are in [§2](part-a/2-openapi-document-standards.md) and [§3](part-a/3-asyncapi-document-standards.md); the event rules are in [§16](part-d/16-cloudevents-and-webhooks.md) and [§17](part-d/17-asyncapi-channel-rules.md).
 
@@ -32,6 +32,7 @@ flowchart TD
     Q{"What kind of API surface?"} -->|"Synchronous HTTP request-response"| R["REST: OpenAPI 3.1<br/>default api/openapi.yaml or api/index.yaml entry"]
     Q -->|"HTTP push to subscriber URLs"| W["Webhooks: OpenAPI 3.1 webhooks section"]
     Q -->|"Brokered channels or event streams<br/>(MQTT, AMQP, Kafka, WebSockets, SSE)"| A["AsyncAPI 3.0<br/>default api/asyncapi.yaml or api/index.yaml entry"]
+    Q -->|"Recognised protocol-native surface<br/>(for example OIDC, OID4VCI, SDMX, OGC)"| S["Normative standard and discovery metadata<br/>type: standard in api/index.yaml"]
     W --> CE["Domain events use the CloudEvents v1.0.2 envelope"]
     A --> CE
 ```
@@ -40,18 +41,40 @@ A BB MAY additionally expose surfaces under other industry standards (for exampl
 
 **Out of scope:**
 
-- **Operational behaviour of a deployed BB** (token validation, certificate trust, key rotation, replay enforcement, audit logging, log redaction, alg allowlists, FAPI conformance, infrastructure). Belongs in a separate **GovStack API Security & Operations** companion (not yet drafted).
-- **Ecosystem governance** (ratification, enforcement, exception lifecycle, transition timelines, conformance levels, companion-artifact ownership). Expected to be defined in the proposed **GovStack API Lifecycle & Governance** companion document, reconciled with the existing GovStack Specification Framework and CFR compliance model.
+- **Operational behaviour of a deployed BB** (token validation, certificate trust, key rotation, replay enforcement, audit logging, log redaction, algorithm allowlists, FAPI conformance, infrastructure).
+- **Ecosystem governance** (ratification, enforcement, exception lifecycle, transition timelines, conformance levels, artifact ownership). These decisions belong to the GovStack governance process and the existing Specification Framework.
 - Performance, SLOs, capacity planning.
 - gRPC, GraphQL, file protocols, bulk media streaming.
 - Implementation guidance for any specific BB.
-- Design and maintenance of conformance test packs (separate companion artifact).
+- Design and maintenance of implementation conformance test packs.
 
 ## 1.3 Relationship to existing GovStack documents <a href="#13-relationship-to-existing-govstack-documents" id="13-relationship-to-existing-govstack-documents"></a>
 
-This guide is a GovStack specification that extends the Cross-Functional Requirements. Under the GovStack Specification Framework an extending specification may tighten or elaborate a cross-functional requirement but **MUST NOT** contradict or weaken one, and a requirement classified IMMUTABLE cannot be altered at all. Where a rule here inherits a cross-functional requirement it cites the requirement identifier, for example `govstack-cfr-data#req-2` in [§10.2](part-c/10-data-types-and-formats.md#102-rfc-3339-timestamps), so that the inheritance and its immutability are visible at the point of use.
+This guide is a candidate GovStack specification intended to extend the Cross-Functional Requirements. It is not yet a conformant CFR extension: its protocol-native and non-HTTP interface rules propose changes to current CFR wording, tracked in [cfr-architecture issue #7](https://github.com/GovStackWorkingGroup/cfr-architecture/issues/7) and [issue #8](https://github.com/GovStackWorkingGroup/cfr-architecture/issues/8). Under the GovStack Specification Framework an extending specification may tighten or elaborate a cross-functional requirement but **MUST NOT** contradict or weaken one, and a requirement classified IMMUTABLE cannot be altered at all. Where a rule here inherits a cross-functional requirement it cites the requirement identifier, for example `govstack-cfr-data#req-2` in [§10.2](part-c/10-data-types-and-formats.md#102-rfc-3339-timestamps), so that the inheritance and its immutability are visible at the point of use.
 
-Where this guide overlaps with existing GovStack requirements or BB-specific conventions in ways that rule does not settle, precedence must be settled through ratification and reconciliation with the existing GovStack Specification Framework and CFR compliance model. A full reconciliation matrix will accompany v1.0.
+The guide's candidate specification identifier is `govstack-cfr-api`, its current version is `0.1.0-draft`, and its proposed parent is the developing `govstack-cfr` specification. The proposed relationships are:
+
+| Guide rules | CFR requirement | Relationship |
+|---|---|---|
+| §2.1–§2.4, §20.1 | `govstack-cfr-quality#req-4` | OpenAPI versions, discovery, and validation for applicable HTTP APIs. |
+| §3, §16.1–§16.4, §17 | `govstack-cfr-architecture#req-19` | AsyncAPI and CloudEvents documentation for asynchronous interfaces. |
+| §5.1, §18.1–§18.4 | `govstack-cfr-architecture#req-3` | Explicit versioning and compatibility. |
+| §6.1, §6.3, §6.5, §14 | `govstack-cfr-architecture#req-5` | HTTP and idempotency behaviour. |
+| §8.6, §17.3 | `govstack-cfr-architecture#req-6` | Data-protection constraints for addresses and metadata. |
+| §8.4, §11.3, §17.8 | `govstack-cfr-architecture#req-13` | Trace Context and correlation. |
+| §5.9 | `govstack-cfr-architecture#req-15` | Liveness contract. |
+| §15.6, §16.1 | `govstack-cfr-architecture#req-14` | Callbacks and completion notifications. |
+| §18.5, §18.7 | `govstack-cfr-architecture#req-17` | Consumer-visible deprecation. |
+| §9.8, §9.9, §18.3, §18.6 | `govstack-cfr-architecture#req-18` | Tolerant-reader and additive-change behaviour. |
+| §8.2, §19 | `govstack-cfr-quality#req-8` | Localisation. |
+| §8.1, §13.1–§13.6, §17.10 | `govstack-cfr-security#req-3` | OIDC, OAuth, and service authentication declarations. |
+| §11.2, §11.4 | `govstack-cfr-security#req-16` | Structured validation errors without exposed internals. |
+| §10.11 | `govstack-cfr-data#req-1` | Immutable UTF-8 requirement. |
+| §10.2 | `govstack-cfr-data#req-2` | Immutable UTC timestamp requirement. |
+| §9.1, §10.3–§10.10 | `govstack-cfr-data#req-3` | Interoperable data representations and code lists. |
+| §13.7 | `govstack-cfr-security#req-1` | Immutable protected-transport outcome. |
+
+These mappings are alignment references, not formal inheritance declarations. They become formal only after the conflicting parent wording is resolved and each normative guide rule has a CFR identifier and classifiers. This guide does not replace `govstack-cfr-architecture#req-7`; while that requirement remains in CFR, it continues to apply independently. Passing this guide's linter therefore does not by itself prove complete CFR conformance.
 
 ## 1.4 Audience <a href="#14-audience" id="14-audience"></a>
 
@@ -67,7 +90,7 @@ The guide uses RFC 2119 language: **MUST**, **MUST NOT**, **SHOULD**, **SHOULD N
 
 ## 1.6 Exception process <a href="#16-exception-process" id="16-exception-process"></a>
 
-A BB editor **MAY** propose deviating from a **MUST** rule through the exception process to be defined in the proposed **GovStack API Lifecycle & Governance** companion document. An exception is effective only after approval and only for its recorded scope and lifetime. The canonical specification **MUST** declare each approved exception using the exact fields in [§20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version); an expired entry or one with a missing or syntactically invalid exception record URI does not suppress a rule. The submission, review, renewal, public-log, and revocation workflow remains governance.
+A BB editor **MAY** propose deviating from a **MUST** rule through the GovStack governance process. An exception **MUST NOT** weaken an inherited IMMUTABLE requirement, broaden an inherited EXTENSIBLE requirement, or replace a parent requirement that the GovStack Requirements Model does not permit replacing. An exception is effective only after approval and only for its recorded scope and lifetime. The canonical specification **MUST** declare each approved exception using the exact fields in [§20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version); an expired entry or one with a missing or syntactically invalid exception record URI does not suppress a rule. Until GovStack designates an approval authority and record system, no proposed exception can suppress conformance findings.
 
 ## 1.7 Precedence of external standards <a href="#17-precedence-of-external-standards" id="17-precedence-of-external-standards"></a>
 
@@ -89,22 +112,22 @@ This guide sits at the top of a stack, and keeping the layers distinct is what s
 - **This guide** fixes the *shape* of every BB API (the rules below). It is generic and binds the spec author.
 - **A BB specification** (the OpenAPI/AsyncAPI document for one BB) fills that shape with concrete content: which resources, fields, status codes, scopes, and error names that BB has. The guide constrains the shape; the BB spec owns the content.
 - **An implementation profile** records the concrete deployment values a spec deliberately leaves open: server URLs, identity-provider endpoints, replay windows, retry counts, retention periods. The guide never fixes these.
-- **A running deployment** has operational behaviour (token validation, key rotation, replay enforcement, logging) that no specification expresses. That is the **GovStack API Security & Operations** companion's domain ([§1.2](#12-scope)).
+- **A running deployment** has operational behaviour (token validation, key rotation, replay enforcement, logging) that no specification expresses. Those controls are outside this guide's scope ([§1.2](#12-scope)).
 
 ```mermaid
 flowchart TB
     G["This guide<br/>fixes the shape of every BB API"] --> S["BB specification<br/>fills the shape with one BB's content"]
     S --> P["Implementation profile<br/>records deployment values the spec leaves open"]
-    P --> D["Running deployment<br/>operational behaviour, owned by the Security and Operations companion"]
+    P --> D["Running deployment<br/>operational behaviour outside this guide"]
 ```
 
 A rule earns a place in this guide only if it constrains the specification document. Every rule is therefore one of three kinds:
 
 1. **Spec-shape** rules constrain what the spec declares and are verifiable by reading the file (for example, [§9.2](part-c/9-json-conventions-and-naming.md#92-camelcase-field-names) camelCase, [§11.1](part-c/11-errors.md#111-rfc-9457-problem-details) `application/problem+json`).
 2. **Documentation-obligation** rules require the spec to write down a contract whose value the guide does not itself fix (for example, [§14.3](part-d/14-idempotency.md#143-documented-replay-window), which makes the spec document its replay-window contract, and [§16.10](part-d/16-cloudevents-and-webhooks.md#1610-documented-delivery-failure-contract)).
-3. **Behavioural-contract** rules state run-time behaviour an integrator relies on across BBs (for example, [§14.4](part-d/14-idempotency.md#144-replay-returns-original-response) idempotent replay, [§19.1](part-e/19-localisation.md#191-honour-the-request-language) honouring the request language). They are part of the interface contract but cannot be linted from the spec; they are verified by the conformance test pack ([Appendix A](appendix/a-companion-documents.md)).
+3. **Behavioural-contract** rules state run-time behaviour an integrator relies on across BBs (for example, [§14.4](part-d/14-idempotency.md#144-replay-returns-original-response) idempotent replay, [§19.1](part-e/19-localisation.md#191-honour-the-request-language) honouring the request language). They are part of the interface contract but cannot be linted from the spec; they require implementation-level conformance testing.
 
-What the guide does **not** do is mandate a concrete deployment value (an implementation profile's job) or operational behaviour (the Security & Operations companion's job). Where a section mixes the three kinds, a **Layer** note at the top of that section says which rules fall where.
+What the guide does **not** do is mandate a concrete deployment value or operational behaviour. Those concerns are outside its scope. Where a section mixes the three kinds, a **Layer** note at the top of that section says which rules fall where.
 
 This axis is orthogonal to the enforcement class of [§1.9](#19-rule-enforcement-classes). Spec-shape rules are usually `[M]` or `[M+R]`; behavioural-contract rules are `[R]`, because no linter can reach run-time behaviour, though the rule is no less binding and is still verified through conformance testing.
 
@@ -116,12 +139,12 @@ Each numbered rule carries an enforcement-class tag, shown as a bold badge at th
 - **`[R]` Review.** The rule requires human judgement; no reliable automated check exists. Conformance is assessed through specification review and the conformance process.
 - **`[M+R]` Partly machine-checkable.** A linter can verify the structural part (presence, shape, naming, declared values), but a human reviewer must confirm the semantic part: whether the right construct was used for the right meaning.
 
-The tag is guidance for the ruleset author and the conformance process, not part of the normative requirement: an `[M]` MUST and an `[R]` MUST are equally binding. The tag only marks where mechanical enforcement ends and review begins. Purely informative or scoping statements (for example [§12.10](part-c/12-pagination-filtering-sorting.md#1210-sparse-fieldsets-out-of-scope), [§16.9](part-d/16-cloudevents-and-webhooks.md#169-readiness-for-a-shared-signature-profile), [§18.6](part-d/18-compatibility-and-lifecycle.md#186-clients-ignore-unknown-fields)) carry no tag. The machine-checkable subset that [§20.2](part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset) expects the Spectral ruleset to cover is the `[M]` rules plus the mechanical portion of the `[M+R]` rules. Enforceability of a rule may also depend on a referenced companion artifact, such as the conditional OpenAPI schema reuse in [§2.8](part-a/2-openapi-document-standards.md#28-conditional-vendored-openapi-schemas) or the AsyncAPI schemas in [§3.8](part-a/3-asyncapi-document-standards.md#38-pinned-vendored-asyncapi-components). Sequencing publication of those artifacts against the pilot and ratification plan is governance, not design.
+The tag is guidance for the ruleset author and the conformance process, not part of the normative requirement: an `[M]` MUST and an `[R]` MUST are equally binding. The tag only marks where mechanical enforcement ends and review begins. Purely informative or scoping statements (for example [§12.10](part-c/12-pagination-filtering-sorting.md#1210-sparse-fieldsets-out-of-scope), [§16.9](part-d/16-cloudevents-and-webhooks.md#169-readiness-for-a-shared-signature-profile), [§18.6](part-d/18-compatibility-and-lifecycle.md#186-clients-ignore-unknown-fields)) carry no tag. The machine-checkable subset that [§20.2](part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset) expects the Spectral ruleset to cover is the `[M]` rules plus the mechanical portion of the `[M+R]` rules. Where a rule depends on a referenced schema artifact, such as the conditional OpenAPI reuse in [§2.8](part-a/2-openapi-document-standards.md#28-conditional-vendored-openapi-schemas) or the AsyncAPI schemas in [§3.8](part-a/3-asyncapi-document-standards.md#38-pinned-vendored-asyncapi-components), that dependency is stated directly in the rule.
 
 ## 1.10 Applicability and transition <a href="#110-applicability-and-transition" id="110-applicability-and-transition"></a>
 
 This guide applies in full to new API surfaces and to new major versions of existing surfaces. An already-published BB specification is not retroactively wire-incompatible merely because a newer guide exists. Existing surfaces **MUST** adopt requirements that do not change their public wire contract as soon as practical: canonical-file designation, `api/index.yaml` where needed, `api/coverage.yaml`, validation, complete metadata and descriptions, accurate examples, and security declarations that describe the behaviour already deployed. A change to paths, field names, representations, identifiers, status semantics, security behaviour, event addresses, or another consumer-visible contract **MUST NOT** be made in place solely to satisfy this guide; it **MUST** be released in the next major API version under [§18.4](part-d/18-compatibility-and-lifecycle.md#184-breaking-changes-bump-major-version). Until that major version, the existing surface documents the gap and follows the approved exception process rather than silently changing the wire contract.
 
-The transition schedule, conformance levels, and enforcement dates for existing BBs are governance questions for the GovStack API Lifecycle & Governance companion ([Appendix A](appendix/a-companion-documents.md)). Every canonical specification pins the exact guide and ruleset versions it uses under [§20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version); validation tooling **MUST NOT** silently substitute a newer compatible-looking version.
+The GovStack governance process owns the transition schedule, conformance levels, and enforcement dates for existing BBs. Every canonical specification pins the exact guide and ruleset versions it uses under [§20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version); validation tooling **MUST NOT** silently substitute a newer compatible-looking version.
 
 The guide itself follows SemVer, including the current exact prerelease identifier `0.1.0-draft`. A guide patch release **MUST NOT** change which specifications conform; it may only correct prose or tooling defects without changing normative meaning. A guide minor release **MAY** add optional guidance, deprecate a rule, or relax a requirement, but **MUST NOT** add or strengthen a mandatory requirement. Adding or strengthening a **MUST** or **SHOULD**, removing a permitted behaviour, or otherwise making a previously conforming specification non-conforming **MUST** increment the guide major version. These rules apply even during the `0.x` drafting series so that exact conformance declarations remain meaningful.

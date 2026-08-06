@@ -41,4 +41,4 @@ info:
 
 ## Note on governance <a href="#note-on-governance" id="note-on-governance"></a>
 
-Publication gates, conformance levels, exception handling, transition timelines, and CI implementation are governance questions, proposed for the **GovStack API Lifecycle & Governance** companion document.
+Publication gates, conformance levels, exception handling, transition timelines, and CI implementation are owned by the GovStack governance process and are outside this guide.

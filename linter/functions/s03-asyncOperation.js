@@ -35,9 +35,7 @@ function resolveLocalRef(root, ref) {
  *
  * For every entry under `operations`, asserts it declares:
  *   - `action` == "send" or "receive"
- *   - a non-empty `summary`
  *   - a non-empty `description`
- *   - at least one `tag`
  *   - a `channel` Reference Object ({$ref: <string>})
  *   - a non-empty `messages` array of Reference Objects
  *   - each `messages[i]` $ref points into the operation's referenced channel's
@@ -69,14 +67,8 @@ export default function s03AsyncOperation(targetVal, _options, context) {
     if (!ACTIONS.has(op.action)) {
       findings.push({ message: `operation "${opId}" must declare action "send" or "receive"`, path: at('action') });
     }
-    if (!isNonEmptyString(op.summary)) {
-      findings.push({ message: `operation "${opId}" must declare a non-empty summary`, path: at('summary') });
-    }
     if (!isNonEmptyString(op.description)) {
       findings.push({ message: `operation "${opId}" must declare a non-empty description`, path: at('description') });
-    }
-    if (!Array.isArray(op.tags) || op.tags.length < 1) {
-      findings.push({ message: `operation "${opId}" must declare at least one tag`, path: at('tags') });
     }
 
     const channelRef = refString(op.channel);

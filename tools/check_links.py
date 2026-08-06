@@ -13,9 +13,7 @@ content) and enforces the book's internal-consistency contract:
   4. SUMMARY.md lists every page exactly once (README.md first) and nothing that
      is missing.
   5. No page is an orphan (unreachable from SUMMARY.md).
-  6. Every OPEN-N-X id referenced in the book is defined exactly once as a row in
-     appendix/b-open-questions.md.
-  7. Every page opens with `---`, carries a double-quoted `description:` line, and
+  6. Every page opens with `---`, carries a double-quoted `description:` line, and
      closes its frontmatter.
 
 Exit status is 0 with a one-line summary when everything passes, or 1 with every
@@ -31,15 +29,10 @@ from pathlib import Path
 
 # Explicit anchor tag as emitted on heading lines.
 ANCHOR_RE = re.compile(r'<a href="#(?P<href>[^"]*)" id="(?P<id>[^"]*)"></a>')
-OPEN_QUESTION_RE = re.compile(r"OPEN-\d+-[A-Z]")
-OPEN_QUESTION_EXACT_RE = re.compile(r"^OPEN-\d+-[A-Z]$")
 DESCRIPTION_RE = re.compile(r'^description:\s*".*"\s*$')
 
 SKIP_LINK_PREFIXES = ("http://", "https://", "mailto:")
 SLUG_KEEP = set("abcdefghijklmnopqrstuvwxyz0123456789-")
-
-APPENDIX_OPEN_QUESTIONS = "appendix/b-open-questions.md"
-
 
 def slugify(heading_text):
     """GitHub-style slug shared with build_rules_index.py; the two MUST be identical.
@@ -62,8 +55,8 @@ def slugify(heading_text):
 def iter_markdown_links(line):
     """Yield (target, column) for every `[text](target)` link on a line.
 
-    A bracket/paren depth scanner is used so link text that contains brackets
-    (for example ``[`[OPEN-4-B]`](...)``) is parsed correctly.
+    A bracket/paren depth scanner is used so nested link text is parsed
+    correctly.
     """
     i = 0
     n = len(line)
@@ -116,7 +109,6 @@ class Checker:
         # Per-file data keyed by absolute Path.
         self.anchors = {}  # path -> set of anchor ids
         self.links = []  # (path, lineno, target)
-        self.open_mentions = []  # (path, lineno, open_id)
         self.link_count = 0
         self.anchor_count = 0
 
@@ -138,7 +130,7 @@ class Checker:
             if not is_summary:
                 self.check_frontmatter(path, lines)
             self.collect_anchors(path, lines)
-            self.collect_links_and_mentions(path, lines)
+            self.collect_links(path, lines)
 
     def check_frontmatter(self, path, lines):
         if not lines or lines[0].strip() != "---":
@@ -189,12 +181,10 @@ class Checker:
                 ids.add(anchor_id)
         self.anchors[path] = ids
 
-    def collect_links_and_mentions(self, path, lines):
+    def collect_links(self, path, lines):
         for lineno, line in enumerate(lines, start=1):
             for target, _col in iter_markdown_links(line):
                 self.links.append((path, lineno, target))
-            for match in OPEN_QUESTION_RE.finditer(line):
-                self.open_mentions.append((path, lineno, match.group(0)))
 
     # -- pass 2: validate links and fragments ---------------------------------
 
@@ -311,47 +301,6 @@ class Checker:
                     f"lists a file outside the book's page set: {self.rel(resolved)}",
                 )
 
-    # -- OPEN-question integrity ---------------------------------------------
-
-    def check_open_questions(self):
-        appendix = self.book_root / APPENDIX_OPEN_QUESTIONS
-        if not appendix.exists():
-            self.failures.append(
-                f"{APPENDIX_OPEN_QUESTIONS}: file is missing (check 6 cannot run)"
-            )
-            return
-        defined = {}  # open_id -> first defining line number
-        for lineno, line in enumerate(appendix.read_text(encoding="utf-8").split("\n"), 1):
-            stripped = line.strip()
-            if not stripped.startswith("|"):
-                continue
-            cells = [c.strip() for c in stripped.strip("|").split("|")]
-            if not cells:
-                continue
-            first = cells[0]
-            match = OPEN_QUESTION_RE.search(first)
-            if not match:
-                continue
-            open_id = match.group(0)
-            if open_id in defined:
-                self.fail(
-                    appendix,
-                    lineno,
-                    f"duplicate OPEN id definition '{open_id}' "
-                    f"(first at line {defined[open_id]})",
-                )
-            else:
-                defined[open_id] = lineno
-
-        for path, lineno, open_id in self.open_mentions:
-            if open_id not in defined:
-                self.fail(
-                    path,
-                    lineno,
-                    f"references undefined open question '{open_id}' "
-                    f"(no row in {APPENDIX_OPEN_QUESTIONS})",
-                )
-
     # -- driver ---------------------------------------------------------------
 
     def run(self):
@@ -361,8 +310,6 @@ class Checker:
         self.scan_files()
         self.validate_links()
         self.check_summary()
-        self.check_open_questions()
-
         if self.failures:
             print(
                 f"check_links: {len(self.failures)} failure(s):",

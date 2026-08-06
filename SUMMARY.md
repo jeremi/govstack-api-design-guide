@@ -41,9 +41,7 @@
 
 ## Appendices
 
-* [Appendix A. Companion documents and artifacts](appendix/a-companion-documents.md)
-* [Appendix B. Open questions (consolidated)](appendix/b-open-questions.md)
-* [Appendix C. Normative references](appendix/c-normative-references.md)
+* [Appendix. References](appendix/references.md)
 
 ## Guides
 

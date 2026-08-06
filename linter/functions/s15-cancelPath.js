@@ -32,14 +32,14 @@ export default function cancelPath(targetVal, _options, context) {
 
     if (!CANONICAL.test(key)) {
       results.push({
-        message: `cancellation path "${key}" must be POST /v{N}/operations/{operationId}/cancel`,
+        message: `cancellation path "${key}" should use POST /v{N}/operations/{operationId}/cancel`,
         path: [...base, key],
       });
       continue;
     }
     if (!isObject(item) || !isObject(item.post)) {
       results.push({
-        message: `cancellation at "${key}" must be declared as a POST operation`,
+        message: `cancellation at "${key}" should use a POST operation`,
         path: [...base, key],
       });
     }

@@ -16,7 +16,7 @@ description: "Field naming, JSON representation, forward-compatibility, and spec
 
 ## 9.2 camelCase field names <a href="#92-camelcase-field-names" id="92-camelcase-field-names"></a>
 
-**[M]** JSON field names **MUST** use `camelCase`, applied consistently across the entire ecosystem. (See [note below](#note-on-92) on the choice of casing.)
+**[M]** GovStack-owned JSON field names **SHOULD** use `camelCase` consistently within a surface. Fields adopted from an external standard retain that standard's spelling. (See [note below](#note-on-92) on the choice of casing.)
 
 ## 9.3 Real JSON booleans <a href="#93-real-json-booleans" id="93-real-json-booleans"></a>
 
@@ -28,7 +28,7 @@ description: "Field naming, JSON representation, forward-compatibility, and spec
 
 ## 9.5 No spaces or non-ASCII names <a href="#95-no-spaces-or-non-ascii-names" id="95-no-spaces-or-non-ascii-names"></a>
 
-**[M]** Field names **MUST NOT** contain spaces or non-ASCII characters.
+**[M]** GovStack-owned field names **SHOULD** use ASCII identifiers without spaces. Fields adopted from an external standard retain that standard's spelling.
 
 ## 9.6 Avoid abbreviations <a href="#96-avoid-abbreviations" id="96-avoid-abbreviations"></a>
 
@@ -36,7 +36,7 @@ description: "Field naming, JSON representation, forward-compatibility, and spec
 
 ## 9.7 Screaming snake case enum values <a href="#97-screaming-snake-case-enum-values" id="97-screaming-snake-case-enum-values"></a>
 
-**[M]** Enum values that name a BB-defined state or category **MUST** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`). Values whose form is fixed elsewhere keep the casing their own definition gives them and **MUST NOT** be re-cased to satisfy this rule: identifiers built to a shape this guide defines (event types per [§16.3](../part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types), sort keys per [§12.7](../part-c/12-pagination-filtering-sorting.md#127-sort-parameter-convention)), codes drawn from an external standard (BCP 47 language tags per [§10.9](../part-c/10-data-types-and-formats.md#109-bcp-47-language-codes), ISO 4217 currency codes per [§10.10](../part-c/10-data-types-and-formats.md#1010-iso-4217-currency-codes)), and values registered in an IANA registry, including JOSE and COSE algorithm and curve names such as `ES256`, `EdDSA`, and `Ed25519`, and media types. The distinction is ownership, not appearance: a value this BB defines is re-cased to satisfy this rule, a value defined elsewhere is reproduced exactly as its own registry or specification spells it.
+**[M]** Enum values that name a BB-defined state or category **SHOULD** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`). Values whose form is fixed elsewhere keep the casing their own definition gives them and **MUST NOT** be re-cased to satisfy this rule: identifiers built to a shape this guide defines (event types per [§16.3](../part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types), sort keys per [§12.7](../part-c/12-pagination-filtering-sorting.md#127-sort-parameter-convention)), codes drawn from an external standard (BCP 47 language tags per [§10.9](../part-c/10-data-types-and-formats.md#109-bcp-47-language-codes), ISO 4217 currency codes per [§10.10](../part-c/10-data-types-and-formats.md#1010-iso-4217-currency-codes)), and values registered in an IANA registry, including JOSE and COSE algorithm and curve names such as `ES256`, `EdDSA`, and `Ed25519`, and media types.
 
 ## 9.8 Forward-compatible schemas <a href="#98-forward-compatible-schemas" id="98-forward-compatible-schemas"></a>
 
@@ -52,11 +52,11 @@ description: "Field naming, JSON representation, forward-compatibility, and spec
 
 ## 9.11 Single registered BB code <a href="#911-single-registered-bb-code" id="911-single-registered-bb-code"></a>
 
-**[M+R]** Every namespace that embeds a BB code (HTTP problem-type URLs [§11.2](../part-c/11-errors.md#112-stable-http-problem-type-uri), OAuth scopes [§13.4](../part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes), event types [§16.3](../part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types), logical channel IDs [§17.2](../part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses), and any transport-neutral asynchronous error code that embeds one [§11.6](../part-c/11-errors.md#116-transport-neutral-asynchronous-errors)) **MUST** use the BB's single registered code, identically in all of them. BB codes **MUST** match `^[a-z][a-z0-9-]{1,30}$` and **MUST** be unique across the ecosystem. The BB-code register is proposed for the Lifecycle & Governance companion ([Appendix A](../appendix/a-companion-documents.md)); until it exists, codes **SHOULD** be agreed through the API Working Group. [`[OPEN-9-A]`](../appendix/b-open-questions.md)
+**[M+R]** Every namespace that embeds a BB code (HTTP problem-type URLs [§11.2](../part-c/11-errors.md#112-stable-http-problem-type-uri), OAuth scopes [§13.4](../part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes), event types [§16.3](../part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types), logical channel IDs [§17.2](../part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses), and any transport-neutral asynchronous error code that embeds one [§11.6](../part-c/11-errors.md#116-transport-neutral-asynchronous-errors)) **MUST** use the BB's single registered code, identically in all of them. BB codes **MUST** match `^[a-z][a-z0-9-]{1,30}$` and **MUST** be unique across the ecosystem. Until GovStack publishes a canonical register, codes **SHOULD** be agreed through the API Working Group.
 
 ## Note on 9.2 <a href="#note-on-92" id="note-on-92"></a>
 
-`camelCase` aligns with OAuth/OIDC, OpenID Federation, JSON:API, and the majority of public REST APIs. `snake_case` would align with the Python ecosystem. Either is defensible; consistency across BBs is what matters most. Migration cost for BBs already using snake_case is proposed for the Lifecycle & Governance companion.
+`camelCase` aligns with OAuth/OIDC, OpenID Federation, JSON:API, and the majority of public REST APIs. `snake_case` would align with the Python ecosystem. Either is defensible; consistency across BBs is what matters most. Existing published surfaces follow the compatibility rules in [§18](../part-d/18-compatibility-and-lifecycle.md) rather than renaming fields in place.
 
 ## Carve-out from 9.2 <a href="#carve-out-from-92" id="carve-out-from-92"></a>
 

@@ -11,10 +11,17 @@ published or ratified.
 
 **Author:** Jeremi Joslin
 
+**Specification:** `govstack-cfr-api`<br>
+**Version:** `0.1.0-draft`<br>
+**Proposed parent:** `govstack-cfr` (candidate relationship pending CFR issues
+[#7](https://github.com/GovStackWorkingGroup/cfr-architecture/issues/7) and
+[#8](https://github.com/GovStackWorkingGroup/cfr-architecture/issues/8))
+
 ## Start here
 
 - **Editing a BB specification?** Run the [spec editor checklist](guides/spec-editor-checklist.md) against your spec, use [Rules at a glance](all-rules.md) to jump to any rule, and [validate mechanically](guides/validating-your-spec.md) before review.
-- **Reviewing this draft for the committee?** [How to use this guide](how-to-use-this-guide.md) says what feedback is most useful at this stage; [Appendix B](appendix/b-open-questions.md) is the decision agenda, with the questions that block v1.0 marked.
+- **Reviewing this draft for the committee?** [How to use this guide](how-to-use-this-guide.md) says what feedback is most useful at this stage.
+- **Reviewing CFR alignment?** [§1.3](1-introduction.md#13-relationship-to-existing-govstack-documents) maps the guide to its proposed parent requirements and identifies the CFR changes needed for protocol-native and non-HTTP interfaces.
 - **Pointing an AI coding agent at the rules?** The book ships a machine-readable index of every rule (`rules.yaml`, at the root of this folder in the repository); [Using this guide with AI agents](guides/using-with-ai-agents.md) has a ready-made instruction block for a BB repository.
 
 ## Executive summary
@@ -30,10 +37,10 @@ This draft is intended to be stress-tested immediately against live specificatio
 The substantive rules establish:
 
 - Canonical, machine-validatable OpenAPI and AsyncAPI entrypoints at known locations ([§2](part-a/2-openapi-document-standards.md), [§3](part-a/3-asyncapi-document-standards.md)).
-- REST-style URLs with major versions in the path, plural-noun resource names, standard HTTP verb semantics, and an unversioned `/health` endpoint ([§5](part-b/5-url-structure-and-versioning.md)–[§6](part-b/6-http-methods.md)).
+- Standard HTTP semantics and an unversioned `/health` endpoint, with versioned resource paths and consistent URL naming as recommended defaults rather than universal wire requirements ([§5](part-b/5-url-structure-and-versioning.md)–[§6](part-b/6-http-methods.md)).
 - Standard HTTP status codes used consistently, with `ETag` / `If-Match` for optimistic concurrency ([§7](part-b/7-http-status-codes.md)).
 - Standard headers for authentication, idempotency, localisation, correlation, and rate limiting; no personal data in URLs, channel addresses, routing keys, or message headers ([§8](part-b/8-headers.md), [§17](part-d/17-asyncapi-channel-rules.md)).
-- `camelCase` JSON, RFC 3339 timestamps, decimal-string monetary amounts, E.164 phone numbers, ISO code lists for country / currency / language ([§9](part-c/9-json-conventions-and-naming.md)–[§10](part-c/10-data-types-and-formats.md)).
+- Recommended `camelCase` for GovStack-owned JSON, plus normative RFC 3339 timestamps, decimal-string monetary amounts, E.164 phone numbers, and ISO code lists for country / currency / language ([§9](part-c/9-json-conventions-and-naming.md)–[§10](part-c/10-data-types-and-formats.md)).
 - One ecosystem-wide HTTP error format based on RFC 9457 Problem Details, with a stable `https://govstack.global/problems/...` type URI, trace IDs, and field-level validation ([§11](part-c/11-errors.md)).
 - Cursor-based pagination by default, with a single envelope shape for collection responses ([§12](part-c/12-pagination-filtering-sorting.md)).
 - OAuth 2.0 + OIDC for citizen-facing operations, mutual TLS or OAuth client credentials for BB-to-BB calls ([§13](part-d/13-authentication-and-authorisation.md)).
@@ -44,4 +51,4 @@ The substantive rules establish:
 - A single language model based on `Accept-Language` and `Content-Language` ([§19](part-e/19-localisation.md)).
 - Mechanical validation: every BB spec MUST pass schema validation and the machine-checkable GovStack Spectral ruleset rules ([§20](part-e/20-conformance-and-validation.md)).
 
-Where the guide adopts an external standard or convention (RFC 9457, CloudEvents, OAuth 2.0 + OIDC, the health-check response convention, ISO code lists), that standard or convention takes precedence over the guide's generic rules ([§1.7](1-introduction.md#17-precedence-of-external-standards)). Rules use RFC 2119 keywords (see [§1.5](1-introduction.md#15-language)). Open design calls are consolidated in [Appendix B](appendix/b-open-questions.md).
+Where the guide adopts an external standard or convention (RFC 9457, CloudEvents, OAuth 2.0 + OIDC, the health-check response convention, ISO code lists), that standard or convention takes precedence over the guide's generic rules ([§1.7](1-introduction.md#17-precedence-of-external-standards)). Rules use RFC 2119 keywords (see [§1.5](1-introduction.md#15-language)).

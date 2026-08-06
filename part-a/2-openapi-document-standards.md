@@ -30,7 +30,7 @@ An operation-free shared component library under `api/common/` is referenced sup
 
 ## 2.5 Complete info block <a href="#25-complete-info-block" id="25-complete-info-block"></a>
 
-**[M]** The `info` block of each canonical file **MUST** include `title`, `version` (SemVer), `description`, and `contact`. Where a BB ships per-surface canonical files ([2.2](#22-one-canonical-openapi-entrypoint)), each surface carries its own `info.version` and versions independently.
+**[M]** The `info` block of each canonical file **MUST** include `title`, `version` (SemVer), and a useful `description`. It **SHOULD** include `contact`; repository governance may supply the maintainer contact when it does not belong in the API contract. Where a BB ships per-surface canonical files ([2.2](#22-one-canonical-openapi-entrypoint)), each surface carries its own `info.version` and versions independently.
 
 ## 2.6 Meaningful servers block <a href="#26-meaningful-servers-block" id="26-meaningful-servers-block"></a>
 
@@ -38,7 +38,7 @@ An operation-free shared component library under `api/common/` is referenced sup
 
 ## 2.7 Complete operation metadata <a href="#27-complete-operation-metadata" id="27-complete-operation-metadata"></a>
 
-**[M+R]** Every operation **MUST** include `operationId` (camelCase, verb-noun), `summary`, `description`, and at least one `tag`.
+**[M+R]** Every operation **MUST** include a stable, non-empty `operationId` and an accurate `description`. An `operationId` **SHOULD** use a readable camelCase verb-noun form. A concise `summary` and at least one useful `tag` **SHOULD** be present when they improve navigation or generated documentation.
 
 ## 2.8 Conditional vendored OpenAPI schemas <a href="#28-conditional-vendored-openapi-schemas" id="28-conditional-vendored-openapi-schemas"></a>
 

@@ -40,7 +40,7 @@ rules:
   # 5.8 [R] MUST — non-CRUD actions expressed as /{collection}/{id}/{verb}
   # sub-resources.
   govstack-5.8:
-    description: "Non-CRUD actions must be expressed as /{collection}/{id}/{verb} sub-resources (guide 5.8, [R], strict heuristic)."
+    description: "Non-CRUD actions should be expressed as /{collection}/{id}/{verb} sub-resources (guide 5.8, [R], strict heuristic)."
     message: "[5.8][R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#58-actions-as-sub-resources
     severity: warn

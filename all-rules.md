@@ -37,7 +37,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 
 | Rule | Class | Strength | Surface | Title |
 | --- | --- | --- | --- | --- |
-| [4.1](part-a/4-documentation-requirements.md#41-every-schema-described) | M | MUST | Universal | Every schema described |
+| [4.1](part-a/4-documentation-requirements.md#41-useful-schema-descriptions) | M | MUST | Universal | Useful schema descriptions |
 | [4.2](part-a/4-documentation-requirements.md#42-examples-for-bodies-and-enums) | M+R | MUST | Universal | Examples for bodies and enums |
 | [4.3](part-a/4-documentation-requirements.md#43-no-placeholder-text) | M+R | MUST | Universal | No placeholder text |
 | [4.4](part-a/4-documentation-requirements.md#44-accurate-operation-descriptions) | R | MUST | Universal | Accurate operation descriptions |
@@ -49,13 +49,13 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | Rule | Class | Strength | Surface | Title |
 | --- | --- | --- | --- | --- |
 | [5.1](part-b/5-url-structure-and-versioning.md#51-major-version-in-the-path) | M | MUST | OpenAPI | Major version in the path |
-| [5.2](part-b/5-url-structure-and-versioning.md#52-plural-noun-resources) | M+R | MUST | OpenAPI | Plural noun resources |
-| [5.3](part-b/5-url-structure-and-versioning.md#53-kebab-case-path-segments) | M | MUST | OpenAPI | Kebab-case path segments |
+| [5.2](part-b/5-url-structure-and-versioning.md#52-plural-noun-resources) | M+R | SHOULD | OpenAPI | Plural noun resources |
+| [5.3](part-b/5-url-structure-and-versioning.md#53-kebab-case-path-segments) | M | SHOULD | OpenAPI | Kebab-case path segments |
 | [5.4](part-b/5-url-structure-and-versioning.md#54-shallow-path-nesting) | M | SHOULD | OpenAPI | Shallow path nesting |
 | [5.5](part-b/5-url-structure-and-versioning.md#55-identifiers-as-path-parameters) | M+R | MUST | OpenAPI | Identifiers as path parameters |
-| [5.6](part-b/5-url-structure-and-versioning.md#56-query-parameter-naming) | M | MUST | OpenAPI | Query parameter naming |
-| [5.7](part-b/5-url-structure-and-versioning.md#57-no-verbs-in-crud-paths) | M+R | MUST | OpenAPI | No verbs in CRUD paths |
-| [5.8](part-b/5-url-structure-and-versioning.md#58-actions-as-sub-resources) | R | MUST | OpenAPI | Actions as sub-resources |
+| [5.6](part-b/5-url-structure-and-versioning.md#56-query-parameter-naming) | M | SHOULD | OpenAPI | Query parameter naming |
+| [5.7](part-b/5-url-structure-and-versioning.md#57-no-verbs-in-crud-paths) | M+R | SHOULD | OpenAPI | No verbs in CRUD paths |
+| [5.8](part-b/5-url-structure-and-versioning.md#58-actions-as-sub-resources) | R | SHOULD | OpenAPI | Actions as sub-resources |
 | [5.9](part-b/5-url-structure-and-versioning.md#59-unversioned-health-endpoint) | M+R | MUST | OpenAPI | Unversioned health endpoint |
 | [5.10](part-b/5-url-structure-and-versioning.md#510-standard-unversioned-endpoints) | M | MUST | OpenAPI | Standard unversioned endpoints |
 
@@ -66,7 +66,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [6.1](part-b/6-http-methods.md#61-get-is-safe-and-idempotent) | M+R | MUST | OpenAPI | GET is safe and idempotent |
 | [6.2](part-b/6-http-methods.md#62-post-creates-or-performs-actions) | R | MUST | OpenAPI | POST creates or performs actions |
 | [6.3](part-b/6-http-methods.md#63-put-replaces-the-entire-resource) | R | MUST | OpenAPI | PUT replaces the entire resource |
-| [6.4](part-b/6-http-methods.md#64-patch-uses-json-merge-patch) | M+R | MUST | OpenAPI | PATCH uses JSON Merge Patch |
+| [6.4](part-b/6-http-methods.md#64-patch-uses-a-registered-patch-format) | M+R | MUST | OpenAPI | PATCH uses a registered patch format |
 | [6.5](part-b/6-http-methods.md#65-delete-response-semantics) | M+R | MUST | OpenAPI | DELETE response semantics |
 | [6.6](part-b/6-http-methods.md#66-post-search-for-complex-queries) | M+R | MUST | OpenAPI | POST search for complex queries |
 | [6.7](part-b/6-http-methods.md#67-bulk-mutation-needs-explicit-selection) | M+R | MUST | OpenAPI | Bulk mutation needs explicit selection |
@@ -114,10 +114,10 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | Rule | Class | Strength | Surface | Title |
 | --- | --- | --- | --- | --- |
 | [9.1](part-c/9-json-conventions-and-naming.md#91-json-as-default-media-type) | M+R | MUST | Universal | JSON as default media type |
-| [9.2](part-c/9-json-conventions-and-naming.md#92-camelcase-field-names) | M | MUST | Universal | camelCase field names |
+| [9.2](part-c/9-json-conventions-and-naming.md#92-camelcase-field-names) | M | SHOULD | Universal | camelCase field names |
 | [9.3](part-c/9-json-conventions-and-naming.md#93-real-json-booleans) | M | MUST | Universal | Real JSON booleans |
 | [9.4](part-c/9-json-conventions-and-naming.md#94-explicit-nullability) | M | MUST | Universal | Explicit nullability |
-| [9.5](part-c/9-json-conventions-and-naming.md#95-no-spaces-or-non-ascii-names) | M | MUST | Universal | No spaces or non-ASCII names |
+| [9.5](part-c/9-json-conventions-and-naming.md#95-no-spaces-or-non-ascii-names) | M | SHOULD | Universal | No spaces or non-ASCII names |
 | [9.6](part-c/9-json-conventions-and-naming.md#96-avoid-abbreviations) | R | SHOULD | Universal | Avoid abbreviations |
 | [9.7](part-c/9-json-conventions-and-naming.md#97-screaming-snake-case-enum-values) | M | MUST | Universal | Screaming snake case enum values |
 | [9.8](part-c/9-json-conventions-and-naming.md#98-forward-compatible-schemas) | M | MUST | Universal | Forward-compatible schemas |
@@ -241,7 +241,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [17.17](part-d/17-asyncapi-channel-rules.md#1717-declared-request-reply-correlation) | M+R | MUST | AsyncAPI | Declared request-reply correlation |
 | [17.18](part-d/17-asyncapi-channel-rules.md#1718-correlated-completion-signals) | M+R | MUST | AsyncAPI | Correlated completion signals |
 | [17.19](part-d/17-asyncapi-channel-rules.md#1719-protocol-bindings-where-relevant) | M+R | MUST | AsyncAPI | Protocol bindings where relevant |
-| [17.20](part-d/17-asyncapi-channel-rules.md#1720-examples-for-every-message) | M+R | MUST | AsyncAPI | Examples for every message |
+| [17.20](part-d/17-asyncapi-channel-rules.md#1720-representative-message-examples) | M+R | SHOULD | AsyncAPI | Representative message examples |
 
 ## 18. Compatibility and lifecycle
 
@@ -261,7 +261,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | --- | --- | --- | --- | --- |
 | [19.1](part-e/19-localisation.md#191-honour-the-request-language) | R | MUST | Universal | Honour the request language |
 | [19.2](part-e/19-localisation.md#192-never-translate-stable-content) | R | MUST | Universal | Never translate stable content |
-| [19.3](part-e/19-localisation.md#193-english-as-default-language) | R | MUST | Universal | English as default language |
+| [19.3](part-e/19-localisation.md#193-declared-default-language) | R | MUST | Universal | Declared default language |
 | [19.4](part-e/19-localisation.md#194-declare-the-response-language) | M+R | MUST | Universal | Declare the response language |
 
 ## 20. Conformance and validation

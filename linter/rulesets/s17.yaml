@@ -41,10 +41,10 @@ rules:
   # reverse-DNS global.govstack.{bb-code}.v{major}.{resource}.{event}. Channel
   # Object addresses intentionally retain protocol-native destination syntax.
   govstack-17.2:
-    description: "Logical channel IDs must follow reverse-DNS global.govstack.{bb-code}.v{major}.{resource}.{event} (guide 17.2, [M+R])."
+    description: "Logical channel IDs should follow the GovStack reverse-DNS grammar (guide 17.2, [M+R], proxy)."
     message: "[17.2][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses
-    severity: error
+    severity: warn
     formats: [aas3]
     given: $.channels
     then:
@@ -205,10 +205,10 @@ rules:
   # example. The SHOULD to show headers+payload per message family
   # (command/event/error/completion) is not mechanically verified.
   govstack-17.20:
-    description: "Every message must define at least one example (guide 17.20, [M+R])."
+    description: "Messages should define representative examples (guide 17.20, [M+R])."
     message: "[17.20][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#1720-examples-for-every-message
-    severity: error
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#1720-representative-message-examples
+    severity: warn
     formats: [aas3]
     given: $.components.messages[*]
     then:

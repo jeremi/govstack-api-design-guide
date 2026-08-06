@@ -38,7 +38,7 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-2.5, govstack-2.5-semver]
-    note: "info has title/version/description/contact; version matches SemVer regex"
+    note: "info has title/version/description; version matches SemVer regex; contact is advisory"
   - id: "2.6"
     class: "M+R"
     status: partial-proxy
@@ -48,7 +48,7 @@ rules:
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-2.7]
-    note: "each operation has operationId(camelCase)/summary/description/>=1 tag"
+    note: "each operation has stable non-empty operationId and description; casing, summary, and tags are advisory"
   - id: "2.8"
     class: "M+R"
     status: needs-context
@@ -78,7 +78,7 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-3.5, govstack-3.5-semver]
-    note: "info has title/version(SemVer)/description/contact"
+    note: "info has title/version(SemVer)/description; contact is advisory"
   - id: "3.6"
     class: "M+R"
     status: implemented
@@ -88,7 +88,7 @@ rules:
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-3.7]
-    note: "each op has action(send/receive)/summary/description/>=1 tag/channel ref/>=1 msg ref; verify op msgs resolve to channel's messages"
+    note: "each op has action(send/receive), description, channel ref, and >=1 msg ref; verify op msgs resolve to channel's messages; summary and tags are advisory"
   - id: "3.8"
     class: "M"
     status: needs-context
@@ -101,14 +101,14 @@ rules:
     note: "proxy: payload schemas parse as JSON Schema + apply §9/§10 checks to payload props"
   - id: "4.1"
     class: "M"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-4.1]
-    note: "recursive traversal: every schema node has non-empty description"
+    note: "advisory proxy: warns on every missing schema description; whether a non-obvious schema has a useful description is not mechanically decidable"
   - id: "4.2"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-4.2]
-    note: "body-example presence (strong); enum \"values documented\" proxied by description presence"
+    note: "advisory body-example presence; enum \"values documented\" proxied by description presence"
   - id: "4.3"
     class: "M+R"
     status: partial-proxy
@@ -123,17 +123,17 @@ rules:
     class: "M+R"
     status: driver
     spectral_rules: []
-    note: "driver validates canonical discovery, api/index.yaml shape and paths, declared document types, explicit noApi reasons, and undeclared spec copies"
+    note: "driver validates canonical discovery, OpenAPI/AsyncAPI paths, explicit noApi reasons, and undeclared spec copies; protocol-standard entries block conformance until an approved registry/profile can validate them"
   - id: "4.6"
     class: "M+R"
     status: driver
     spectral_rules: []
-    note: "driver validates exact Markdown marker and coverage ID sets, dispositions and compatible fields, REQUIRED/not-applicable conflicts, operation/message references, uniqueness across surfaces, and planned gaps"
+    note: "driver validates CFR requirement headings, bodies, canonical IDs and classifiers; active coverage ID sets; disposition evidence; operation/message references; uniqueness; and planned gaps"
   - id: "5.1"
     class: "M"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-5.1]
-    note: "every path key matches ^/v\\d+/...; exempts the 5.9 unversioned operational endpoints /health and /ready"
+    note: "advisory proxy: checks the recommended /v{N}/ path default and standard endpoint exemptions; does not prove that a different declared mechanism exposes the major version unambiguously"
   - id: "5.2"
     class: "M+R"
     status: strict-only
@@ -143,7 +143,7 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-5.3]
-    note: "each non-param path segment kebab-case"
+    note: "advisory default: each non-param path segment kebab-case"
   - id: "5.4"
     class: "M"
     status: implemented
@@ -158,7 +158,7 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-5.6]
-    note: "query-param names camelCase"
+    note: "advisory default: query-param names camelCase"
   - id: "5.7"
     class: "M+R"
     status: strict-only
@@ -196,9 +196,9 @@ rules:
     note: "replace-entire-resource/idempotent is runtime"
   - id: "6.4"
     class: "M+R"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-6.4]
-    note: "PATCH requestBody content includes application/merge-patch+json (only merge/json-patch allowed)"
+    note: "advisory proxy: recognises the Merge Patch default; registered alternative patch media types and documented semantics require review"
   - id: "6.5"
     class: "M+R"
     status: partial-proxy
@@ -363,7 +363,7 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-9.2]
-    note: "recursive: all reusable and inline OpenAPI body fields plus AsyncAPI payload fields use camelCase"
+    note: "advisory: reusable and inline OpenAPI body fields plus AsyncAPI payload fields use camelCase"
   - id: "9.3"
     class: "M"
     status: partial-proxy
@@ -378,7 +378,7 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-9.5]
-    note: "recursive: reusable and inline OpenAPI body fields plus AsyncAPI payload fields contain no spaces/non-ASCII"
+    note: "advisory: reusable and inline OpenAPI body fields plus AsyncAPI payload fields use ASCII without spaces"
   - id: "9.6"
     class: "R"
     status: strict-only
@@ -526,9 +526,9 @@ rules:
     note: "if offset param present, envelope {items,offset,limit,total} with total required"
   - id: "12.7"
     class: "M"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-12.7-name, govstack-12.7-grammar]
-    note: "sort param named sort (flag orderBy/sortBy); value grammar field/-field"
+    note: "advisory proxy: checks the recommended sort name and field/-field grammar; allowed fields, direction documentation, default order, and stable tie-breaker require review"
   - id: "12.8"
     class: "M+R"
     status: partial-proxy
@@ -631,9 +631,9 @@ rules:
     note: "proxy: canonical GET /v1/operations/{operationId} present when Operations used. strengths empty in rules.yaml (class M+R); treated as MUST-flavored."
   - id: "15.5"
     class: "M+R"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-15.5]
-    note: "cancellation path exactly POST /v1/operations/{operationId}/cancel"
+    note: "advisory proxy: checks the conventional cancellation path; does not prove that cancellation support or non-support is documented and discoverable by another mechanism"
   - id: "15.6"
     class: "R"
     status: human
@@ -656,9 +656,9 @@ rules:
     note: "event payload schema requires specversion(const \"1.0\")/id/source/type + data, and the webhooks surface must declare application/cloudevents+json rather than a binary-mode application/json body"
   - id: "16.3"
     class: "M"
-    status: implemented
-    spectral_rules: [govstack-16.3]
-    note: "event type const matches reverse-DNS global.govstack.{bb-code}.{resource}.{action}, no version"
+    status: partial-proxy
+    spectral_rules: [govstack-16.3, govstack-16.3-no-version]
+    note: "split proxy: warns on the reverse-DNS default and errors on a pinned major-version segment; BB-code registry membership, long-term stability, and global collision resistance require context"
   - id: "16.4"
     class: "M+R"
     status: partial-proxy
@@ -708,7 +708,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-17.2]
-    note: "logical channel keys match global.govstack.{bb-code}.v{major}.{resource}.{event}; native address syntax and binding mapping require protocol-aware review"
+    note: "advisory proxy: logical channel keys match the GovStack reverse-DNS default; stability and native-address mapping require review"
   - id: "17.3"
     class: "R"
     status: strict-only
@@ -796,19 +796,19 @@ rules:
     note: "proxy: per server protocol, channels/ops declare matching kafka/mqtt/amqp/ws bindings"
   - id: "17.20"
     class: "M+R"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-17.20]
-    note: "every components.messages entry has >=1 example"
+    note: "advisory proxy: warns when any components.messages entry lacks an example; whether the interaction is already obvious from the schema requires review"
   - id: "18.1"
     class: "M"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-18.1]
-    note: "info.version matches SemVer regex. Not checked: that it is the contract version rather than the implementation version, which no document reveals"
+    note: "proxy: info.version matches SemVer; whether it identifies the contract rather than the implementation and agrees with a nonstandard version mechanism requires context"
   - id: "18.2"
     class: "M"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-18.2-openapi, govstack-18.2-asyncapi]
-    note: "OpenAPI paths and AsyncAPI logical channel IDs carry / match info.version major; the alternative common-schema version field is not checked"
+    note: "advisory proxy: checks recommended OpenAPI path and AsyncAPI channel forms; does not prove that another declared mechanism exposes the major version unambiguously"
   - id: "18.3"
     class: "M+R"
     status: needs-context

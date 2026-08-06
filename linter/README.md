@@ -2,9 +2,7 @@
 
 The GovStack Spectral ruleset and lint tooling for the
 [Cross-BB API Design Guide](../README.md). This is the mechanical enforcement
-behind rule [20.2](../part-e/20-conformance-and-validation.md) (draft; the
-formal companion publication is tracked in
-[Appendix A](../appendix/a-companion-documents.md)). It implements guide
+behind draft rule [20.2](../part-e/20-conformance-and-validation.md). It implements guide
 version **0.1.0-draft** (`guide_version` in [coverage.yaml](coverage.yaml)).
 
 ## Quick start
@@ -25,7 +23,15 @@ apis:
     path: api/public-openapi.yaml
   - type: asyncapi
     path: api/events-asyncapi.yaml
+  - type: standard
+    name: OpenID Connect
+    reference: https://openid.net/specs/openid-connect-core-1_0.html
+    discovery: /.well-known/openid-configuration
 ```
+
+The `standard` form is provisional. It is useful in advisory mode, but blocks
+conformance until GovStack approves a recognised-standard registry or profile;
+an HTTPS reference alone is not treated as conformance evidence.
 
 A BB with no API surface must say so explicitly instead of keeping empty spec
 placeholders:
@@ -41,9 +47,11 @@ The driver runs everything rule 20 asks for:
 1. **File-tree checks** — `api/index.yaml` or canonical entrypoints,
    declaration/type consistency, legacy `swagger.*` names, and undeclared or
    divergent spec copies (guide 2.2/2.3/3.2/3.3).
-2. **Requirement coverage** — every keyed requirement marker under
-   `spec/**/*.md` must have one disposition in `api/coverage.yaml`, and mapped
-   operation/message identifiers must exist and be unambiguous.
+2. **Requirement coverage** — every active CFR-formatted REQUIRED or
+   RECOMMENDED requirement under `spec/**/*.md` must have one disposition in
+   `api/coverage.yaml`. DRAFT, DEPRECATED, and INAPPLICABLE requirements are
+   not active coverage obligations. Mapped operation/message identifiers must
+   exist and be unambiguous.
 3. **Base validators** (20.1) — `openapi-spec-validator` and
    `@asyncapi/cli validate` are mandatory in conformance mode.
 4. **The Spectral ruleset** — rules across both surfaces (OpenAPI 3.1,

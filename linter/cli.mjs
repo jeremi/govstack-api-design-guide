@@ -208,6 +208,7 @@ function parseYamlObject(content, displayPath) {
 
 function validateIndexDocument(index, indexRel, repoRoot, findings) {
   const declarations = [];
+  const standardSurfaces = [];
   let noApi = false;
 
   if (index.version !== 1) {
@@ -215,7 +216,7 @@ function validateIndexDocument(index, indexRel, repoRoot, findings) {
   }
 
   const hasApis = Object.prototype.hasOwnProperty.call(index, 'apis');
-  const hasNoApi = index.noApi === true;
+  const hasNoApi = Object.prototype.hasOwnProperty.call(index, 'noApi');
   if (hasApis === hasNoApi) {
     findings.push(
       driverFinding(
@@ -224,22 +225,26 @@ function validateIndexDocument(index, indexRel, repoRoot, findings) {
         'api/index.yaml must declare exactly one of a non-empty apis list or noApi: true.',
       ),
     );
-    return { declarations, noApi };
+    return { declarations, standardSurfaces, noApi };
   }
 
   if (hasNoApi) {
+    if (index.noApi !== true) {
+      findings.push(driverFinding(indexRel, 'api-index-invalid', 'noApi must be true when declared.'));
+      return { declarations, standardSurfaces, noApi };
+    }
     noApi = true;
     if (typeof index.reason !== 'string' || index.reason.trim().length < 3) {
       findings.push(
         driverFinding(indexRel, 'api-index-invalid', 'noApi: true requires a non-empty reason.'),
       );
     }
-    return { declarations, noApi };
+    return { declarations, standardSurfaces, noApi };
   }
 
   if (!Array.isArray(index.apis) || index.apis.length === 0) {
     findings.push(driverFinding(indexRel, 'api-index-invalid', 'apis must be a non-empty array.'));
-    return { declarations, noApi };
+    return { declarations, standardSurfaces, noApi };
   }
 
   const seen = new Set();
@@ -249,10 +254,42 @@ function validateIndexDocument(index, indexRel, repoRoot, findings) {
       findings.push(driverFinding(indexRel, 'api-index-invalid', `${itemPath} must be an object.`));
       continue;
     }
-    if (entry.type !== 'openapi' && entry.type !== 'asyncapi') {
+    if (entry.type !== 'openapi' && entry.type !== 'asyncapi' && entry.type !== 'standard') {
       findings.push(
-        driverFinding(indexRel, 'api-index-invalid', `${itemPath}.type must be openapi or asyncapi.`),
+        driverFinding(indexRel, 'api-index-invalid', `${itemPath}.type must be openapi, asyncapi, or standard.`),
       );
+      continue;
+    }
+    if (entry.type === 'standard') {
+      if (typeof entry.name !== 'string' || !entry.name.trim()) {
+        findings.push(driverFinding(indexRel, 'api-index-invalid', `${itemPath}.name is required.`));
+        continue;
+      }
+      if (!isHttpsUrl(entry.reference)) {
+        findings.push(
+          driverFinding(indexRel, 'api-index-invalid', `${itemPath}.reference must be an absolute HTTPS URL.`),
+        );
+        continue;
+      }
+      if (entry.discovery !== undefined && (typeof entry.discovery !== 'string' || !entry.discovery.trim())) {
+        findings.push(
+          driverFinding(indexRel, 'api-index-invalid', `${itemPath}.discovery must be a non-empty string when present.`),
+        );
+        continue;
+      }
+      const key = `standard:${entry.name.trim()}:${entry.reference}`;
+      if (seen.has(key)) {
+        findings.push(driverFinding(indexRel, 'api-index-invalid', `${itemPath} duplicates a standard surface.`));
+        continue;
+      }
+      seen.add(key);
+      standardSurfaces.push({
+        kind: 'standard',
+        name: entry.name.trim(),
+        reference: entry.reference,
+        discovery: entry.discovery?.trim() ?? null,
+        declaredBy: indexRel,
+      });
       continue;
     }
     if (typeof entry.path !== 'string' || !entry.path.trim()) {
@@ -278,14 +315,16 @@ function validateIndexDocument(index, indexRel, repoRoot, findings) {
     seen.add(abs);
     declarations.push({ kind: entry.type, abs, declaredBy: indexRel });
   }
-  return { declarations, noApi };
+  return { declarations, standardSurfaces, noApi };
 }
 
 async function discoverApiDeclarations(cfg, rel, findings, notices) {
   const explicit = [];
   if (cfg.openapiPath) explicit.push({ kind: 'openapi', abs: cfg.openapiPath, declaredBy: 'CLI' });
   if (cfg.asyncapiPath) explicit.push({ kind: 'asyncapi', abs: cfg.asyncapiPath, declaredBy: 'CLI' });
-  if (explicit.length) return { declarations: explicit, noApi: false, indexPresent: false };
+  if (explicit.length) {
+    return { declarations: explicit, standardSurfaces: [], noApi: false, indexPresent: false };
+  }
 
   const indexAbs = path.join(cfg.repoRoot, 'api', 'index.yaml');
   const indexRel = rel(indexAbs);
@@ -293,7 +332,7 @@ async function discoverApiDeclarations(cfg, rel, findings, notices) {
   if (indexFile.exists) {
     if (!indexFile.content.trim()) {
       findings.push(driverFinding(indexRel, 'api-index-invalid', 'api/index.yaml must not be empty.'));
-      return { declarations: [], noApi: false, indexPresent: true };
+      return { declarations: [], standardSurfaces: [], noApi: false, indexPresent: true };
     }
     const index = parseYamlObject(indexFile.content, indexRel);
     return { ...validateIndexDocument(index, indexRel, cfg.repoRoot, findings), indexPresent: true };
@@ -311,14 +350,14 @@ async function discoverApiDeclarations(cfg, rel, findings, notices) {
 
   if (declarations.length === 0) {
     const message =
-      'No API declaration found. Add api/openapi.yaml or api/asyncapi.yaml, or declare noApi: true with a reason in api/index.yaml.';
+      'No API declaration found. Add api/openapi.yaml or api/asyncapi.yaml, declare a standard-defined surface in api/index.yaml, or declare noApi: true with a reason.';
     if (cfg.mode === 'conformance') {
       findings.push(driverFinding('api/index.yaml', 'api-declaration-required', message));
     } else {
       notices.push(message);
     }
   }
-  return { declarations, noApi: false, indexPresent: false };
+  return { declarations, standardSurfaces: [], noApi: false, indexPresent: false };
 }
 
 async function loadDeclaredSpecs(declarations, rel, findings) {
@@ -501,11 +540,15 @@ async function scanDivergentCopies(repoRoot, skipAbs, rel, findings) {
 // Requirement-to-contract coverage (api/coverage.yaml)
 // --------------------------------------------------------------------------------------
 
-const REQUIREMENT_ID_RE = /^[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+$/;
-const DISPOSITIONS = new Set(['operation', 'message', 'external', 'not-applicable', 'planned']);
-const REQUIREMENT_MARKER_RE =
-  /^\s*-\s+\*\*([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)\*\*\s+\*\*(REQUIRED|RECOMMENDED|OPTIONAL)\*\*:\s+(.\S|\S.*)$/;
-const LEGACY_REQUIREMENT_RE = /\((REQUIRED|RECOMMENDED|OPTIONAL)\)/;
+const REQUIREMENT_ID_RE = /^govstack-[a-z0-9]+(?:[-.][a-z0-9]+)*#req-[1-9][0-9]*$/;
+const DISPOSITIONS = new Set(['operation', 'message', 'external', 'non-api', 'planned']);
+const REQUIREMENT_HEADING_RE =
+  /^\s*###\s+#([1-9][0-9]*)\s+(.+?)\s+\((REQUIRED|RECOMMENDED|DRAFT|DEPRECATED)\s+(IMMUTABLE|EXTENSIBLE|REPLACEABLE|INAPPLICABLE)\s+(OBSERVABLE|AUDITABLE)\)\s*$/;
+const REQUIREMENT_REFERENCE_RE =
+  /^\s*`(govstack-[a-z0-9]+(?:[-.][a-z0-9]+)*#req-([1-9][0-9]*))(?:\s+(extends|replaces)\s+(govstack-[a-z0-9]+(?:[-.][a-z0-9]+)*#req-[1-9][0-9]*))?`\s*$/;
+const LEGACY_REQUIREMENT_RE =
+  /^\s*-\s+\*\*[^*]+\*\*\s+\*\*(REQUIRED|RECOMMENDED|OPTIONAL|DRAFT|DEPRECATED)\*\*:/;
+const LOOKS_LIKE_REQUIREMENT_HEADING_RE = /^\s*#+\s+#\d+\s+/;
 
 function nonEmptyStrings(value) {
   return Array.isArray(value) && value.length > 0 && value.every((item) => typeof item === 'string' && item.trim());
@@ -533,6 +576,7 @@ function isHttpsUrl(value) {
 async function scanRequirementMarkers(repoRoot, rel, findings) {
   const specDir = path.join(repoRoot, 'spec');
   const markers = new Map();
+  const seenIds = new Map();
 
   async function walk(dir) {
     let entries;
@@ -559,21 +603,87 @@ async function scanRequirementMarkers(repoRoot, rel, findings) {
           continue;
         }
         if (fenced) continue;
-        const match = line.match(REQUIREMENT_MARKER_RE);
+        const match = line.match(REQUIREMENT_HEADING_RE);
         if (match) {
-          const [, id, strength, text] = match;
-          const location = `${rel(full)}:${i + 1}`;
-          if (markers.has(id)) {
+          const [, headingNumber, title, level, mutability, verification] = match;
+          const headingLocation = `${rel(full)}:${i + 1}`;
+          let referenceLine = i + 1;
+          while (referenceLine < lines.length && !lines[referenceLine].trim()) referenceLine += 1;
+          const reference = lines[referenceLine]?.match(REQUIREMENT_REFERENCE_RE);
+          if (!reference) {
+            findings.push(
+              driverFinding(
+                rel(full),
+                'requirements-invalid-marker',
+                `Requirement at ${headingLocation} must be followed by a canonical ` +
+                  '`govstack-...#req-N` identifier, optionally with extends or replaces.',
+              ),
+            );
+            continue;
+          }
+          const [, id, referenceNumber, relation, parent] = reference;
+          const referenceLocation = `${rel(full)}:${referenceLine + 1}`;
+          let bodyLine = referenceLine + 1;
+          while (bodyLine < lines.length && !lines[bodyLine].trim()) bodyLine += 1;
+          while (/^KF:\s+\S/.test(lines[bodyLine]?.trim() ?? '')) {
+            bodyLine += 1;
+            while (bodyLine < lines.length && !lines[bodyLine].trim()) bodyLine += 1;
+          }
+          const body = lines[bodyLine]?.trim() ?? '';
+          if (!body || /^#{1,6}\s+/.test(body)) {
+            findings.push(
+              driverFinding(
+                rel(full),
+                'requirements-invalid-marker',
+                `Requirement ${id} at ${headingLocation} must include body text after its canonical identifier and optional KF lines.`,
+              ),
+            );
+            i = referenceLine;
+            continue;
+          }
+          if (headingNumber !== referenceNumber) {
+            findings.push(
+              driverFinding(
+                rel(full),
+                'requirements-invalid-marker',
+                `Requirement number #${headingNumber} at ${headingLocation} does not match ${id} at ${referenceLocation}.`,
+              ),
+            );
+          }
+          if (mutability === 'INAPPLICABLE' && !relation) {
+            findings.push(
+              driverFinding(
+                rel(full),
+                'requirements-invalid-marker',
+                `INAPPLICABLE requirement ${id} must identify a parent requirement with extends or replaces.`,
+              ),
+            );
+          }
+          if (seenIds.has(id)) {
             findings.push(
               driverFinding(
                 rel(full),
                 'requirements-duplicate-id',
-                `Requirement id "${id}" is duplicated at ${markers.get(id).location} and ${location}.`,
+                `Requirement id "${id}" is duplicated at ${seenIds.get(id)} and ${referenceLocation}.`,
               ),
             );
           } else {
-            markers.set(id, { id, strength, text: text.trim(), location });
+            seenIds.set(id, referenceLocation);
+            const active = (level === 'REQUIRED' || level === 'RECOMMENDED') && mutability !== 'INAPPLICABLE';
+            if (active) {
+              markers.set(id, {
+                id,
+                title: title.trim(),
+                level,
+                mutability,
+                verification,
+                relation: relation ?? null,
+                parent: parent ?? null,
+                location: headingLocation,
+              });
+            }
           }
+          i = referenceLine;
           continue;
         }
         if (LEGACY_REQUIREMENT_RE.test(line)) {
@@ -581,15 +691,15 @@ async function scanRequirementMarkers(repoRoot, rel, findings) {
             driverFinding(
               rel(full),
               'requirements-unkeyed',
-              `Legacy unkeyed requirement at ${rel(full)}:${i + 1}; use "- **REQ-ID** **REQUIRED|RECOMMENDED|OPTIONAL**: text".`,
+              `Legacy requirement marker at ${rel(full)}:${i + 1}; use the GovStack requirement heading, classifiers, and canonical identifier.`,
             ),
           );
-        } else if (/\*\*(REQUIRED|RECOMMENDED|OPTIONAL)\*\*/.test(line)) {
+        } else if (LOOKS_LIKE_REQUIREMENT_HEADING_RE.test(line)) {
           findings.push(
             driverFinding(
               rel(full),
               'requirements-invalid-marker',
-              `Invalid requirement marker at ${rel(full)}:${i + 1}.`,
+              `Invalid GovStack requirement heading at ${rel(full)}:${i + 1}; expected all three CFR classifiers.`,
             ),
           );
         }
@@ -665,7 +775,7 @@ function collectReferenceInventory(specs, rel, findings, coverageRel) {
   return { operationOwners, messageOwners };
 }
 
-async function validateRequirementCoverage(cfg, specs, noApi, rel, findings) {
+async function validateRequirementCoverage(cfg, specs, hasDeclaredSurface, noApi, rel, findings) {
   const coverageAbs = path.join(cfg.repoRoot, 'api', 'coverage.yaml');
   const coverageRel = rel(coverageAbs);
   const file = await readOptionalText(coverageAbs);
@@ -682,14 +792,14 @@ async function validateRequirementCoverage(cfg, specs, noApi, rel, findings) {
     }
     return;
   }
-  if (specs.length === 0) return;
+  if (!hasDeclaredSurface) return;
   const markers = await scanRequirementMarkers(cfg.repoRoot, rel, findings);
   if (markers.size === 0) {
     findings.push(
       driverFinding(
         'spec/',
         'requirements-missing',
-        'Declared API surfaces require at least one keyed requirement marker under spec/**/*.md.',
+        'Declared API surfaces require at least one active CFR-formatted requirement under spec/**/*.md.',
       ),
     );
   }
@@ -761,7 +871,7 @@ async function validateRequirementCoverage(cfg, specs, noApi, rel, findings) {
       operation: new Set(['id', 'disposition', 'operations']),
       message: new Set(['id', 'disposition', 'messages']),
       external: new Set(['id', 'disposition', 'reference']),
-      'not-applicable': new Set(['id', 'disposition', 'rationale']),
+      'non-api': new Set(['id', 'disposition', 'rationale']),
       planned: new Set(['id', 'disposition', 'issue']),
     }[entry.disposition];
     const extras = Object.keys(entry).filter((key) => !allowedKeys.has(key));
@@ -803,18 +913,9 @@ async function validateRequirementCoverage(cfg, specs, noApi, rel, findings) {
       if (!isHttpUrl(entry.reference)) {
         findings.push(driverFinding(coverageRel, 'coverage-invalid', `${label}.reference must be an http(s) URL.`));
       }
-    } else if (entry.disposition === 'not-applicable') {
+    } else if (entry.disposition === 'non-api') {
       if (typeof entry.rationale !== 'string' || entry.rationale.trim().length < 3) {
         findings.push(driverFinding(coverageRel, 'coverage-invalid', `${label}.rationale is required.`));
-      }
-      if (markers.get(entry.id)?.strength === 'REQUIRED') {
-        findings.push(
-          driverFinding(
-            coverageRel,
-            'coverage-required-not-applicable',
-            `${label} cannot mark REQUIRED requirement "${entry.id}" as not-applicable.`,
-          ),
-        );
       }
     } else {
       if (!isHttpUrl(entry.issue)) {
@@ -1275,6 +1376,7 @@ async function main(argv) {
   // --- Discover and load declared spec files -------------------------------------------
   const discovery = await discoverApiDeclarations(cfg, rel, findings, notices);
   const specs = await loadDeclaredSpecs(discovery.declarations, rel, findings);
+  const hasDeclaredSurface = discovery.declarations.length > 0 || discovery.standardSurfaces.length > 0;
 
   // --- File-tree checks (§2.2/§2.3/§3.2/§3.3) -----------------------------------------
   await checkLegacySwagger(cfg.repoRoot, rel, findings);
@@ -1282,10 +1384,26 @@ async function main(argv) {
   skipAbs.add(path.join(cfg.repoRoot, 'api', 'swagger.yaml'));
   skipAbs.add(path.join(cfg.repoRoot, 'api', 'swagger.json'));
   await scanDivergentCopies(cfg.repoRoot, skipAbs, rel, findings);
-  await validateRequirementCoverage(cfg, specs, discovery.noApi, rel, findings);
+  await validateRequirementCoverage(cfg, specs, hasDeclaredSurface, discovery.noApi, rel, findings);
   if (discovery.noApi) notices.push('api/index.yaml explicitly declares that this BB exposes no API surface.');
+  for (const surface of discovery.standardSurfaces) {
+    const message =
+      `Standard-defined API surface "${surface.name}" is inventoried at ${surface.reference}; ` +
+      'its protocol-specific conformance is not evaluated by this OpenAPI/AsyncAPI linter.';
+    if (cfg.mode === 'conformance') {
+      findings.push(
+        driverFinding(
+          'api/index.yaml',
+          'standard-surface-unverified',
+          `${message} Conformance remains blocked until GovStack approves a standard-surface registry or profile.`,
+        ),
+      );
+    } else {
+      notices.push(message);
+    }
+  }
 
-  const noSpec = specs.length === 0;
+  const noSpec = !hasDeclaredSurface;
 
   // --- Spectral (§20.2) + base validators (§20.1) + guide declaration (§20.3) ----------
   let spectral;

@@ -45,10 +45,6 @@ COVERAGE_ENFORCE=1 node --test tests/coverage.test.mjs
 
 The second command fails if `rules.yaml` and `coverage.yaml` disagree about the set of rule ids, or if `coverage.yaml` and the shipped rulesets disagree about which Spectral rules exist. A new guide rule that was never triaged for linting is therefore a test failure, not a silent gap. Rule `documentationUrl`s in the ruleset embed each rule's page and anchor, which is one more reason anchors must stay frozen.
 
-## Adding an open question
-
-Append a row to [Appendix B](../appendix/b-open-questions.md) using an ID of the form `OPEN-{section}-{letter}`, keyed to the current section numbering. Once the guide is published, an assigned identifier remains stable.
-
 ## Versioning the guide itself
 
 This guide is versioned with SemVer, per [§1.10](../1-introduction.md#110-applicability-and-transition), and its current exact identifier is `0.1.0-draft`. A patch release may correct prose or tooling without changing conformance. A minor release may add optional guidance, deprecate a rule, or relax a requirement. Adding or strengthening a mandatory rule, removing a permitted behaviour, or otherwise making a previously conforming specification non-conforming requires a major release. A ruleset release is separately versioned and every canonical spec pins both exact versions under [§20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version). Release notes begin with the first published version.

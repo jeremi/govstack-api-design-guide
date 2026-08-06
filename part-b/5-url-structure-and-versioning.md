@@ -12,19 +12,19 @@ description: "Rules governing URL path structure, resource naming, and version p
 
 ## 5.1 Major version in the path <a href="#51-major-version-in-the-path" id="51-major-version-in-the-path"></a>
 
-**[M]** Major version **MUST** appear in the URL path as `/v{N}/...` (e.g., `/v1/policies`). The standard unversioned endpoints of [§5.10](#510-standard-unversioned-endpoints) are the only exception. [`[OPEN-5-A]`](../appendix/b-open-questions.md)
+**[M]** A versioned HTTP surface **MUST** expose its major contract version unambiguously. New GovStack resource APIs **SHOULD** place it in the URL path as `/v{N}/...` (for example, `/v1/policies`). A recognised protocol standard may use its own version-negotiation mechanism. The standard unversioned endpoints of [§5.10](#510-standard-unversioned-endpoints) do not carry the API major version.
 
 ## 5.2 Plural noun resources <a href="#52-plural-noun-resources" id="52-plural-noun-resources"></a>
 
-**[M+R]** Resource paths **MUST** use plural nouns (`/policies`, not `/policy`).
+**[M+R]** Resource paths **SHOULD** use plural nouns (`/policies`, not `/policy`).
 
 ## 5.3 Kebab-case path segments <a href="#53-kebab-case-path-segments" id="53-kebab-case-path-segments"></a>
 
-**[M]** Multi-word path segments **MUST** use kebab-case (`/event-subscriptions`). The standard unversioned endpoints of [§5.10](#510-standard-unversioned-endpoints) keep the segment spelling their own definition gives them, including the `.well-known` prefix that RFC 8615 fixes.
+**[M]** Multi-word path segments **SHOULD** use kebab-case (`/event-subscriptions`). A surface governed by an external standard keeps that standard's spelling, including the `.well-known` prefix that RFC 8615 fixes.
 
 ## 5.4 Shallow path nesting <a href="#54-shallow-path-nesting" id="54-shallow-path-nesting"></a>
 
-**[M]** Path hierarchy **SHOULD** be shallow, with at most two levels of nesting after `/v{N}/`. Deep nesting makes paths hard to read and discourages addressable sub-resources. [`[OPEN-5-B]`](../appendix/b-open-questions.md)
+**[M]** Path hierarchy **SHOULD** be shallow, with at most two levels of nesting after `/v{N}/`. Deep nesting makes paths hard to read and discourages addressable sub-resources.
 
 ## 5.5 Identifiers as path parameters <a href="#55-identifiers-as-path-parameters" id="55-identifiers-as-path-parameters"></a>
 
@@ -32,15 +32,15 @@ description: "Rules governing URL path structure, resource naming, and version p
 
 ## 5.6 Query parameter naming <a href="#56-query-parameter-naming" id="56-query-parameter-naming"></a>
 
-**[M]** Query parameter names **MUST** follow the JSON naming convention defined in [§9](../part-c/9-json-conventions-and-naming.md).
+**[M]** Query parameter names **SHOULD** follow the JSON naming convention defined in [§9](../part-c/9-json-conventions-and-naming.md).
 
 ## 5.7 No verbs in CRUD paths <a href="#57-no-verbs-in-crud-paths" id="57-no-verbs-in-crud-paths"></a>
 
-**[M+R]** Verbs **MUST NOT** appear in paths for CRUD operations. (`POST /v1/events`, not `POST /v1/event/new`.)
+**[M+R]** Verbs **SHOULD NOT** appear in paths for CRUD operations. (`POST /v1/events`, not `POST /v1/event/new`.)
 
 ## 5.8 Actions as sub-resources <a href="#58-actions-as-sub-resources" id="58-actions-as-sub-resources"></a>
 
-**[R]** Non-CRUD actions **MUST** be expressed as sub-resources: `POST /v1/events/{eventId}/cancel`, `POST /v1/operations/{operationId}/cancel`.
+**[R]** Non-CRUD actions **SHOULD** be expressed as sub-resources: `POST /v1/events/{eventId}/cancel`, `POST /v1/operations/{operationId}/cancel`.
 
 ## 5.9 Unversioned health endpoint <a href="#59-unversioned-health-endpoint" id="59-unversioned-health-endpoint"></a>
 

@@ -49,10 +49,10 @@ rules:
   # does not declare a POST, is flagged. Domain-level cancels not under
   # /operations/ are out of scope.
   govstack-15.5:
-    description: "Operation cancellation must be POST /v{N}/operations/{operationId}/cancel (guide 15.5, [M+R])."
+    description: "Operation cancellation should use POST /v{N}/operations/{operationId}/cancel (guide 15.5, [M+R])."
     message: "[15.5][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#155-cancellation-via-cancel-sub-resource
-    severity: error
+    severity: warn
     formats: [oas3_1]
     given: $.paths
     then:

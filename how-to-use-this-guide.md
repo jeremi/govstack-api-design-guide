@@ -20,9 +20,9 @@ This is a strawman of a normative cross-BB API design guide. It is not yet ratif
 1. **Scope of harmonisation** (see [§1.2](1-introduction.md#12-scope)).
 2. **Structure and depth.** 20 numbered sections ([§1](1-introduction.md)–[§20](part-e/20-conformance-and-validation.md)), supported by examples and rule-specific linter coverage where mechanical enforcement is practical.
 3. **Prescriptiveness.** RFC 2119 keywords and linter-backed conformance (see [§1.5](1-introduction.md#15-language) and [§20](part-e/20-conformance-and-validation.md)).
-4. **The open questions.** [Appendix B](appendix/b-open-questions.md) consolidates every deliberate design call; the **Blocks v1.0?** column marks the ones that need a committee decision before ratification.
+4. **CFR compatibility.** Confirm that the proposed parent relationships and pending CFR changes in [§1.3](1-introduction.md#13-relationship-to-existing-govstack-documents) are correct.
 
-Companion documents (governance, security/operations, common YAML, Spectral ruleset, conformance pack) are referenced where relevant; their scope is in [Appendix A](appendix/a-companion-documents.md).
+Review comments should challenge the draft's proposed rules directly through issues or pull-request feedback rather than relying on embedded drafting questions.
 
 ## About the rule titles <a href="#about-the-rule-titles" id="about-the-rule-titles"></a>
 

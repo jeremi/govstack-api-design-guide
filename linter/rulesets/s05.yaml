@@ -12,27 +12,27 @@ functions:
   - operationResponses
   - securityCoverage
 rules:
-  # 5.1 [M] MUST — major version prefix /v{N}/... on every path. The guide 5.10
+  # 5.1 [M] SHOULD — major version prefix /v{N}/... on GovStack resource paths. The guide 5.10
   # standard unversioned endpoints cannot carry a /v{N}/ prefix and are skipped
   # inside `pathSegments` (functions/lib/standardEndpoints.js), which is the one
   # place that closed set is written down.
   govstack-5.1:
-    description: "Every path must start with a major version prefix /v{N}/ (guide 5.1, [M])."
+    description: "GovStack resource paths should start with a major version prefix /v{N}/ (guide 5.1, [M])."
     message: "[5.1][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#51-major-version-in-the-path
-    severity: error
+    severity: warn
     formats: [oas3_1]
     given: $.paths
     then:
       function: pathSegments
       functionOptions: { check: versionPrefix }
 
-  # 5.3 [M] MUST — multi-word path segments must be kebab-case.
+  # 5.3 [M] SHOULD — multi-word path segments should be kebab-case.
   govstack-5.3:
-    description: "Path segments must be kebab-case (guide 5.3, [M])."
+    description: "Path segments should be kebab-case (guide 5.3, [M])."
     message: "[5.3][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#53-kebab-case-path-segments
-    severity: error
+    severity: warn
     formats: [oas3_1]
     given: $.paths
     then:
@@ -78,14 +78,14 @@ rules:
         name: "query parameter"
         forbidPattern: '(^id$)|([a-z0-9]Id$)|(_id$)'
 
-  # 5.6 [M] MUST — query parameter names follow the §9 JSON naming
+  # 5.6 [M] SHOULD — query parameter names follow the §9 JSON naming
   # convention (camelCase). Covers both path-item-level (shared) and
   # operation-level query parameters.
   govstack-5.6:
-    description: "Query parameter names must be camelCase per §9 (guide 5.6, [M])."
+    description: "Query parameter names should be camelCase per §9 (guide 5.6, [M])."
     message: "[5.6][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#56-query-parameter-naming
-    severity: error
+    severity: warn
     formats: [oas3_1]
     given:
       - "$.paths[*].parameters[?(@.in=='query')].name"

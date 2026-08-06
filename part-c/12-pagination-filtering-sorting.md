@@ -63,15 +63,15 @@ description: "Mandatory pagination for collections, cursor and offset envelopes,
 
 ## 12.7 Sort parameter convention <a href="#127-sort-parameter-convention" id="127-sort-parameter-convention"></a>
 
-**[M]** Sort parameter **MUST** be `sort`, values `field` (ascending) or `-field` (descending); multiple criteria separated by commas.
+**[M]** An API that supports sorting **MUST** document the parameter, allowed fields, direction syntax, default order, and a stable tie-breaker. The GovStack default **SHOULD** be `sort`, with `field` for ascending, `-field` for descending, and commas between multiple criteria.
 
 ## 12.8 Simple equality filtering <a href="#128-simple-equality-filtering" id="128-simple-equality-filtering"></a>
 
-**[M+R]** Simple equality filtering on non-personal, non-secret fields **MUST** use one query parameter per field. A filter containing personal data or another value prohibited from URLs by [§8.6](../part-b/8-headers.md#86-no-personal-data-in-addressable-locations) **MUST NOT** use a query parameter and **MUST** use the body-based search pattern in [§12.9](#129-complex-filtering-via-search).
+**[M+R]** Simple equality filtering on non-personal, non-secret fields **SHOULD** use one query parameter per field. A filter containing personal data or another value prohibited from URLs by [§8.6](../part-b/8-headers.md#86-no-personal-data-in-addressable-locations) **MUST NOT** use a query parameter and **MUST** use a documented body-based search contract such as [§12.9](#129-complex-filtering-via-search).
 
 ## 12.9 Complex filtering via search <a href="#129-complex-filtering-via-search" id="129-complex-filtering-via-search"></a>
 
-**[M+R]** Complex filtering and any filtering that contains personal data **MUST** use `POST /v1/{collection}/search` per [§6.6](../part-b/6-http-methods.md#66-post-search-for-complex-queries). Pagination parameters (`pageSize`, `cursor`) **MUST** be carried in the request body, and the response **MUST** use the [§12.3](#123-cursor-pagination-envelope) envelope. A follow-up request **MUST** retain the same search criteria and sort values as the request that produced its cursor.
+**[M+R]** Complex filtering and any filtering that contains personal data **SHOULD** use a request body, conventionally at `POST /v1/{collection}/search` per [§6.6](../part-b/6-http-methods.md#66-post-search-for-complex-queries). When a body-based search is used, pagination parameters (`pageSize`, `cursor`) **MUST** be carried in the request body, and the response **MUST** use the [§12.3](#123-cursor-pagination-envelope) envelope. A follow-up request **MUST** retain the same search criteria and sort values as the request that produced its cursor.
 
 ## 12.10 Sparse fieldsets out of scope <a href="#1210-sparse-fieldsets-out-of-scope" id="1210-sparse-fieldsets-out-of-scope"></a>
 
