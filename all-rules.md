@@ -271,4 +271,3 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [20.1](part-e/20-conformance-and-validation.md#201-every-file-passes-validation) | M | MUST | Universal | Every file passes validation |
 | [20.2](part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset) | M | MUST | Universal | Passes the GovStack Spectral ruleset |
 | [20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) | M | MUST | Universal | Declared guide conformance version |
-

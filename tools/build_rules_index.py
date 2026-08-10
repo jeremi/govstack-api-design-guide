@@ -398,7 +398,7 @@ def render_all_rules_md(page_infos):
                 f"| {rule_cell} | {class_cell} | {strength_cell} | {surface_cell} | {title_cell} |"
             )
         lines.append("")
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines).rstrip("\n") + "\n"
 
 
 def write_lf(path, content):

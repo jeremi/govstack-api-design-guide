@@ -10,7 +10,7 @@ version **0.1.0-draft** (`guide_version` in [coverage.yaml](coverage.yaml)).
 ```bash
 cd api-design-guide/linter
 npm ci
-node cli.mjs --repo-root ../..          # lints api/openapi.yaml + api/asyncapi.yaml
+node cli.mjs --repo-root ../..          # follows the repository's api/index.yaml declaration
 ```
 
 For multiple API surfaces, declare every document explicitly in
