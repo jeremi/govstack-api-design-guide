@@ -42,13 +42,12 @@ aliases:
           - $.channels[*].messages[*].payload
 rules:
   # 10.1 [M+R] — PROXY (bucket B), MUST -> warn.
-  # Guide: resource identifiers MUST be opaque, URL-safe, server-generated,
-  # globally-unique strings; UUID v4 SHOULD be the default; ULID/KSUID/other
-  # opaque ids MAY be used; statutory identifiers MAY be exempted from the
-  # opacity requirement subject to §8.6. This proxy only checks that
-  # properties named "id" or ending in "Id" declare type: string. It does NOT
-  # verify opacity, URL-safety, global uniqueness, server-generation, that a
-  # UUID (if used) is v4, or the statutory-identifier §8.6 exception.
+  # Guide: resource identifiers MUST be strings, unique within their declared
+  # resource scope (the BB by default). Stable source-owned keys MAY be reused;
+  # newly assigned IDs SHOULD be opaque and server-generated. This proxy checks
+  # only that properties named "id" or ending in "Id" declare type: string.
+  # It does NOT verify scoped uniqueness, source identity, stability, opacity,
+  # URL-safety, personal-data disclosure, or that a UUID (if used) is v4.
   govstack-10.1:
     description: "Properties named id/*Id must declare type: string, not an integer (guide 10.1, [M+R], proxy)."
     message: "[10.1][M+R] {{error}}"

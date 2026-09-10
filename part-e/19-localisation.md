@@ -22,7 +22,9 @@ description: "Rules governing localisation of API content: request-language hand
 
 ## 19.3 Declared default language <a href="#193-declared-default-language" id="193-declared-default-language"></a>
 
-**[R]** The specification **MUST** declare its default response language. English **SHOULD** be used as the cross-border fallback when deployment policy or law does not select another default.
+**[R]** The specification **MUST** declare its default response language.
+
+English **SHOULD** be used as the cross-border fallback when deployment policy or law does not select another default.
 
 ## 19.4 Declare the response language <a href="#194-declare-the-response-language" id="194-declare-the-response-language"></a>
 

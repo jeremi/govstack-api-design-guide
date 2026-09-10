@@ -16,11 +16,15 @@ description: "Rules governing SemVer versioning, backward-compatible and breakin
 
 ## 18.2 Major version in path or channel <a href="#182-major-version-in-path-or-channel" id="182-major-version-in-path-or-channel"></a>
 
-**[M]** A major version increment **MUST** be visible in the canonical contract through the surface's declared versioning mechanism. New GovStack OpenAPI surfaces **SHOULD** carry it in each versioned path key (`/v2/`) rather than duplicating it in `servers`. New AsyncAPI surfaces **SHOULD** carry it in the logical channel ID defined by [§17.2](../part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses). Protocol-native addresses **MUST NOT** be rewritten solely to carry a guide-specific version shape.
+**[M]** A major version increment **MUST** be visible in the canonical contract through the surface's declared versioning mechanism. Protocol-native addresses **MUST NOT** be rewritten solely to carry a guide-specific version shape.
+
+New GovStack OpenAPI surfaces **SHOULD** carry the major version in each versioned path key (`/v2/`) rather than duplicating it in `servers`. New AsyncAPI surfaces **SHOULD** carry it in the logical channel ID defined by [§17.2](../part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses).
 
 ## 18.3 Backward-compatible minor changes <a href="#183-backward-compatible-minor-changes" id="183-backward-compatible-minor-changes"></a>
 
-**[M+R]** Compatibility **MUST** be evaluated as an existing client communicating with a newer server, separately for input and output. A patch increment **MUST** be limited to a backward-compatible correction that does not add public functionality. A minor increment **MAY** add an endpoint; add an optional request field whose absence preserves the old behaviour; broaden values accepted in a request; or add a response field that conforming clients ignore under [§9.8](../part-c/9-json-conventions-and-naming.md#98-forward-compatible-schemas). A response enum value **MAY** be added only when the field was declared extensibly under [§9.9](../part-c/9-json-conventions-and-naming.md#99-no-closed-enums-for-growing-sets). For messaging, the same test **MUST** be applied from publisher to existing consumer for sent messages and from existing publisher to consumer for received messages. Additive syntax **MUST NOT** be called compatible when it changes defaults, pagination boundaries, ordering, authorization, delivery guarantees, or other observable semantics.
+**[M+R]** Compatibility **MUST** be evaluated as an existing client communicating with a newer server, separately for input and output. A patch increment **MUST** be limited to a backward-compatible correction that does not add public functionality. For messaging, the same test **MUST** be applied from publisher to existing consumer for sent messages and from existing publisher to consumer for received messages. Additive syntax **MUST NOT** be called compatible when it changes defaults, pagination boundaries, ordering, authorization, delivery guarantees, or other observable semantics.
+
+A minor increment **MAY** add an endpoint; add an optional request field whose absence preserves the old behaviour; broaden values accepted in a request; or add a response field that conforming clients ignore under [§9.8](../part-c/9-json-conventions-and-naming.md#98-forward-compatible-schemas). A response enum value **MAY** be added only when the field was declared extensibly under [§9.9](../part-c/9-json-conventions-and-naming.md#99-no-closed-enums-for-growing-sets).
 
 ## 18.4 Breaking changes bump major version <a href="#184-breaking-changes-bump-major-version" id="184-breaking-changes-bump-major-version"></a>
 
@@ -36,7 +40,9 @@ description: "Rules governing SemVer versioning, backward-compatible and breakin
 
 ## 18.7 AsyncAPI deprecation metadata <a href="#187-asyncapi-deprecation-metadata" id="187-asyncapi-deprecation-metadata"></a>
 
-**[M+R]** AsyncAPI channels, operations, and messages **MUST** declare consumer-visible deprecation and replacement guidance in their `description`. They **MAY** also use the experimental `x-govstack-deprecated` extension with `since`, `sunset`, `replacement`, and `reason` where supported by tooling.
+**[M+R]** Deprecated AsyncAPI channels, operations, and messages **MUST** declare consumer-visible deprecation and replacement guidance in their `description`.
+
+They **MAY** also use the experimental `x-govstack-deprecated` extension with `since`, `sunset`, `replacement`, and `reason` where supported by tooling.
 
 ## Note on retrofitting <a href="#note-on-retrofitting" id="note-on-retrofitting"></a>
 

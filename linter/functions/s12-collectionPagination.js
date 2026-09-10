@@ -1,6 +1,7 @@
 import { isObject, asArray } from './lib/util.js';
 import { isStandardUnversionedPath } from './lib/standardEndpoints.js';
 import envelopeShape from './envelopeShape.js';
+import { resourcePath } from './lib/resourcePaths.js';
 
 /**
  * s12-collectionPagination — pagination checks for a "collection" GET
@@ -16,9 +17,11 @@ import envelopeShape from './envelopeShape.js';
  * An operation is considered to have opted into offset pagination when its
  * `parameters` array declares a parameter named `offset`.
  *
- * Two carve-outs apply to every mode, so that the whole of §12's collection
+ * Three carve-outs apply to every mode, so that the whole of §12's collection
  * surface answers them the same way:
  *   - the guide §5.10 standard unversioned endpoints are not collections;
+ *   - GET custom methods need a declared array/items response to be classified
+ *     as collections; their resource target alone does not imply a list;
  *   - a collection whose 200 response declares its own bound with `maxItems`
  *     may be returned unpaginated (guide §12.1).
  *
@@ -50,26 +53,53 @@ import envelopeShape from './envelopeShape.js';
  * @param {{path?: (string|number)[]}} [context]
  * @returns {{message:string, path:(string|number)[]}[]|undefined}
  */
-/**
- * Guide §12.1 lets a collection go unpaginated when the specification itself
- * fixes its size and says so with `maxItems`. Every array the response returns
- * must carry that bound: one unbounded array is enough to make the response
- * unbounded.
- *
- * @param {unknown} schema - the 200 response body schema.
- * @returns {boolean} true when the response declares its own bound.
- */
-function hasDeclaredBound(schema) {
-  if (!isObject(schema)) return false;
-  const arrays = [];
-  if (schema.type === 'array') arrays.push(schema);
-  if (isObject(schema.properties)) {
-    for (const prop of Object.values(schema.properties)) {
-      if (isObject(prop) && prop.type === 'array') arrays.push(prop);
+/** Collect conjunctive declarations only; do not infer shapes from alternatives.
+ * Spectral may resolve recursive references, so visit each schema only once. */
+function allOfSchemas(schemas) {
+  const pending = [...schemas];
+  const seen = new WeakSet();
+  const nodes = [];
+  while (pending.length) {
+    const schema = pending.pop();
+    if (!isObject(schema) || seen.has(schema)) continue;
+    seen.add(schema);
+    nodes.push(schema);
+    pending.push(...asArray(schema.allOf));
+  }
+  return nodes;
+}
+
+function arrayShape(nodes) {
+  const bounds = nodes.filter((node) => node.maxItems !== undefined).map((node) => node.maxItems);
+  return {
+    isArray: nodes.some((node) => node.type === 'array'),
+    bounded: bounds.length > 0 && bounds.every((bound) => Number.isInteger(bound) && bound >= 0),
+  };
+}
+
+/** Inspect the root and its immediate properties through nested allOf.
+ * A type and its maxItems bound can be declared in separate branches, including
+ * repeated declarations of the same property. Every declared array needs a
+ * valid bound for §12.1's exemption; nested object contents need review. */
+function collectionShape(schema) {
+  const nodes = allOfSchemas([schema]);
+  const root = arrayShape(nodes);
+  const properties = new Map();
+  for (const node of nodes) {
+    for (const [name, property] of Object.entries(isObject(node.properties) ? node.properties : {})) {
+      const declarations = properties.get(name) ?? [];
+      declarations.push(property);
+      properties.set(name, declarations);
     }
   }
-  if (arrays.length === 0) return false;
-  return arrays.every((a) => Number.isInteger(a.maxItems));
+  const propertyShapes = new Map(
+    [...properties].map(([name, declarations]) => [name, arrayShape(allOfSchemas(declarations))]),
+  );
+  const arrays = [root, ...propertyShapes.values()].filter((shape) => shape.isArray);
+  return {
+    isCollection: root.isArray || propertyShapes.get('items')?.isArray === true,
+    bounded: arrays.length > 0 && arrays.every((shape) => shape.bounded),
+  };
 }
 
 /** Merge a schema's direct shape with one level of allOf composition. */
@@ -129,9 +159,17 @@ export default function collectionPagination(targetVal, options, context) {
   const pathKey = base.length >= 2 ? base[base.length - 2] : undefined;
   if (isStandardUnversionedPath(pathKey)) return undefined;
 
+  // A GET custom method need not return a collection. Only apply the list
+  // proxy when its response explicitly declares an array or an items array.
+  // POST search is selected separately by §12.9 and retains its envelope check.
+  const shape = collectionShape(responseSchema);
+  if (base.at(-1) === 'get' && resourcePath(pathKey).customMethod !== undefined) {
+    if (!shape.isCollection) return undefined;
+  }
+
   // Guide §12.1: a collection bounded by its own schema may skip pagination,
   // and with it the pagination parameters and envelopes of §12.2–§12.4.
-  if (hasDeclaredBound(responseSchema)) return undefined;
+  if (shape.bounded) return undefined;
 
   const params = asArray(targetVal.parameters).filter(isObject);
   const offsetMode = params.some((p) => p.name === 'offset');

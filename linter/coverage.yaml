@@ -12,7 +12,7 @@
 #   runtime       - constrains wire behaviour; conformance test-harness territory, not a linter's
 #   human         - review/governance judgment; no useful automated check
 #   informative   - non-normative guide entry; nothing to enforce
-guide_version: "0.1.0-draft"
+guide_version: "0.2.0-draft"
 rules:
   - id: "2.1"
     class: "M"
@@ -28,7 +28,7 @@ rules:
     class: "R"
     status: driver
     spectral_rules: []
-    note: "no divergent copies elsewhere; md snippets $ref canonical - repo file tree"
+    note: "no undeclared current copies; api/legacy archives excluded from discovery but explicit declarations and references still validate; historical documentation and canonical snippet use require review"
   - id: "2.4"
     class: "M"
     status: driver
@@ -68,7 +68,7 @@ rules:
     class: "R"
     status: driver
     spectral_rules: []
-    note: "no divergent AsyncAPI copies - repo file tree"
+    note: "no undeclared current AsyncAPI copies; api/legacy archives excluded from discovery but explicit declarations and references still validate; historical documentation requires review"
   - id: "3.4"
     class: "M"
     status: driver
@@ -93,7 +93,7 @@ rules:
     class: "M"
     status: needs-context
     spectral_rules: []
-    note: "shared components $ref pinned local govstack-asyncapi-common.yaml - needs vendored file"
+    note: "local CloudEvents envelopes allowed; common component reuse requires vendored file and explicit version - needs artifact context"
   - id: "3.9"
     class: "M"
     status: partial-proxy
@@ -128,7 +128,7 @@ rules:
     class: "M+R"
     status: driver
     spectral_rules: []
-    note: "driver validates CFR requirement headings, bodies, canonical IDs and classifiers; active coverage ID sets; disposition evidence; operation/message references; uniqueness; and planned gaps"
+    note: "driver validates CFR requirement headings, bodies, canonical IDs and classifiers; exact active coverage ID sets including the empty set; optional separate DRAFT mappings; disposition evidence; operation/message references; uniqueness; and planned active gaps; draft maturity is explicit in notices"
   - id: "5.1"
     class: "M"
     status: partial-proxy
@@ -143,12 +143,12 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-5.3]
-    note: "advisory default: each non-param path segment kebab-case"
+    note: "advisory default: resource segments use kebab-case and terminal colon custom-method suffixes use camelCase"
   - id: "5.4"
     class: "M"
     status: implemented
     spectral_rules: [govstack-5.4]
-    note: "<=2 non-param levels after /v{N}/; {param} segments do not count (per mandated 15.5/16.11 action paths)"
+    note: "<=2 non-param resource/action levels after /v{N}/; parameters and colon custom-method suffixes add no hierarchy level"
   - id: "5.5"
     class: "M+R"
     status: partial-proxy
@@ -163,12 +163,12 @@ rules:
     class: "M+R"
     status: strict-only
     spectral_rules: [govstack-5.7]
-    note: "proxy: verb-like final path segments vs verb list"
+    note: "proxy: CRUD-like final segments or colon custom-method suffixes vs a lexical verb list; actual CRUD semantics require review"
   - id: "5.8"
     class: "R"
-    status: strict-only
-    spectral_rules: [govstack-5.8]
-    note: "proxy: action-style paths follow /{col}/{id}/{verb}"
+    status: human
+    spectral_rules: []
+    note: "action sub-resources and colon custom methods are permitted; choosing a resource scope and avoiding identifier shadowing require semantic review"
   - id: "5.9"
     class: "M+R"
     status: implemented
@@ -206,14 +206,14 @@ rules:
     note: "proxy: DELETE responses in {204(no body),200,202}"
   - id: "6.6"
     class: "M+R"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-6.6]
-    note: "POST .../search returns 200 not 201"
+    note: "POST /search, :search and :lookup return 200 not 201; identifying other read-only POSTs and their single-resource or collection semantics requires review"
   - id: "6.7"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-6.7]
-    note: "proxy: collection-targeted PUT/PATCH/DELETE require >=1 param"
+    note: "proxy: collection-targeted PUT/PATCH/DELETE require >=1 param; colon custom methods require semantic review and are not inferred to be bulk CRUD"
   - id: "7.1"
     class: "R"
     status: human
@@ -298,7 +298,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-7.17]
-    note: "proxy: PUT/PATCH declare If-Match param + 412 response (advisory)"
+    note: "proxy: PUT/PATCH declare If-Match param + 412 response (advisory; the MUST applies only where optimistic concurrency is supported, which the linter cannot detect, so the proxy stays at info)"
   - id: "7.18"
     class: "M"
     status: implemented
@@ -353,7 +353,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-8.7, govstack-8.7-no-legacy]
-    note: "proxy: 429 responses declare Retry-After and structured RateLimit; deterministic error forbids legacy RateLimit-Limit/Remaining/Reset"
+    note: "proxy: 429 responses declare Retry-After and structured RateLimit (SHOULD-level rule, proxy at info); deterministic warn flags legacy RateLimit-Limit/Remaining/Reset"
   - id: "9.1"
     class: "M+R"
     status: partial-proxy
@@ -391,9 +391,9 @@ rules:
     note: "proxy: enum string values SCREAMING_SNAKE_CASE minus the rule's carve-outs (BCP 47 tags, reverse-DNS error codes and event types, media types, x-govstack-* vocabularies, and the JOSE/COSE names not already all-caps). IANA registry membership is not visible in a document, so a registered value outside the listed set is a miss. §12.7 sort keys are a known false positive."
   - id: "9.8"
     class: "M"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-9.8]
-    note: "top-level resource body schemas don't set additionalProperties:false"
+    note: "HTTP response resource roots do not set additionalProperties:false; classifying emitted event resources requires review; closed operation request schemas and nested payloads are permitted"
   - id: "9.9"
     class: "R"
     status: partial-proxy
@@ -413,7 +413,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-10.1]
-    note: "proxy: resource id fields string/uuid not integer"
+    note: "proxy: resource id fields are strings; source ownership, scoped uniqueness, stability and URL disclosure require review; UUID is not required"
   - id: "10.2"
     class: "M"
     status: partial-proxy
@@ -478,12 +478,12 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-11.3]
-    note: "problem schema requires traceId after reference resolution; runtime equality with the effective W3C traceparent is not checked"
+    note: "problem schema requires traceId after reference resolution; runtime equality with the originating W3C traceparent, including retained traceId on stored replays, is not checked"
   - id: "11.4"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-11.4]
-    note: "when an HTTP problem schema declares errors, it requires errors[] items with pointer/message and omits field-level code; the linter does not infer field attribution from status codes or semantics"
+    note: "when an HTTP problem schema declares errors, it requires errors[] items with pointer/message and omits field-level code; the linter does not infer JSON-body field attribution or validate an optional parameter-to-pointer mapping"
   - id: "11.5"
     class: "R"
     status: runtime
@@ -498,17 +498,17 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-12.1]
-    note: "proxy: list endpoints (array response) declare pagination params/envelope; exempts the 5.10 standard unversioned endpoints (not collections) and collections whose response declares its own maxItems bound"
+    note: "proxy: likely collection paths declare pagination parameters; GET custom methods need a declared array/items response to be classified as collections; exempts standard unversioned endpoints and response arrays with maxItems bounds; nested array bounds, relationship collection classification, and completeness of the permitted view require semantic review"
   - id: "12.2"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-12.2]
-    note: "proxy: paginated lists declare pageSize+cursor; exempts the 5.9 operational endpoints /health and /ready"
+    note: "proxy: paginated lists declare pageSize+cursor; fixed or variable page-size semantics, cursor integrity, expiry and repeated criteria require review; exempts standard unversioned and schema-bounded endpoints"
   - id: "12.3"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-12.3]
-    note: "proxy: paginated response schema requires items and pageInfo with a nullable, non-empty nextCursor and does not declare hasMore; runtime cursor availability and total exact/estimated plus snapshot/current semantics require review"
+    note: "proxy: paginated response schema requires items and pageInfo with a nullable, non-empty nextCursor and does not declare hasMore; runtime continuation including short or empty pages and total exact/estimated plus snapshot/current semantics require review"
   - id: "12.4"
     class: "M+R"
     status: implemented
@@ -538,7 +538,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-12.9-body, govstack-12.9-response]
-    note: "proxy: .../search carries pageSize/cursor in body + §12.3 envelope"
+    note: "proxy: POST /search or :search carries pageSize/cursor in body + §12.3 envelope; other custom-method collection semantics require review"
   - id: "12.10"
     class: "informative"
     status: informative
@@ -568,7 +568,7 @@ rules:
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-13.5]
-    note: "no apiKey scheme in query/cookie; token schemes use Authorization header"
+    note: "checks apiKey schemes for query/cookie placement; HTTP token Authorization, mTLS, and protocol-native credential behaviour require review"
   - id: "13.6"
     class: "R"
     status: partial-proxy
@@ -586,9 +586,9 @@ rules:
     note: "proxy: create-POSTs (201) accept Idempotency-Key"
   - id: "14.2"
     class: "R"
-    status: runtime
+    status: human
     spectral_rules: []
-    note: "key opacity/client-generation runtime"
+    note: "review the specification's accepted key syntax and maximum length; key generation and rejection behaviour also require implementation-level tests"
   - id: "14.3"
     class: "R"
     status: human
@@ -598,7 +598,7 @@ rules:
     class: "R"
     status: runtime
     spectral_rules: []
-    note: "replay returns original response - runtime"
+    note: "replay preserves the original result and stored Problem traceId; current-attempt tracing headers are separate - runtime"
   - id: "14.5"
     class: "R"
     status: runtime
@@ -628,7 +628,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-15.4]
-    note: "proxy: canonical GET /v1/operations/{operationId} present when Operations used. strengths empty in rules.yaml (class M+R); treated as MUST-flavored."
+    note: "proxy: canonical GET /v1/operations/{operationId} present when Operations used. level MUST in rules.yaml (class M+R)."
   - id: "15.5"
     class: "M+R"
     status: partial-proxy
@@ -698,7 +698,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-16.11]
-    note: "proxy: subscription create/list/delete endpoints present; conditional signing-key rotation is not checked"
+    note: "proxy: exposed BB subscription paths provide create/list/delete; absent subscription APIs are not flagged; conditional signing-key rotation is not checked"
   - id: "17.1"
     class: "M+R"
     status: implemented
@@ -728,12 +728,12 @@ rules:
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-17.6]
-    note: "recognized CloudEvents Message Objects use application/cloudevents+json and carry the required envelope attributes; identifying every domain event and misplaced domain data requires semantic review"
+    note: "recognized CloudEvents Message Objects use application/cloudevents+json and carry required envelope attributes after reference resolution; identifying every domain event and misplaced domain data requires semantic review"
   - id: "17.7"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-17.7]
-    note: "recognized CloudEvents and async-error messages reference the vendored common schemas; identifying every domain event or rejection requires semantic review"
+    note: "local CloudEvents envelopes are allowed; recognizable bare/wrapped async errors and explicit common envelope references use vendored common schemas; local aliases and semantic rejection identification require review"
   - id: "17.8"
     class: "M+R"
     status: partial-proxy
@@ -846,9 +846,9 @@ rules:
     note: "not translating stable content runtime"
   - id: "19.3"
     class: "R"
-    status: runtime
+    status: human
     spectral_rules: []
-    note: "default response language English runtime"
+    note: "review the declared default response language for HTTP and event specifications; English is advisory where deployment policy or law does not select another default"
   - id: "19.4"
     class: "M+R"
     status: partial-proxy

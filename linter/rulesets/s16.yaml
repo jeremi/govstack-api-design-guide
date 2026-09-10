@@ -6,7 +6,7 @@
 #
 # Scope note: §16 spans both the OpenAPI/webhooks and the AsyncAPI surfaces.
 # These rules target the OpenAPI document (formats: [oas3_1]); the AsyncAPI
-# clause of 16.1 (brokered transports use AsyncAPI 3.0) is not enforced here.
+# clause of 16.1 (brokered transports use qualified AsyncAPI 3 versions) is not enforced here.
 functionsDir: "../functions"
 functions:
   - envelopeShape
@@ -18,7 +18,7 @@ rules:
   # Verifies: HTTP push events are NOT modelled with operation `callbacks`; the
   # GovStack push mechanism is OpenAPI 3.1 top-level `webhooks`.
   # Does NOT verify: that a BB with events documents them at all (an absent
-  # event surface is not detectable), nor the AsyncAPI-3.0 clause for brokered
+  # event surface is not detectable), nor the qualified-AsyncAPI-3 clause for brokered
   # transports (MQTT/AMQP/Kafka/WebSockets/SSE).
   govstack-16.1:
     description: "HTTP push events must use top-level webhooks, not operation callbacks (guide 16.1, [M+R], proxy)."
@@ -144,11 +144,11 @@ rules:
   # Verifies: when a subscription surface exists (paths named /subscriptions),
   # it exposes create/list/delete interfaces. Conditional signing-key rotation
   # is not checked because signing is optional and profile-specific.
-  # Does NOT verify: that a BB which should offer subscriptions actually does
-  # (an absent subscription surface is not flagged), nor the AsyncAPI
+  # Does NOT verify: whether subscription management belongs to the BB or its broker
+  # (an absent BB subscription surface is not flagged), nor the AsyncAPI
   # message-command control plane the guide also permits.
   govstack-16.11:
-    description: "subscription management must expose create/list/delete (guide 16.11, [M+R], proxy)."
+    description: "BB-managed subscriptions must expose create/list/delete (guide 16.11, [M+R], proxy)."
     message: "[16.11][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#1611-subscription-management-interfaces
     severity: warn

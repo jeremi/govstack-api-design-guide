@@ -4,10 +4,19 @@
 This script is part of the guide's machine layer. It scans every rule page under
 `part-*/` and regenerates two artifacts at the book root:
 
-  * `rules.yaml`     - one structured entry per rule (id, class, strengths,
-                       surface, page, anchor, and rule text).
-  * `all-rules.md`   - a human-facing "rules at a glance" page with one GFM
-                       table per section.
+  * `rules.yaml`       - one structured entry per rule (id, class, level, kinds,
+                         surface, page, anchor, and rule text).
+  * `all-rules.md`     - a human-facing "rules at a glance" page with one GFM
+                         table per section.
+  * `rules-by-kind.md` - the same rules grouped by the kind of API they apply
+                         to (read, write, events) plus the deployment profile.
+
+Rule bodies follow one convention: the badge and the first paragraph carry the
+requirement, and that paragraph uses keywords of exactly one level family
+(MUST/MUST NOT, SHOULD/SHOULD NOT, or MAY). Later paragraphs may only use
+weaker keywords. The level of the first paragraph is the rule's `level`.
+API kinds come from `tools/rule-kinds.json` (section defaults plus per-rule
+overrides).
 
 Both artifacts are GENERATED. Do not hand-edit them; edit the section pages and
 re-run this script instead. Output is byte-reproducible: no timestamps, no
@@ -19,9 +28,10 @@ Modes:
               is stale (a missing file counts as stale), 0 otherwise.
 
 The script fails loudly (non-zero exit, message on stderr) on any malformed
-page: an anchor id that does not equal the computed slug, an href that does not
+page: an anchor id that does not equal the expected stable anchor, an href that does not
 equal its id, a duplicate rule id, a rule id whose section does not match its
-page filename, or an unrecognised surface.
+page filename, an unrecognised surface, a first paragraph that mixes levels, a
+later paragraph stronger than the first, or a rule without an API kind.
 """
 
 import argparse
@@ -31,8 +41,10 @@ import re
 import sys
 from pathlib import Path
 
+from anchors import expected_anchor
+
 GUIDE_NAME = "GovStack Cross-BB API Design Guide"
-GUIDE_VERSION = "0.1.0-draft"
+GUIDE_VERSION = "0.2.0-draft"
 
 # Regex for a heading line carrying an explicit anchor tag, e.g.
 #   ## 2.1 OpenAPI 3.1.0 required <a href="#21-openapi-310-required" id="21-openapi-310-required"></a>
@@ -55,30 +67,28 @@ STRENGTH_TOKENS = [
     ("SHOULD", "**SHOULD**"),
     ("MAY", "**MAY**"),
 ]
-
-SLUG_KEEP = set("abcdefghijklmnopqrstuvwxyz0123456789-")
-
+# Each keyword belongs to one level family; the family is the rule's level.
+LEVEL_OF = {
+    "MUST NOT": "MUST",
+    "MUST": "MUST",
+    "SHOULD NOT": "SHOULD",
+    "SHOULD": "SHOULD",
+    "MAY": "MAY",
+}
+LEVEL_RANK = {None: 0, "MAY": 1, "SHOULD": 2, "MUST": 3}
+# Kinds of API a rule applies to. `deployment` marks runtime obligations;
+# mixed rules also carry the API kinds for their specification declarations.
+KINDS = ("read", "write", "events", "deployment")
+KIND_LABELS = {
+    "read": "Read-only HTTP APIs",
+    "write": "HTTP APIs with mutations (in addition to the read-only rules)",
+    "events": "Event and webhook surfaces",
+    "deployment": "Deployment profile (runtime obligations)",
+}
+RULE_KINDS_FILE = "rule-kinds.json"
 
 class BuildError(Exception):
     """Raised when a page violates the format contract."""
-
-
-def slugify(heading_text):
-    """GitHub-style slug shared with check_links.py; the two MUST be identical.
-
-    Lowercase the text, keep ASCII letters, digits and existing hyphens, turn
-    spaces into hyphens, drop every other character. Consecutive hyphens are NOT
-    collapsed. The caller passes the heading text without its trailing `<a>` tag
-    and with the trailing space before that tag already stripped.
-    """
-    out = []
-    for ch in heading_text.lower():
-        if ch in SLUG_KEEP:
-            out.append(ch)
-        elif ch == " ":
-            out.append("-")
-        # every other character is dropped
-    return "".join(out)
 
 
 def unwrap_links(text):
@@ -177,19 +187,34 @@ def extract_strengths(text):
     return strengths
 
 
-def strongest_strength(strengths):
-    """The single strongest keyword for the summary table."""
-    if "MUST NOT" in strengths or "MUST" in strengths:
-        return "MUST"
-    if "SHOULD NOT" in strengths or "SHOULD" in strengths:
-        return "SHOULD"
-    if "MAY" in strengths:
-        return "MAY"
-    return "—"  # em dash placeholder rendered as a single character
+def level_families(text):
+    """The level families whose keywords appear in `text`."""
+    return sorted({LEVEL_OF[s] for s in extract_strengths(text)}, key=LEVEL_RANK.get)
+
+
+def rule_level(paragraphs):
+    """The level of the first paragraph; later paragraphs must be weaker."""
+    if not paragraphs:
+        return None
+    families = level_families(paragraphs[0])
+    if len(families) > 1:
+        raise BuildError(
+            f"first paragraph mixes levels {families}; keep one level per requirement "
+            "paragraph and move weaker statements to a following paragraph"
+        )
+    level = families[0] if families else None
+    for paragraph in paragraphs[1:]:
+        for family in level_families(paragraph):
+            if LEVEL_RANK[family] > LEVEL_RANK[level]:
+                raise BuildError(
+                    f"a later paragraph uses {family} but the requirement paragraph "
+                    f"is {level or 'informative'}; move it into the requirement paragraph"
+                )
+    return level
 
 
 def parse_body(body_lines):
-    """Return (class, strengths, text) for one rule body."""
+    """Return (class, level, text) for one rule body."""
     kept = strip_example_blocks(body_lines)
     paragraphs = [unwrap_links(p) for p in group_paragraphs(kept)]
     rule_class = "informative"
@@ -199,7 +224,36 @@ def parse_body(body_lines):
             rule_class = match.group("cls")
             paragraphs[0] = paragraphs[0][match.end() :]
     text = "\n".join(paragraphs)
-    return rule_class, extract_strengths(text), text
+    return rule_class, rule_level(paragraphs), text
+
+
+def load_rule_kinds(book_root):
+    """Read the hand-maintained kinds table (section defaults and rule overrides)."""
+    path = book_root / "tools" / RULE_KINDS_FILE
+    table = json.loads(path.read_text(encoding="utf-8"))
+    for key in ("sections", "rules"):
+        if not isinstance(table.get(key), dict):
+            raise BuildError(f"{path.name}: missing '{key}' table")
+    return table
+
+
+def rule_kinds(rule_id, table):
+    """The kinds a rule applies to: its override, else its section default."""
+    section = rule_id.split(".")[0]
+    kinds = table["rules"].get(rule_id, table["sections"].get(section))
+    if not kinds:
+        raise BuildError(f"{RULE_KINDS_FILE}: no API kinds for rule {rule_id} (section {section})")
+    for kind in kinds:
+        if kind not in KINDS:
+            raise BuildError(f"{RULE_KINDS_FILE}: unknown kind {kind!r} for rule {rule_id}")
+    return list(kinds)
+
+
+def check_kind_overrides(table, rule_ids):
+    """Every per-rule override must name a rule that exists."""
+    stale = sorted(set(table["rules"]) - set(rule_ids))
+    if stale:
+        raise BuildError(f"{RULE_KINDS_FILE}: overrides for unknown rules: {', '.join(stale)}")
 
 
 def parse_section_number(filename):
@@ -246,8 +300,11 @@ def heading_indices(lines):
     return [i for i, line in enumerate(lines) if line.startswith("## ")]
 
 
-def collect_page(book_root, page, seen_ids):
-    """Parse one rule page into a page-info dict with its ordered rule list."""
+def collect_page(book_root, page, seen_ids, kinds_table, errors=None):
+    """Parse one rule page into a page-info dict with its ordered rule list.
+
+    Level violations are appended to `errors` when a list is given, so a build
+    can report every offending rule at once; otherwise they raise."""
     page_rel = page.relative_to(book_root).as_posix()
     section_num = parse_section_number(page.name)
     lines = page.read_text(encoding="utf-8").split("\n")
@@ -271,10 +328,10 @@ def collect_page(book_root, page, seen_ids):
         heading_text = match.group("text")
         href = match.group("href")
         anchor_id = match.group("id")
-        expected = slugify(heading_text)
+        expected = expected_anchor(heading_text)
         if anchor_id != expected:
             raise BuildError(
-                f"{page_rel}:{idx + 1}: anchor id {anchor_id!r} != computed slug {expected!r} "
+                f"{page_rel}:{idx + 1}: anchor id {anchor_id!r} != expected anchor {expected!r} "
                 f"for heading {heading_text!r}"
             )
         if href != anchor_id:
@@ -303,14 +360,21 @@ def collect_page(book_root, page, seen_ids):
         next_heads = [h for h in all_heads if h > idx]
         end = next_heads[0] if next_heads else len(lines)
         body_lines = lines[idx + 1 : end]
-        rule_class, strengths, text = parse_body(body_lines)
+        try:
+            rule_class, level, text = parse_body(body_lines)
+        except BuildError as exc:
+            if errors is None:
+                raise
+            errors.append(f"{page_rel}:{idx + 1}: rule {rule_id}: {exc}")
+            continue
 
         rules.append(
             {
                 "id": rule_id,
                 "title": rule_title,
                 "class": rule_class,
-                "strengths": strengths,
+                "level": level,
+                "kinds": rule_kinds(rule_id, kinds_table),
                 "surface": surface,
                 "page": page_rel,
                 "anchor": anchor_id,
@@ -323,8 +387,13 @@ def collect_page(book_root, page, seen_ids):
 def collect(book_root):
     seen_ids = set()
     page_infos = []
+    errors = []
+    kinds_table = load_rule_kinds(book_root)
     for page in discover_rule_pages(book_root):
-        page_infos.append(collect_page(book_root, page, seen_ids))
+        page_infos.append(collect_page(book_root, page, seen_ids, kinds_table, errors))
+    if errors:
+        raise BuildError(f"{len(errors)} rule bodies break the level convention:\n  " + "\n  ".join(errors))
+    check_kind_overrides(kinds_table, seen_ids)
     rules = [rule for info in page_infos for rule in info["rules"]]
     return rules, page_infos
 
@@ -356,7 +425,8 @@ def render_rules_yaml(rules):
         lines.append(f"- id: {js(rule['id'])}")
         lines.append(f"  title: {js(rule['title'])}")
         lines.append(f"  class: {rule['class']}")
-        lines.append(f"  strengths: {inline_list(rule['strengths'])}")
+        lines.append(f"  level: {rule['level'] or 'null'}")
+        lines.append(f"  kinds: {inline_list(rule['kinds'])}")
         lines.append(f"  surface: {rule['surface']}")
         lines.append(f"  page: {rule['page']}")
         lines.append(f"  anchor: {rule['anchor']}")
@@ -371,7 +441,7 @@ def escape_cell(text):
 def render_all_rules_md(page_infos):
     lines = [
         "---",
-        'description: "Every rule in the guide: enforcement class, RFC 2119 strength, surface, and a link."',
+        'description: "Every rule in the guide: enforcement class, level, API kinds, surface, and a link."',
         "---",
         "",
         "# Rules at a glance",
@@ -386,16 +456,53 @@ def render_all_rules_md(page_infos):
             continue
         lines.append(f"## {info['h1_title']}")
         lines.append("")
-        lines.append("| Rule | Class | Strength | Surface | Title |")
-        lines.append("| --- | --- | --- | --- | --- |")
+        lines.append("| Rule | Class | Level | Applies to | Surface | Title |")
+        lines.append("| --- | --- | --- | --- | --- | --- |")
         for rule in info["rules"]:
             rule_cell = f"[{rule['id']}]({rule['page']}#{rule['anchor']})"
             class_cell = "—" if rule["class"] == "informative" else rule["class"]
-            strength_cell = strongest_strength(rule["strengths"])
+            level_cell = rule["level"] or "—"
+            kinds_cell = ", ".join(rule["kinds"])
             surface_cell = rule["surface"]
             title_cell = escape_cell(rule["title"])
             lines.append(
-                f"| {rule_cell} | {class_cell} | {strength_cell} | {surface_cell} | {title_cell} |"
+                f"| {rule_cell} | {class_cell} | {level_cell} | {kinds_cell} | {surface_cell} | {title_cell} |"
+            )
+        lines.append("")
+    return "\n".join(lines).rstrip("\n") + "\n"
+
+
+def render_rules_by_kind_md(rules):
+    lines = [
+        "---",
+        'description: "The rules that apply to each kind of API: read-only, read-write, events, and the deployment profile."',
+        "---",
+        "",
+        "# Rules by API kind",
+        "",
+        "This page is generated from the section pages and `tools/rule-kinds.json` by "
+        "`tools/build_rules_index.py`; do not edit it by hand. A read-write HTTP API "
+        "follows the read-only list plus the mutations list. Rules apply where their "
+        "stated conditions hold. A rule listed for both an API kind and deployment "
+        "has specification declarations and runtime obligations assessed separately. "
+        "Level is the requirement "
+        "level of the rule's first paragraph; see "
+        "[§1.11](1-introduction.md#111-which-rules-apply-to-your-api).",
+        "",
+    ]
+    for kind in KINDS:
+        selected = [rule for rule in rules if kind in rule["kinds"]]
+        lines.append(f"## {KIND_LABELS[kind]}")
+        lines.append("")
+        lines.append(f"{len(selected)} rule{'s' if len(selected) != 1 else ''}.")
+        lines.append("")
+        lines.append("| Rule | Level | Class | Title |")
+        lines.append("| --- | --- | --- | --- |")
+        for rule in selected:
+            rule_cell = f"[{rule['id']}]({rule['page']}#{rule['anchor']})"
+            class_cell = "—" if rule["class"] == "informative" else rule["class"]
+            lines.append(
+                f"| {rule_cell} | {rule['level'] or '—'} | {class_cell} | {escape_cell(rule['title'])} |"
             )
         lines.append("")
     return "\n".join(lines).rstrip("\n") + "\n"
@@ -433,7 +540,7 @@ def run_check(targets, rule_count):
             file=sys.stderr,
         )
         return 1
-    print(f"check passed: rules.yaml and all-rules.md are up to date ({rule_count} rules)")
+    print(f"check passed: generated rule pages are up to date ({rule_count} rules)")
     return 0
 
 
@@ -471,6 +578,7 @@ def main(argv=None):
     targets = [
         (book_root / "rules.yaml", render_rules_yaml(rules)),
         (book_root / "all-rules.md", render_all_rules_md(page_infos)),
+        (book_root / "rules-by-kind.md", render_rules_by_kind_md(rules)),
     ]
 
     if args.check:

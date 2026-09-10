@@ -5,7 +5,7 @@ info:
   description: Fixture for govstack-12.9-response.
   contact: {}
 paths:
-  /v1/foos/search:
+  /v1/foos:search:
     post:
       operationId: searchFoos
       summary: Search foos

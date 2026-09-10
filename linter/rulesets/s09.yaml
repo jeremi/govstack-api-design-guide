@@ -118,17 +118,17 @@ rules:
     then:
       function: s09-enumCasing
 
-  # 9.8 [M] — resource body schemas MUST NOT set additionalProperties: false at
+  # 9.8 [M] — response resource schemas MUST NOT set additionalProperties: false at
   # the top level (it blocks forward-compatible field additions). Checks the
-  # top level of request/response body schemas; nested objects may still close.
+  # top level of response body schemas; operation requests and nested objects
+  # may still close.
   govstack-9.8:
-    description: "Resource body schemas must not set additionalProperties: false at the top level (guide 9.8, [M])."
-    message: "[9.8][M] Resource body schema must not set additionalProperties: false at the top level (§9.8: forward-compatibility)."
+    description: "Response resource schemas must not set additionalProperties: false at the top level (guide 9.8, [M])."
+    message: "[9.8][M] Response resource schema must not set additionalProperties: false at the top level (§9.8: forward-compatibility)."
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#98-forward-compatible-schemas
     severity: error
     formats: [oas3_1]
     given:
-      - $.paths[*][get,put,post,delete,patch].requestBody.content[*].schema
       - $.paths[*][get,put,post,delete,patch].responses[*].content[*].schema
     then:
       function: schema

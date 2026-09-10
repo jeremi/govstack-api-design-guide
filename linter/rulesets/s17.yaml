@@ -97,12 +97,13 @@ rules:
     then:
       function: s17-cloudEventsPayload
 
-  # 17.7 [M] — Message Objects remain local. Recognizable CloudEvents and async
-  # error payloads MUST reference the reviewed envelope or async-error schema
-  # from the vendored common file. Other message kinds are outside this rule.
+  # 17.7 [M] — Message Objects and conforming event envelopes may remain local.
+  # Recognizable bare or wrapped async errors MUST reuse the common error schema.
+  # Explicit common envelope references must also be vendored; local envelope
+  # structure is checked by 17.6 after reference resolution.
   # The base validator separately proves that the external ref resolves.
   govstack-17.7:
-    description: "CloudEvents and async-error Message Objects must reference payload schemas from the vendored govstack-asyncapi-common.yaml file (guide 17.7, [M])."
+    description: "Async-error payloads and explicit shared envelope references must reuse vendored common schemas; local CloudEvents envelopes are permitted (guide 17.7, [M])."
     message: "[17.7][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/17-asyncapi-channel-rules.md#177-shared-cloudevents-envelope-schema
     severity: error

@@ -64,16 +64,17 @@ rules:
       - field: responses.204.content
         function: undefined
 
-  # 6.6 [M+R] — POST .../search MUST return 200, not 201. The given filters
-  # to path keys ending in "/search" via a JSONPath property filter (verified
-  # to resolve through both the bundler and the CLI).
+  # 6.6 [M+R] — PROXY (bucket B, MUST -> warn). Recognizes search and exact
+  # lookup, which return 200 rather than 201, through conventional /search
+  # and :search/:lookup suffixes. Other POST read
+  # operations require review of their declared semantics.
   govstack-6.6:
-    description: "POST .../search must return 200, not 201 (guide 6.6, [M+R])."
+    description: "POST search and exact lookup must return 200, not 201 (guide 6.6, [M+R], proxy)."
     message: "[6.6][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/6-http-methods.md#66-post-search-for-complex-queries
-    severity: error
+    severity: warn
     formats: [oas3_1]
-    given: "$.paths[?(@property.endsWith('/search'))].post"
+    given: '$.paths[?(@property.match(/([\/:]search|:lookup)$/))].post'
     then:
       function: operationResponses
       functionOptions:
@@ -92,6 +93,6 @@ rules:
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/6-http-methods.md#67-bulk-mutation-needs-explicit-selection
     severity: warn
     formats: [oas3_1]
-    given: "$.paths[?(!@property.includes('{'))]"
+    given: "$.paths[?(!@property.includes('{') && !@property.includes(':'))]"
     then:
       function: s06-bulkMutationSelection

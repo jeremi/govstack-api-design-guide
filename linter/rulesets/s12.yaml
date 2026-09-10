@@ -14,8 +14,9 @@
 # 12.7), it is used only to scope an otherwise-exact shape check to the
 # endpoints the shape applies to.
 #
-# Two carve-outs are shared by every collection-GET rule and therefore live in
-# one place, inside `s12-collectionPagination`: the guide 5.10 standard
+# Shared carve-outs are applied to every collection-GET rule and therefore live in
+# one place, inside `s12-collectionPagination`: GET custom methods need a
+# declared array/items response to be classified as collections; the guide 5.10 standard
 # unversioned endpoints are not collections, and a collection whose 200
 # response declares its own `maxItems` bound may go unpaginated (guide 12.1).
 functionsDir: "../functions"
@@ -177,19 +178,19 @@ rules:
                       pattern: '(\[(gte|lte|gt|lt|ne|neq|in|nin|like|contains|regex)\]$)|(^(filter|filters)$)'
 
   # 12.9 [M+R] — PROXY (bucket B, MUST -> warn). Complex filtering MUST use
-  # POST /v1/{collection}/search, carrying pageSize/cursor in the request
+  # POST search, carrying pageSize/cursor in the request
   # body and responding with the §12.3 envelope. Identifies the search
-  # endpoint via a `/search`-suffixed path heuristic (proxy for "this is the
+  # endpoint via a `/search` or `:search` suffix heuristic (proxy for "this is the
   # §6.6/§12.9 complex-filtering endpoint") and does NOT verify that the path
   # actually sits under a collection resource, nor the filtering semantics of
   # the request body itself.
   govstack-12.9-body:
-    description: "POST .../search request body must carry pageSize and cursor (guide 12.9, [M+R], proxy)."
+    description: "POST search request body must carry pageSize and cursor (guide 12.9, [M+R], proxy)."
     message: "[12.9][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#129-complex-filtering-via-search
     severity: warn
     formats: [oas3_1]
-    given: '$.paths[?(@property.match(/\/search$/))].post.requestBody.content["application/json"].schema'
+    given: '$.paths[?(@property.match(/[\/:]search$/))].post.requestBody.content["application/json"].schema'
     then:
       function: envelopeShape
       functionOptions:
@@ -198,12 +199,12 @@ rules:
           cursor: {}
 
   govstack-12.9-response:
-    description: "POST .../search response must use the §12.3 cursor envelope (guide 12.9, [M+R], proxy)."
+    description: "POST search response must use the §12.3 cursor envelope (guide 12.9, [M+R], proxy)."
     message: "[12.9][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#129-complex-filtering-via-search
     severity: warn
     formats: [oas3_1]
-    given: '$.paths[?(@property.match(/\/search$/))].post'
+    given: '$.paths[?(@property.match(/[\/:]search$/))].post'
     then:
       function: s12-collectionPagination
       functionOptions:

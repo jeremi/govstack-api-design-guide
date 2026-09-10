@@ -156,8 +156,10 @@ Structural checks over the `paths` object. One `check` per rule instance.
 - **Given:** `$.paths`.
 - **Options:** `check` *(required)* one of `versionPrefix` (keys start with
   `/v{N}/`, 5.1), `segmentCasing` (non-version, non-`{param}` segments obey
-  `casing`, default kebab, 5.3), `maxDepthAfterVersion` (≤ `max` segments after
-  the version, default 2, 5.4); plus `casing` / `max` for those checks.
+  `casing`, default kebab, with camelCase colon method suffixes, 5.3),
+  `maxDepthAfterVersion` (≤ `max` resource/action levels after the version,
+  default 2, 5.4); parameters and colon suffixes add no hierarchy level.
+  Additional options are `casing` / `max` for those checks.
 - **Example (5.4):**
   ```yaml
   given: $.paths

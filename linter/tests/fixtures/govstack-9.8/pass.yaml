@@ -16,3 +16,52 @@ paths:
                 properties:
                   id:
                     type: string
+                  data:
+                    type: object
+                    additionalProperties: false
+                    properties:
+                      name:
+                        type: string
+    post:
+      operationId: createThing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                name:
+                  type: string
+      responses:
+        '204':
+          description: A closed inline operation request is accepted.
+  /things/lookup:
+    post:
+      operationId: lookupThing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ThingLookupRequest'
+      responses:
+        '200':
+          description: A referenced operation request may also reject unknown fields.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+components:
+  schemas:
+    ThingLookupRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string

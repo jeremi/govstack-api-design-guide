@@ -13,7 +13,7 @@ functions:
   - s03-asyncOperation
 rules:
   # 3.1 [M] — the spec MUST declare an AsyncAPI 3 version qualified by this
-  # ruleset. 0.1.0-draft qualifies 3.0.0 and 3.1.0; 2.x and earlier MUST NOT.
+  # ruleset. 0.2.0-draft qualifies 3.0.0 and 3.1.0; 2.x and earlier MUST NOT.
   # formats [aas2, aas3] so a 2.x document is still told to move to AsyncAPI 3.
   govstack-3.1:
     description: "AsyncAPI version must be a qualified AsyncAPI 3 version, 3.0.0 or 3.1.0 (guide 3.1, [M])."

@@ -41,8 +41,8 @@ info:
     name: CC-BY-4.0
     url: https://creativecommons.org/licenses/by/4.0/
   x-govstack-api-guide:
-    version: 0.1.0-draft
-    rulesetVersion: 0.1.0-draft
+    version: 0.2.0-draft
+    rulesetVersion: 0.2.0-draft
 servers:
   - url: https://api.example.gov/registry
     description: Production gateway for the Registry Building Block.

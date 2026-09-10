@@ -1,8 +1,7 @@
 import { isObject } from './lib/util.js';
+import { resourcePath, isPathParameter as isParam } from './lib/resourcePaths.js';
 
 const VERSION_SEG = /^v\d+$/;
-const isParam = (seg) => seg.startsWith('{') && seg.endsWith('}');
-const split = (key) => key.split('/').filter((s) => s.length > 0);
 
 /**
  * pluralSegment — STRICT-ONLY heuristic: every non-version, non-parameter
@@ -43,7 +42,7 @@ export default function pluralSegment(targetVal, options, context) {
 
   for (const key of Object.keys(targetVal)) {
     if (typeof key !== 'string' || !key.startsWith('/')) continue;
-    const segs = split(key);
+    const { segments: segs } = resourcePath(key);
     for (const seg of segs) {
       if (isParam(seg) || VERSION_SEG.test(seg)) continue;
       const lower = seg.toLowerCase();

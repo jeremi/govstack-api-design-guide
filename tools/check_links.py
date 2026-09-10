@@ -9,7 +9,7 @@ content) and enforces the book's internal-consistency contract:
   1. Every relative markdown link resolves to a file that exists.
   2. Every link fragment `#x` matches an explicit anchor id in the target file.
   3. Every explicit `<a href="#x" id="x"></a>` anchor has href == id, id equal to
-     the slug of its heading, and no duplicate id within a page.
+     its preserved rule anchor or heading slug, and no duplicate id within a page.
   4. SUMMARY.md lists every page exactly once (README.md first) and nothing that
      is missing.
   5. No page is an orphan (unreachable from SUMMARY.md).
@@ -27,30 +27,13 @@ import re
 import sys
 from pathlib import Path
 
+from anchors import expected_anchor
+
 # Explicit anchor tag as emitted on heading lines.
 ANCHOR_RE = re.compile(r'<a href="#(?P<href>[^"]*)" id="(?P<id>[^"]*)"></a>')
 DESCRIPTION_RE = re.compile(r'^description:\s*".*"\s*$')
 
 SKIP_LINK_PREFIXES = ("http://", "https://", "mailto:")
-SLUG_KEEP = set("abcdefghijklmnopqrstuvwxyz0123456789-")
-
-def slugify(heading_text):
-    """GitHub-style slug shared with build_rules_index.py; the two MUST be identical.
-
-    Lowercase the text, keep ASCII letters, digits and existing hyphens, turn
-    spaces into hyphens, drop every other character. Consecutive hyphens are NOT
-    collapsed. The caller passes the heading text without its trailing `<a>` tag
-    and with the trailing space before that tag already stripped.
-    """
-    out = []
-    for ch in heading_text.lower():
-        if ch in SLUG_KEEP:
-            out.append(ch)
-        elif ch == " ":
-            out.append("-")
-        # every other character is dropped
-    return "".join(out)
-
 
 def iter_markdown_links(line):
     """Yield (target, column) for every `[text](target)` link on a line.
@@ -162,7 +145,7 @@ class Checker:
                 anchor_id = match.group("id")
                 pre = line[: match.start()]
                 heading_text = pre.lstrip("#").strip()
-                expected = slugify(heading_text)
+                expected = expected_anchor(heading_text)
                 if href != anchor_id:
                     self.fail(
                         path,
@@ -173,7 +156,7 @@ class Checker:
                     self.fail(
                         path,
                         lineno,
-                        f"anchor id '{anchor_id}' != slug '{expected}' of heading "
+                        f"anchor id '{anchor_id}' != expected anchor '{expected}' of heading "
                         f"{heading_text!r}",
                     )
                 if anchor_id in ids:

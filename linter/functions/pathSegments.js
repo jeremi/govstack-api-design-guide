@@ -1,10 +1,9 @@
 import { isObject } from './lib/util.js';
 import { matchesCasing } from './lib/casing.js';
 import { isStandardUnversionedPath } from './lib/standardEndpoints.js';
+import { resourcePath, isPathParameter as isParam } from './lib/resourcePaths.js';
 
 const VERSION_SEG = /^v\d+$/;
-const isParam = (seg) => seg.startsWith('{') && seg.endsWith('}');
-const split = (key) => key.split('/').filter((s) => s.length > 0);
 const MUTATING_METHODS = ['post', 'put', 'patch', 'delete'];
 
 /**
@@ -17,8 +16,8 @@ const MUTATING_METHODS = ['post', 'put', 'patch', 'delete'];
  * options:
  *   check {string} required, one of:
  *     "versionPrefix"        every path key starts with /v{N}/  (guide 5.1)
- *     "segmentCasing"        every non-version, non-param segment obeys `casing`
- *                            (default kebab)                     (guide 5.3)
+ *     "segmentCasing"        resource segments obey `casing` (default kebab);
+ *                            colon methods use camelCase          (guide 5.3)
  *     "maxDepthAfterVersion" at most `max` NON-PARAM levels follow the version
  *                            prefix; `{param}` segments do NOT count as levels
  *                            (default max 2)                     (guide 5.4)
@@ -47,7 +46,7 @@ export default function pathSegments(targetVal, options, context) {
 
   for (const key of Object.keys(targetVal)) {
     if (typeof key !== 'string' || !key.startsWith('/')) continue;
-    const segs = split(key);
+    const { segments: segs, customMethod } = resourcePath(key);
     const here = [...base, key];
 
     // Guide 5.10 fixes the location and spelling of a closed set of endpoints
@@ -63,6 +62,9 @@ export default function pathSegments(targetVal, options, context) {
       }
     } else if (check === 'segmentCasing') {
       const casing = typeof opts.casing === 'string' ? opts.casing : 'kebab';
+      if (customMethod !== undefined && !matchesCasing(customMethod, 'camel')) {
+        results.push({ message: `path "${key}" custom method "${customMethod}" must be camel case`, path: here });
+      }
       for (const seg of segs) {
         if (VERSION_SEG.test(seg) || isParam(seg)) continue;
         if (!matchesCasing(seg, casing)) {
@@ -85,7 +87,8 @@ export default function pathSegments(targetVal, options, context) {
       const max = Number.isInteger(opts.max) ? opts.max : 2;
       const afterVersion = VERSION_SEG.test(segs[0]) ? segs.slice(1) : segs;
       // "Levels of nesting" counts resource/action segments only: a `{param}`
-      // path parameter is NOT a level. Guide 5.8/15.5/16.11 mandate paths like
+      // path parameter is NOT a level. A colon custom method adds no level.
+      // Guide 5.8/15.5/16.11 support paths like
       // /v1/operations/{operationId}/cancel and
       // /v1/subscriptions/{subscriptionId}/rotate-secret — three raw segments,
       // but only two non-param levels — so params must not count toward depth.

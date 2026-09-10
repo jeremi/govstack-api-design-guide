@@ -18,21 +18,16 @@ operations:
 components:
   messages:
     RecordCreated:
-      contentType: application/cloudevents+json
+      # Inline async errors still have to reuse the shared error schema.
+      contentType: application/json
       payload:
         type: object
-        required: [specversion, id, source, type, data]
+        required: [code, traceId]
         properties:
-          specversion:
-            const: '1.0'
-          id:
+          code:
             type: string
-          source:
+          traceId:
             type: string
-          type:
-            type: string
-          data:
-            type: object
       examples:
         - name: sample
-          payload: {}
+          payload: {code: REJECTED, traceId: trace-1}

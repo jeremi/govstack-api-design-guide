@@ -11,6 +11,9 @@ import schemaDescriptions from '../functions/schemaDescriptions.js';
 import responseHeaderRequired from '../functions/responseHeaderRequired.js';
 import operationResponses from '../functions/operationResponses.js';
 import pathSegments from '../functions/pathSegments.js';
+import pluralSegment from '../functions/s05-pluralNoun.js';
+import actionVerbSegment from '../functions/s05-actionVerbs.js';
+import bulkMutationSelection from '../functions/s06-bulkMutationSelection.js';
 import envelopeShape from '../functions/envelopeShape.js';
 import securityCoverage from '../functions/securityCoverage.js';
 import schemaFieldFormat from '../functions/schemaFieldFormat.js';
@@ -38,6 +41,9 @@ const ALL = {
   responseHeaderRequired,
   operationResponses,
   pathSegments,
+  pluralSegment,
+  actionVerbSegment,
+  bulkMutationSelection,
   envelopeShape,
   securityCoverage,
   schemaFieldFormat,
@@ -504,4 +510,77 @@ test('s17-cloudEventsPayload: scopes non-CloudEvents and requires a local vendor
     count(cloudEventsPayload(remoteEnvelope, { requireSharedReference: true }, { path: [] })),
     1,
   );
+});
+
+
+test('custom methods: resource casing, method casing and depth are independent', () => {
+  const valid = {
+    '/v1/households:lookup': {},
+    '/v1/birth-registrations:search': {},
+    '/v1/households/{recordId}:rotateSecret': {},
+    '/v1/households/{recordId}/memberships/{membershipId}:endMembership': {},
+  };
+  assert.equal(count(pathSegments(valid, { check: 'segmentCasing' })), 0);
+  assert.equal(count(pathSegments(valid, { check: 'maxDepthAfterVersion', max: 2 })), 0);
+  assert.equal(count(pluralSegment(valid, {})), 0);
+  assert.equal(count(actionVerbSegment(valid, {})), 0);
+  for (const route of [
+    '/v1/birthRegistrations:search',
+    '/v1/households/{recordId}:rotate-secret',
+    '/v1/households:Search',
+    '/v1/households:search:again',
+    '/v1/households:search/results',
+    '/v1/households:',
+    '/v1/:search',
+    '/v1/households/{record:Id}',
+  ]) {
+    assert.ok(count(pathSegments({ [route]: {} }, { check: 'segmentCasing' })) > 0, route);
+  }
+  assert.equal(count(pluralSegment({ '/v1/household:search': {} }, {})), 1);
+  assert.equal(count(pathSegments({
+    '/v1/households/{id}/memberships/{memberId}/events:search': {},
+  }, { check: 'maxDepthAfterVersion', max: 2 })), 1);
+});
+
+test('custom methods: standard CRUD stays discouraged and action sub-resources remain valid', () => {
+  assert.equal(count(actionVerbSegment({
+    '/v1/households:lookup': {},
+    '/v1/households:search': {},
+    '/v1/households/search': {},
+    '/v1/events/{eventId}/cancel': {},
+    '/v1/events/{eventId}:cancel': {},
+  }, {})), 0);
+  const bad = actionVerbSegment({
+    '/v1/households:create': {},
+    '/v1/households/{recordId}:delete': {},
+    '/v1/households:createHousehold': {},
+    '/v1/households/new': {},
+  }, {});
+  assert.equal(count(bad), 4);
+});
+
+test('custom methods: collection targets do not imply bulk mutation or paged results', () => {
+  assert.equal(count(bulkMutationSelection({ patch: {} }, {}, { path: ['paths', '/v1/households'] })), 1);
+  assert.equal(count(bulkMutationSelection({ patch: {} }, {}, { path: ['paths', '/v1/households:refresh'] })), 0);
+  const operation = (schema) => ({ responses: { 200: { content: { 'application/json': { schema } } } } });
+  const ctx = (pathKey, method = 'get') => ({ path: ['paths', pathKey, method] });
+  const record = operation({ type: 'object', properties: { recordId: { type: 'string' } } });
+  for (const mode of ['pageParam', 'cursorParams', 'cursorEnvelope', 'pageSizeBounds', 'offsetEnvelope']) {
+    assert.equal(count(collectionPagination(record, { mode }, ctx('/v1/households:lookup'))), 0);
+  }
+  const records = operation({ type: 'array', items: { type: 'object' } });
+  assert.equal(count(collectionPagination(records, { mode: 'pageParam' }, ctx('/v1/households/{id}:members'))), 1);
+  assert.ok(count(collectionPagination(record, { mode: 'cursorEnvelope' }, ctx('/v1/households:search', 'post'))) > 0);
+});
+
+test('custom GET pagination follows recursive allOf declarations without looping', () => {
+  const schema = { allOf: [{ properties: { items: { type: 'array' } } }] };
+  schema.allOf.push(schema);
+  const items = schema.allOf[0].properties.items;
+  items.allOf = [items];
+  const operation = { responses: { 200: { content: { 'application/json': { schema } } } } };
+  const context = { path: ['paths', '/v1/households:members', 'get'] };
+  assert.equal(count(collectionPagination(operation, { mode: 'pageParam' }, context)), 1);
+  items.allOf.push({ maxItems: 0 });
+  assert.equal(count(collectionPagination(operation, { mode: 'pageParam' }, context)), 0);
 });

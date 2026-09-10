@@ -3,6 +3,8 @@
 * [GovStack Cross-BB API Design Guide](README.md)
 * [How to use this guide](how-to-use-this-guide.md)
 * [Rules at a glance](all-rules.md)
+* [Rules by API kind](rules-by-kind.md)
+* [Draft changes](draft-changes.md)
 * [1. Introduction](1-introduction.md)
 
 ## Part A. API artifacts

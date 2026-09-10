@@ -5,15 +5,14 @@ const CE_ENVELOPE_REQUIRED = ['specversion', 'id', 'source', 'type'];
 /**
  * s17-cloudEventsPayload — §17.6 structured CloudEvents JSON payloads.
  *
- * Given: a single AsyncAPI 3.0 message object (`$.components.messages[*]`).
+ * Given: a single AsyncAPI 3 message object (`$.components.messages[*]`).
  *
  * For domain-event messages, asserts contentType is
  * `application/cloudevents+json` and the payload declares the structured
- * CloudEvents shape: `specversion` (const "1.0"), `id`, `source`, and `type`.
- * Event `data` remains optional and locally specialised. One level of top-level
- * `allOf` is merged. A reference to the reviewed shared CloudEventEnvelope
- * contributes its known fields; base AsyncAPI validation separately proves
- * that the external reference resolves.
+ * CloudEvents shape: `specversion` (fixed "1.0"), `id`, `source`, and `type`.
+ * Event `data` remains optional and locally specialised. Nested `allOf`
+ * declarations are merged after Spectral resolves references; base AsyncAPI
+ * validation separately proves that external references resolve.
  *
  * Messages that do not declare the CloudEvents media type, reference a
  * CloudEvents envelope, or expose CloudEvents fields are OUT of scope. This is
@@ -21,8 +20,9 @@ const CE_ENVELOPE_REQUIRED = ['specversion', 'id', 'source', 'type'];
  * messages, and a linter cannot infer that they are domain events.
  *
  * Options:
- *   requireSharedReference {boolean} when true, only check that the message
- *     payload references the vendored CloudEventEnvelope or GovStackAsyncError.
+ *   requireSharedReference {boolean} when true, check shared async-error reuse
+ *     in a bare payload or CloudEvent data and require any explicit common
+ *     envelope reference to be vendored. Local event envelopes are permitted.
  *     The corresponding rule runs with `resolved: false` so the authored
  *     external reference remains visible.
  * @param {unknown} targetVal - a message object.
@@ -36,20 +36,24 @@ export default function s17CloudEventsPayload(targetVal, options, context) {
   if (!isObject(payload)) return; // no inline payload schema to inspect
   const base = context && Array.isArray(context.path) ? context.path : [];
   if (isObject(options) && options.requireSharedReference === true) {
-    if (
-      referencesVendoredSchema(payload, 'CloudEventEnvelope') ||
-      referencesVendoredSchema(payload, 'GovStackAsyncError')
-    ) {
-      return;
-    }
-    if (!isCloudEventMessage(targetVal, payload) && !isAsyncErrorSchema(payload)) return;
-    return [
-      {
-        message:
-          'message payload must reference the schema from the vendored common/govstack-asyncapi-common.yaml file',
+    const results = [];
+    const { properties } = effective(payload);
+    const cloudEvent = isCloudEventMessage(targetVal, payload);
+    const errorPayload = cloudEvent ? properties.data : payload;
+    if (isObject(errorPayload) && isAsyncErrorSchema(errorPayload) &&
+        !referencesVendoredSchema(errorPayload, 'GovStackAsyncError')) {
+      results.push({
+        message: 'async-error payload must reference GovStackAsyncError from the vendored common/govstack-asyncapi-common.yaml file',
         path: [...base, 'payload'],
-      },
-    ];
+      });
+    }
+    if (referencesCommonEnvelope(payload) && !referencesVendoredSchema(payload, 'CloudEventEnvelope')) {
+      results.push({
+        message: 'shared CloudEventEnvelope must reference the vendored common/govstack-asyncapi-common.yaml file; a local CloudEvents-conforming envelope is also permitted',
+        path: [...base, 'payload'],
+      });
+    }
+    return results.length ? results : undefined;
   }
   if (!isCloudEventMessage(targetVal, payload)) return;
   const { required, properties } = effective(payload);
@@ -66,12 +70,14 @@ export default function s17CloudEventsPayload(targetVal, options, context) {
     if (!required.has(name)) {
       results.push({ message: `CloudEvents payload must list "${name}" in required`, path: [...at, 'required'] });
     }
+    if (!isObject(properties[name])) {
+      results.push({ message: `CloudEvents payload must declare a schema for "${name}"`, path: at });
+    }
   }
-  const sv = properties.specversion;
-  if (isObject(sv) && 'const' in sv && sv.const !== '1.0') {
+  if (!fixesSpecversion(properties.specversion)) {
     results.push({
-      message: 'CloudEvents payload "specversion" must be declared with const "1.0"',
-      path: [...at, 'properties', 'specversion', 'const'],
+      message: 'CloudEvents payload "specversion" must be restricted to "1.0" using const or enum',
+      path: at,
     });
   }
   return results.length ? results : undefined;
@@ -91,31 +97,60 @@ function isAsyncErrorSchema(payload) {
   return !declared('status') && declared('code') && (declared('traceId') || declared('traceid'));
 }
 
-/** Merge a schema's own required/properties with one level of allOf branches. */
-function effective(schema) {
+/** Merge conjunctive declarations without trusting a schema's name as its shape. */
+function effective(schema, seen = new Set()) {
+  if (!isObject(schema) || seen.has(schema)) return { required: new Set(), properties: {} };
+  seen.add(schema);
   const required = new Set(asArray(schema.required).filter((s) => typeof s === 'string'));
   const properties = isObject(schema.properties) ? { ...schema.properties } : {};
   for (const branch of asArray(schema.allOf)) {
-    if (!isObject(branch)) continue;
-    if (referencesSchema(branch, 'CloudEventEnvelope')) {
-      for (const name of CE_ENVELOPE_REQUIRED) required.add(name);
-      properties.specversion ??= { const: '1.0' };
-    }
-    for (const r of asArray(branch.required)) if (typeof r === 'string') required.add(r);
-    if (isObject(branch.properties)) {
-      for (const [k, v] of Object.entries(branch.properties)) if (!(k in properties)) properties[k] = v;
+    const inherited = effective(branch, seen);
+    for (const name of inherited.required) required.add(name);
+    for (const [key, value] of Object.entries(inherited.properties)) {
+      properties[key] = key in properties ? { allOf: [properties[key], value] } : value;
     }
   }
   return { required, properties };
 }
 
+/** Inspect only const/enum constraints across conjunctions, not arbitrary JSON Schema. */
+function fixesSpecversion(schema) {
+  let allowed;
+  const seen = new Set();
+  const visit = (part) => {
+    if (part === false) allowed = new Set();
+    if (!isObject(part) || seen.has(part)) return;
+    seen.add(part);
+    const restrict = (values) => {
+      allowed = allowed === undefined ? new Set(values) : new Set(values.filter((value) => allowed.has(value)));
+    };
+    if ('const' in part) restrict([part.const]);
+    if (Array.isArray(part.enum)) restrict(part.enum);
+    if ('type' in part && part.type !== 'string' && !asArray(part.type).includes('string')) restrict([]);
+    for (const branch of asArray(part.allOf)) visit(branch);
+  };
+  visit(schema);
+  return allowed?.size === 1 && allowed.has('1.0');
+}
+
+function referencesCommonEnvelope(schema) {
+  return schemaReferences(schema).some((ref) =>
+    /(?:^|\/)govstack-asyncapi-common\.yaml#\/components\/schemas\/CloudEventEnvelope$/.test(ref));
+}
+
+function schemaReferences(schema, seen = new Set()) {
+  if (!isObject(schema) || seen.has(schema)) return [];
+  seen.add(schema);
+  return [
+    ...(typeof schema.$ref === 'string' ? [schema.$ref] : []),
+    ...asArray(schema.allOf).flatMap((branch) => schemaReferences(branch, seen)),
+  ];
+}
+
 function referencesSchema(schema, name) {
   if (!isObject(schema)) return false;
   const suffix = `#/components/schemas/${name}`;
-  if (typeof schema.$ref === 'string' && schema.$ref.endsWith(suffix)) return true;
-  return asArray(schema.allOf).some(
-    (branch) => isObject(branch) && typeof branch.$ref === 'string' && branch.$ref.endsWith(suffix),
-  );
+  return schemaReferences(schema).some((ref) => ref.endsWith(suffix));
 }
 
 function referencesVendoredSchema(schema, name) {
@@ -129,8 +164,5 @@ function referencesVendoredSchema(schema, name) {
     !ref.startsWith('//') &&
     !/^[a-z][a-z+.-]*:/i.test(ref) &&
     pattern.test(ref);
-  if (matchesLocalRef(schema.$ref)) return true;
-  return asArray(schema.allOf).some(
-    (branch) => isObject(branch) && matchesLocalRef(branch.$ref),
-  );
+  return schemaReferences(schema).some(matchesLocalRef);
 }

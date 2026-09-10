@@ -1,6 +1,6 @@
 {
   "name": "govstack-api-lint",
-  "version": "0.1.0-draft",
+  "version": "0.2.0-draft",
   "private": true,
   "description": "GovStack Spectral ruleset and lint driver for the Cross-BB API Design Guide",
   "type": "module",

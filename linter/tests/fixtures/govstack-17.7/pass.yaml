@@ -43,3 +43,17 @@ components:
         - name: sample
           payload:
             command: refresh
+    LocalEnvelope:
+      contentType: application/cloudevents+json
+      payload:
+        type: object
+        required: [specversion, id, source, type]
+        properties:
+          specversion:
+            const: '1.0'
+          id:
+            type: string
+          source:
+            type: string
+          type:
+            const: org.example.registry.record.created

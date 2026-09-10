@@ -3,7 +3,7 @@
 The GovStack Spectral ruleset and lint tooling for the
 [Cross-BB API Design Guide](../README.md). This is the mechanical enforcement
 behind draft rule [20.2](../part-e/20-conformance-and-validation.md). It implements guide
-version **0.1.0-draft** (`guide_version` in [coverage.yaml](coverage.yaml)).
+version **0.2.0-draft** (`guide_version` in [coverage.yaml](coverage.yaml)).
 
 ## Quick start
 
@@ -46,16 +46,23 @@ The driver runs everything rule 20 asks for:
 
 1. **File-tree checks** — `api/index.yaml` or canonical entrypoints,
    declaration/type consistency, legacy `swagger.*` names, and undeclared or
-   divergent spec copies (guide 2.2/2.3/3.2/3.3).
+   divergent spec copies (guide 2.2/2.3/3.2/3.3). Clearly documented historical
+   contracts under `api/legacy/` are excluded from current-surface discovery;
+   explicit declarations and canonical references still undergo validation.
 2. **Requirement coverage** — every active CFR-formatted REQUIRED or
    RECOMMENDED requirement under `spec/**/*.md` must have one disposition in
    `api/coverage.yaml`. DRAFT, DEPRECATED, and INAPPLICABLE requirements are
-   not active coverage obligations. Mapped operation/message identifiers must
-   exist and be unambiguous.
+   not active coverage obligations. `requirements: []` is valid when there are
+   no active requirements. An optional `draftRequirements` array maps only
+   applicable DRAFT requirements using the same disposition shapes; it does
+   not replace active coverage. Mapped operation/message identifiers must
+   exist and be unambiguous in either list. Draft-only runs and draft mappings
+   carry explicit notices: passing checks validates API artifacts, not
+   requirement maturity, deployed implementation conformance, or certification.
 3. **Base validators** (20.1) — `openapi-spec-validator` and
    `@asyncapi/cli validate` are mandatory in conformance mode.
 4. **The Spectral ruleset** — rules across both surfaces (OpenAPI 3.1,
-   AsyncAPI 3.0). Spectral auto-detects the document type.
+   AsyncAPI 3). Spectral auto-detects the document type.
 5. **Declared exceptions** (20.3) — approved, unexpired exceptions suppress a
    matching rule only at or below their RFC 6901 JSON Pointer scope. Driver
    findings cannot be suppressed.
@@ -74,8 +81,8 @@ the following shape. `record` must be HTTPS, dates use `YYYY-MM-DD`, and
 ```yaml
 info:
   x-govstack-api-guide:
-    version: 0.1.0-draft
-    rulesetVersion: 0.1.0-draft
+    version: 0.2.0-draft
+    rulesetVersion: 0.2.0-draft
     exceptions:
       - rule: "9.5"
         scope: /components/schemas/LegacyRecord

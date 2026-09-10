@@ -7,8 +7,8 @@ info:
     name: Sample BB Team
     url: https://example.org/contact
   x-govstack-api-guide:
-    version: 0.1.0-draft
-    rulesetVersion: 0.1.0-draft
+    version: 0.2.0-draft
+    rulesetVersion: 0.2.0-draft
     exceptions:
       - rule: "9.3"
         scope: /components/schemas/Legacy/properties/enabled

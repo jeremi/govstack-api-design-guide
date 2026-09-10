@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.join(HERE, '..', 'cli.mjs');
 const MINI_RULESET = path.join(HERE, 'driver-fixtures', 'mini-ruleset.yaml');
-const GUIDE_VERSION = '0.1.0-draft';
+const GUIDE_VERSION = '0.2.0-draft';
 const ADVISORY = ['--mode', 'advisory', '--skip-validators'];
 
 function makeRepo(files) {
@@ -82,6 +82,21 @@ requirements:
   - id: "govstack-bb-test-fr#req-1"
     disposition: external
     reference: https://example.org/requirements/test
+`;
+
+const DRAFT_REQUIREMENTS = `# Requirements
+
+### #1 Proposed retrieval (DRAFT EXTENSIBLE OBSERVABLE)
+
+\`govstack-bb-test-fr#req-1\`
+
+The proposed API retrieves a resource.
+
+### #2 Proposed matching (DRAFT EXTENSIBLE OBSERVABLE)
+
+\`govstack-bb-test-fr#req-2\`
+
+The proposed API matches resources.
 `;
 
 const NO_API_INDEX = `version: 1
@@ -373,6 +388,43 @@ components:
   }
 });
 
+test('api/legacy preserves historical contracts without hiding other undeclared specs', () => {
+  const dir = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'api/coverage.yaml': VALID_COVERAGE,
+    'api/legacy/README.md': 'Historical contracts only; these are not current API surfaces.',
+    'api/legacy/v1/openapi.yaml': cleanOpenapi(),
+    'api/legacy/v1/events.json': '{"asyncapi":"3.0.0","info":{"title":"Historical events"}}',
+    'api/legacy-current/openapi.yaml': cleanOpenapi(),
+    'legacy/openapi.yaml': cleanOpenapi(),
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 1);
+    const paths = r.json.files
+      .filter((file) => file.findings.some((finding) => finding.code === 'file-undeclared-spec'))
+      .map((file) => file.path)
+      .sort();
+    assert.deepEqual(paths, ['api/legacy-current/openapi.yaml', 'legacy/openapi.yaml']);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('a contract explicitly declared under api/legacy still undergoes validation', () => {
+  const dir = makeRepo({
+    'api/index.yaml': 'version: 1\napis:\n  - type: openapi\n    path: api/legacy/openapi.yaml\n',
+    'api/legacy/openapi.yaml': '',
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 1);
+    assert.ok(codes(r.json).includes('declared-spec-empty'));
+  } finally {
+    cleanup(dir);
+  }
+});
+
 test('coverage requires stable unique IDs and valid dispositions', () => {
   const dir = makeRepo({
     'api/openapi.yaml': cleanOpenapi(),
@@ -517,6 +569,96 @@ requirements:
       .flatMap((file) => file.findings)
       .find((finding) => finding.code === 'coverage-planned');
     assert.equal(advisoryFinding.severity, 'warn');
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('draft-only contracts validate with empty active coverage and optional draft mappings', () => {
+  for (const draftMapping of ['', `draftRequirements:
+  - { id: "govstack-bb-test-fr#req-1", disposition: operation, operations: [listThings] }
+`]) {
+    const dir = makeRepo({
+      'api/openapi.yaml': cleanOpenapi(),
+      'api/coverage.yaml': `version: 1\nrequirements: []\n${draftMapping}`,
+      'spec/requirements.md': DRAFT_REQUIREMENTS,
+    });
+    try {
+      const bin = fakeOpenapiValidator(dir);
+      const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET], {
+        env: { ...process.env, PATH: bin },
+      });
+      assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
+      assert.ok(r.json.notices.some((notice) => notice.includes('No active REQUIRED or RECOMMENDED')));
+      assert.ok(r.json.notices.some((notice) => notice.includes('does not establish requirement maturity')));
+      if (draftMapping) assert.ok(r.json.notices.some((notice) => notice.includes('optional design traceability')));
+    } finally {
+      cleanup(dir);
+    }
+  }
+});
+
+test('draft coverage validates marker maturity, references, and array shape', () => {
+  for (const [coverage, expectedCode] of [
+    [`requirements: []\ndraftRequirements:\n  - { id: "govstack-bb-test-fr#req-1", disposition: operation, operations: [missingOperation] }\n`, 'coverage-missing-reference'],
+    [`requirements: []\ndraftRequirements:\n  - { id: "govstack-bb-test-fr#req-3", disposition: operation, operations: [listThings] }\n`, 'coverage-unknown-requirement'],
+    [`requirements:\n  - { id: "govstack-bb-test-fr#req-1", disposition: operation, operations: [listThings] }\n`, 'coverage-unknown-requirement'],
+    ['requirements: []\ndraftRequirements: null\n', 'coverage-invalid'],
+  ]) {
+    const dir = makeRepo({
+      'api/openapi.yaml': cleanOpenapi(),
+      'api/coverage.yaml': `version: 1\n${coverage}`,
+      'spec/requirements.md': DRAFT_REQUIREMENTS,
+    });
+    try {
+      const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+      assert.equal(r.status, 1);
+      assert.ok(codes(r.json).includes(expectedCode), r.stdout);
+    } finally {
+      cleanup(dir);
+    }
+  }
+});
+
+test('draft mappings cannot conceal missing active coverage', () => {
+  const dir = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'api/coverage.yaml': `version: 1
+requirements: []
+draftRequirements:
+  - { id: "govstack-bb-test-fr#req-1", disposition: operation, operations: [listThings] }
+  - { id: "govstack-bb-test-fr#req-2", disposition: operation, operations: [listThings] }
+`,
+    'spec/requirements.md': DRAFT_REQUIREMENTS.replace('Proposed retrieval (DRAFT', 'Proposed retrieval (REQUIRED'),
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 1);
+    assert.ok(codes(r.json).includes('coverage-unknown-requirement'));
+    assert.ok(codes(r.json).includes('coverage-missing-requirement'));
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('planned draft work remains explicit without blocking active artifact validation', () => {
+  const dir = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'api/coverage.yaml': `version: 1
+requirements: []
+draftRequirements:
+  - { id: "govstack-bb-test-fr#req-1", disposition: planned, issue: https://example.org/issues/123 }
+`,
+    'spec/requirements.md': DRAFT_REQUIREMENTS,
+  });
+  try {
+    const bin = fakeOpenapiValidator(dir);
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, '--fail-on', 'warn'], {
+      env: { ...process.env, PATH: bin },
+    });
+    assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
+    assert.ok(r.json.notices.some((notice) => notice.includes('remains planned draft work and is not implemented')));
+    assert.ok(!codes(r.json).includes('coverage-planned'));
   } finally {
     cleanup(dir);
   }

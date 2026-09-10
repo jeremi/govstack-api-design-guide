@@ -4,7 +4,7 @@ const MUTATING_METHODS = ['put', 'patch', 'delete'];
 
 /**
  * bulkMutationSelection — guide 6.7 (proxy): a collection-targeted PUT,
- * PATCH, or DELETE (a path with no `{param}` segment) MUST require at least
+ * PATCH, or DELETE (a path with no parameter or colon custom method) MUST require at least
  * one explicit selection parameter. PROXY: only checks that >=1 `query`
  * parameter is declared (path-item-level or operation-level); it cannot
  * verify the parameter actually scopes/limits which records are mutated, nor
@@ -12,7 +12,7 @@ const MUTATING_METHODS = ['put', 'patch', 'delete'];
  * knowledge of which resources are designated append-only).
  *
  * `given` should select path-item objects already filtered to collection-only
- * keys, e.g. `$.paths[?(!@property.includes('{'))]`.
+ * keys, e.g. `$.paths[?(!@property.includes('{') && !@property.includes(':'))]`.
  *
  * @param {unknown} targetVal - a path-item object.
  * @param {object} options - unused.
@@ -22,6 +22,10 @@ const MUTATING_METHODS = ['put', 'patch', 'delete'];
 export default function bulkMutationSelection(targetVal, options, context) {
   if (!isObject(targetVal)) return;
   const base = context && Array.isArray(context.path) ? context.path : [];
+  // A custom method may target a collection without being a bulk CRUD
+  // mutation. Its request semantics are a separate review decision.
+  const pathKey = base.at(-1);
+  if (typeof pathKey === 'string' && pathKey.includes(':')) return;
   const pathItemParams = asArray(targetVal.parameters);
   const results = [];
 

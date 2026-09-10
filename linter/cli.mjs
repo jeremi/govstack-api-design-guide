@@ -28,7 +28,7 @@ const { Spectral, Document } = spectralCore;
 const { bundleAndLoadRuleset } = bundler;
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const SUPPORTED_GUIDE_VERSION = '0.1.0-draft';
+const SUPPORTED_GUIDE_VERSION = '0.2.0-draft';
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
 
 // Spectral severity numbers -> our names. 0=error 1=warn 2=info 3=hint.
@@ -497,6 +497,7 @@ async function sniffSpec(absPath) {
 // Parsed documents are deterministic errors; only oversized sniff-only hits stay advisory.
 async function scanDivergentCopies(repoRoot, skipAbs, rel, findings) {
   const commonRoot = path.resolve(repoRoot, 'api', 'common');
+  const legacyRoot = path.resolve(repoRoot, 'api', 'legacy');
 
   async function walk(dir) {
     let entries;
@@ -510,6 +511,9 @@ async function scanDivergentCopies(repoRoot, skipAbs, rel, findings) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         if (DIVERGENT_EXCLUDE_DIRS.has(entry.name)) continue;
+        // Archived contracts are historical material, not undeclared current
+        // surfaces. Explicit declarations are loaded and validated separately.
+        if (path.resolve(full) === legacyRoot) continue;
         await walk(full);
       } else if (entry.isFile()) {
         if (!/\.(ya?ml|json)$/i.test(entry.name)) continue;
@@ -576,6 +580,7 @@ function isHttpsUrl(value) {
 async function scanRequirementMarkers(repoRoot, rel, findings) {
   const specDir = path.join(repoRoot, 'spec');
   const markers = new Map();
+  const draftMarkers = new Map();
   const seenIds = new Map();
 
   async function walk(dir) {
@@ -670,8 +675,8 @@ async function scanRequirementMarkers(repoRoot, rel, findings) {
           } else {
             seenIds.set(id, referenceLocation);
             const active = (level === 'REQUIRED' || level === 'RECOMMENDED') && mutability !== 'INAPPLICABLE';
-            if (active) {
-              markers.set(id, {
+            if (active || (level === 'DRAFT' && mutability !== 'INAPPLICABLE')) {
+              (active ? markers : draftMarkers).set(id, {
                 id,
                 title: title.trim(),
                 level,
@@ -708,7 +713,7 @@ async function scanRequirementMarkers(repoRoot, rel, findings) {
   }
 
   await walk(specDir);
-  return markers;
+  return { markers, draftMarkers };
 }
 
 function collectReferenceInventory(specs, rel, findings, coverageRel) {
@@ -775,7 +780,7 @@ function collectReferenceInventory(specs, rel, findings, coverageRel) {
   return { operationOwners, messageOwners };
 }
 
-async function validateRequirementCoverage(cfg, specs, hasDeclaredSurface, noApi, rel, findings) {
+async function validateRequirementCoverage(cfg, specs, hasDeclaredSurface, noApi, rel, findings, notices) {
   const coverageAbs = path.join(cfg.repoRoot, 'api', 'coverage.yaml');
   const coverageRel = rel(coverageAbs);
   const file = await readOptionalText(coverageAbs);
@@ -793,14 +798,11 @@ async function validateRequirementCoverage(cfg, specs, hasDeclaredSurface, noApi
     return;
   }
   if (!hasDeclaredSurface) return;
-  const markers = await scanRequirementMarkers(cfg.repoRoot, rel, findings);
+  const { markers, draftMarkers } = await scanRequirementMarkers(cfg.repoRoot, rel, findings);
   if (markers.size === 0) {
-    findings.push(
-      driverFinding(
-        'spec/',
-        'requirements-missing',
-        'Declared API surfaces require at least one active CFR-formatted requirement under spec/**/*.md.',
-      ),
+    notices.push(
+      'No active REQUIRED or RECOMMENDED requirements are declared. This run validates API artifacts; ' +
+        'it does not establish requirement maturity or Building Block certification.',
     );
   }
   if (!file.exists || !file.content.trim()) {
@@ -808,7 +810,7 @@ async function validateRequirementCoverage(cfg, specs, hasDeclaredSurface, noApi
       driverFinding(
         coverageRel,
         file.exists ? 'coverage-empty' : 'coverage-missing',
-        'Declared API surfaces require a non-empty api/coverage.yaml requirement mapping.',
+        'Declared API surfaces require api/coverage.yaml with version: 1 and a requirements array.',
       ),
     );
     return;
@@ -819,16 +821,29 @@ async function validateRequirementCoverage(cfg, specs, hasDeclaredSurface, noApi
   if (doc.version !== 1) {
     findings.push(driverFinding(coverageRel, 'coverage-invalid', 'api/coverage.yaml must declare version: 1.'));
   }
-  if (!Array.isArray(doc.requirements) || doc.requirements.length === 0) {
-    findings.push(
-      driverFinding(coverageRel, 'coverage-invalid', 'requirements must be a non-empty array.'),
+  const groups = [
+    { name: 'requirements', expectedMarkers: markers, entries: doc.requirements, draft: false },
+    { name: 'draftRequirements', expectedMarkers: draftMarkers, entries: doc.draftRequirements === undefined ? [] : doc.draftRequirements, draft: true },
+  ];
+  for (const group of groups) {
+    if (!Array.isArray(group.entries)) {
+      findings.push(driverFinding(coverageRel, 'coverage-invalid', `${group.name} must be an array.`));
+    }
+  }
+  const entries = groups.flatMap((group) =>
+    Array.isArray(group.entries) ? group.entries.map((entry, i) => ({ ...group, entry, i })) : [],
+  );
+  if (doc.draftRequirements !== undefined) {
+    notices.push(
+      'draftRequirements records optional design traceability for DRAFT requirements. ' +
+        'These mappings do not satisfy active coverage obligations or establish implementation certification.',
     );
-    return;
   }
 
   const seenIds = new Set();
-  for (const [i, entry] of doc.requirements.entries()) {
-    const label = `requirements[${i}]`;
+  const activeIds = new Set();
+  for (const { name, expectedMarkers, draft, entry, i } of entries) {
+    const label = `${name}[${i}]`;
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
       findings.push(driverFinding(coverageRel, 'coverage-invalid', `${label} must be an object.`));
       continue;
@@ -845,14 +860,16 @@ async function validateRequirementCoverage(cfg, specs, hasDeclaredSurface, noApi
       findings.push(driverFinding(coverageRel, 'coverage-invalid', `Requirement id "${entry.id}" is duplicated.`));
     } else {
       seenIds.add(entry.id);
-      if (!markers.has(entry.id)) {
+      if (!expectedMarkers.has(entry.id)) {
         findings.push(
           driverFinding(
             coverageRel,
             'coverage-unknown-requirement',
-            `Coverage id "${entry.id}" has no matching marker under spec/**/*.md.`,
+            `${label} id "${entry.id}" has no matching ${draft ? 'DRAFT' : 'active REQUIRED or RECOMMENDED'} marker under spec/**/*.md.`,
           ),
         );
+      } else if (!draft) {
+        activeIds.add(entry.id);
       }
     }
 
@@ -920,6 +937,8 @@ async function validateRequirementCoverage(cfg, specs, hasDeclaredSurface, noApi
     } else {
       if (!isHttpUrl(entry.issue)) {
         findings.push(driverFinding(coverageRel, 'coverage-invalid', `${label}.issue must be an http(s) URL.`));
+      } else if (draft) {
+        notices.push(`${label} remains planned draft work and is not implemented: ${entry.issue}.`);
       } else {
         findings.push(
           driverFinding(
@@ -934,7 +953,7 @@ async function validateRequirementCoverage(cfg, specs, hasDeclaredSurface, noApi
   }
 
   for (const [id, marker] of markers) {
-    if (!seenIds.has(id)) {
+    if (!activeIds.has(id)) {
       findings.push(
         driverFinding(
           coverageRel,
@@ -1384,7 +1403,7 @@ async function main(argv) {
   skipAbs.add(path.join(cfg.repoRoot, 'api', 'swagger.yaml'));
   skipAbs.add(path.join(cfg.repoRoot, 'api', 'swagger.json'));
   await scanDivergentCopies(cfg.repoRoot, skipAbs, rel, findings);
-  await validateRequirementCoverage(cfg, specs, hasDeclaredSurface, discovery.noApi, rel, findings);
+  await validateRequirementCoverage(cfg, specs, hasDeclaredSurface, discovery.noApi, rel, findings, notices);
   if (discovery.noApi) notices.push('api/index.yaml explicitly declares that this BB exposes no API surface.');
   for (const surface of discovery.standardSurfaces) {
     const message =

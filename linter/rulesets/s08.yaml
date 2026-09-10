@@ -91,29 +91,29 @@ rules:
     then:
       function: s08-noXHeaders
 
-  # 8.7 [M+R] — PROXY (bucket B), notched one step: MUST -> warn.
+  # 8.7 [M+R] — PROXY (bucket B), notched one step: SHOULD -> info.
   # Verifies: an operation declaring a 429 response (proxy for "rate-limited
   # by the BB itself") declares Retry-After on 429 and the structured
   # RateLimit header on its 2xx and 429 responses.
   # Does NOT verify: that rate limiting is actually implemented, the
   # delegated-to-gateway prose exception or the header's runtime value.
   govstack-8.7:
-    description: "rate-limited endpoints must declare structured RateLimit and 429 Retry-After (guide 8.7, [M+R], proxy)."
+    description: "rate-limited endpoints should declare structured RateLimit and 429 Retry-After (guide 8.7, [M+R], proxy)."
     message: "[8.7][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#87-rate-limit-headers-declared
-    severity: warn
+    severity: info
     formats: [oas3_1]
     given: "$.paths[*][get,put,post,delete,patch].responses"
     then:
       function: s08-rateLimitHeaders
 
-  # 8.7 [M+R] — deterministic MUST NOT: the legacy three-header variant is
+  # 8.7 [M+R] — deterministic SHOULD NOT: the legacy three-header variant is
   # not conformant to the pinned structured-field draft.
   govstack-8.7-no-legacy:
-    description: "legacy RateLimit-Limit/Remaining/Reset headers are forbidden (guide 8.7, [M+R])."
+    description: "legacy RateLimit-Limit/Remaining/Reset headers are not the pinned structured-field draft (guide 8.7, [M+R])."
     message: "[8.7][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#87-rate-limit-headers-declared
-    severity: error
+    severity: warn
     formats: [oas3_1]
     given: "$.paths[*][get,put,post,delete,patch].responses"
     then:

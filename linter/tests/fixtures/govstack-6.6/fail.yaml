@@ -12,7 +12,7 @@ servers:
       gatewayHost:
         default: gateway.example.org
 paths:
-  /v1/widgets/search:
+  /v1/widgets:search:
     post:
       operationId: searchWidgets
       summary: Search widgets
