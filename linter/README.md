@@ -67,6 +67,12 @@ The driver runs everything rule 20 asks for:
    matching rule only at or below their RFC 6901 JSON Pointer scope. Driver
    findings cannot be suppressed.
 
+Complete OpenAPI and AsyncAPI example contracts under `api/examples/` go
+through steps 3 to 5 and count toward `--fail-on` like canonical files. They
+are not API surfaces: they are excluded from divergent-copy discovery and do not
+satisfy requirement coverage. Operation-free component libraries there are
+skipped. With `--openapi` or `--asyncapi`, the driver lints only the named files.
+
 Flags: `--openapi <path>`, `--asyncapi <path>`, `--ruleset <file>`, `--strict`,
 `--mode conformance|advisory`, `--fail-on error|warn|info|never` (default
 `error`), `--format text|json`, and `--skip-validators`. Conformance mode is
@@ -115,7 +121,7 @@ Severity policy (mechanical, no judgment):
   rule) run one notch lower, so an imperfect heuristic never blocks at
   `error`. Each fragment comments on what its proxies do *not* verify.
 - Noisy heuristics (pluralization, verb detection, personal-data term scans,
-  copy-paste detection) ship only in `strict.yaml` (8 rules, opt-in, `warn`).
+  copy-paste detection) ship only in `strict.yaml` (7 rules, opt-in, `warn`).
 
 Two deliberate overlaps to be aware of: `govstack-8.3` and `govstack-14.1`
 both require an `Idempotency-Key` header on creating POSTs (each cites its own

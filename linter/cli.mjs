@@ -471,26 +471,66 @@ async function sniffSpec(absPath) {
   } catch {
     return null;
   }
-  if (data && typeof data === 'object' && !Array.isArray(data)) {
-    const hasEntries = (value) =>
-      value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length > 0;
-    const hasComponents = hasEntries(data.components);
-    if (typeof data.openapi === 'string') {
-      return {
-        kind: 'OpenAPI',
-        heuristic: false,
-        supportOnly: hasComponents && !hasEntries(data.paths) && !hasEntries(data.webhooks),
-      };
-    }
-    if (typeof data.asyncapi === 'string') {
-      return {
-        kind: 'AsyncAPI',
-        heuristic: false,
-        supportOnly: hasComponents && !hasEntries(data.channels) && !hasEntries(data.operations),
-      };
-    }
+  const shape = documentShape(data);
+  return shape ? { ...shape, heuristic: false } : null;
+}
+
+// Classifies parsed data as a top-level OpenAPI/AsyncAPI document. `supportOnly` marks an
+// operation-free component library.
+function documentShape(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+  const hasEntries = (value) =>
+    value && typeof value === 'object' && !Array.isArray(value) && Object.keys(value).length > 0;
+  const hasComponents = hasEntries(data.components);
+  if (typeof data.openapi === 'string') {
+    return {
+      kind: 'OpenAPI',
+      supportOnly: hasComponents && !hasEntries(data.paths) && !hasEntries(data.webhooks),
+    };
+  }
+  if (typeof data.asyncapi === 'string') {
+    return {
+      kind: 'AsyncAPI',
+      supportOnly: hasComponents && !hasEntries(data.channels) && !hasEntries(data.operations),
+    };
   }
   return null;
+}
+
+// Complete example contracts under api/examples/ are validated like canonical files
+// (guide §2.3/§3.3/§20) but are not API surfaces: they are excluded from divergent-copy
+// discovery and from requirement coverage. Operation-free component libraries are skipped.
+async function discoverExampleSpecs(repoRoot, skipAbs, rel) {
+  const specs = [];
+
+  async function walk(dir) {
+    let entries;
+    try {
+      entries = await fsp.readdir(dir, { withFileTypes: true });
+    } catch (err) {
+      if (err.code === 'ENOENT') return;
+      throw new OperationalError(`Cannot read ${rel(dir)}: ${err.message}`);
+    }
+    entries.sort((a, b) => a.name.localeCompare(b.name));
+    for (const entry of entries) {
+      if (entry.isSymbolicLink()) continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        await walk(full);
+      } else if (entry.isFile()) {
+        if (!/\.(ya?ml|json)$/i.test(entry.name)) continue;
+        if (skipAbs.has(path.resolve(full))) continue;
+        if (!SNIFF_RE.test(await readHead(full, SNIFF_BYTES))) continue;
+        const loaded = await loadSpec(full, rel(full));
+        const shape = loaded.present ? documentShape(loaded.data) : null;
+        if (!shape || shape.supportOnly) continue;
+        specs.push({ kind: shape.kind === 'OpenAPI' ? 'openapi' : 'asyncapi', abs: full, ...loaded });
+      }
+    }
+  }
+
+  await walk(path.join(repoRoot, 'api', 'examples'));
+  return specs;
 }
 
 // Walk the repo for undeclared top-level specs, including api/ and spec/ assets.
@@ -1403,6 +1443,8 @@ async function main(argv) {
   skipAbs.add(path.join(cfg.repoRoot, 'api', 'swagger.yaml'));
   skipAbs.add(path.join(cfg.repoRoot, 'api', 'swagger.json'));
   await scanDivergentCopies(cfg.repoRoot, skipAbs, rel, findings);
+  const explicitSpecs = Boolean(cfg.openapiPath || cfg.asyncapiPath);
+  const exampleSpecs = explicitSpecs ? [] : await discoverExampleSpecs(cfg.repoRoot, skipAbs, rel);
   await validateRequirementCoverage(cfg, specs, hasDeclaredSurface, discovery.noApi, rel, findings, notices);
   if (discovery.noApi) notices.push('api/index.yaml explicitly declares that this BB exposes no API surface.');
   for (const surface of discovery.standardSurfaces) {
@@ -1426,7 +1468,7 @@ async function main(argv) {
 
   // --- Spectral (§20.2) + base validators (§20.1) + guide declaration (§20.3) ----------
   let spectral;
-  for (const spec of specs) {
+  for (const spec of [...specs, ...exampleSpecs]) {
     const relSpec = rel(spec.abs);
 
     // §20.3: version comparison + exception set for this spec.
@@ -1474,7 +1516,7 @@ async function main(argv) {
     return e;
   };
   // Present specs appear first, in a deterministic order, even when clean.
-  for (const spec of specs) ensureFile(rel(spec.abs));
+  for (const spec of [...specs, ...exampleSpecs]) ensureFile(rel(spec.abs));
   for (const f of findings) ensureFile(f.file).findings.push(f);
   for (const s of suppressed) ensureFile(s.file).suppressed.push(s);
   const files = [...fileMap.values()];
@@ -1498,7 +1540,7 @@ async function main(argv) {
     notices,
     suppressed,
     summary: {
-      filesLinted: specs.length,
+      filesLinted: specs.length + exampleSpecs.length,
       errors,
       warnings,
       info,

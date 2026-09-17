@@ -26,6 +26,8 @@ The canonical entrypoint **MAY** `$ref`-compose other repository files provided 
 
 An operation-free shared component library under `api/common/` is referenced support material, not a canonical API surface or a divergent copy.
 
+An OpenAPI document under `api/examples/` that declares operations is an example contract: it illustrates how a deployment applies a canonical surface. It is not a canonical surface or a divergent copy and does not satisfy requirement coverage. Example contracts are validated under [§20](../part-e/20-conformance-and-validation.md); operation-free component libraries there are support material.
+
 A BB **MAY** retain historical contracts under `api/legacy/` when its documentation clearly identifies them as historical and separates them from the current API inventory. These archives are excluded from discovery of undeclared current surfaces; they do not describe the current contract. A file explicitly declared as a canonical surface or referenced by a canonical contract still participates in validation regardless of its directory.
 
 ## 2.4 Passes openapi-spec-validator <a href="#24-passes-openapi-spec-validator" id="24-passes-openapi-spec-validator"></a>

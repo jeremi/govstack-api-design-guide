@@ -14,6 +14,7 @@ functions:
   - s07-creationResponses
   - s07-baselineResponses
   - s07-successResponseSchema
+  - s07-etagValidator
 rules:
   # 7.2 [M] — every 201 response MUST include a Location header pointing at
   # the created resource. Presence-only: does not verify the header's value
@@ -125,28 +126,24 @@ rules:
       function: s07-baselineResponses
 
   # 7.16 [M+R] — PROXY (bucket B), notched one step: SHOULD -> info.
-  # Verifies: every GET operation's 200 response declares an ETag header AND
-  # the operation also declares a 304 response. Does NOT distinguish
-  # single-resource GETs from collection-listing GETs (applies to every GET
-  # operation's 200 response), does not verify the ETag is actually derived
-  # from resource state, and does not verify client If-None-Match support
-  # (client-side behaviour, invisible to a server spec).
+  # Verifies: a GET operation's 200 response declares an ETag header AND the
+  # operation also declares a 304 response. Skips GETs whose 200 body declares
+  # a root array or an `items` array, because collection responses and pages
+  # MAY omit ETag. Does not verify the ETag is actually derived from resource
+  # state, and does not verify client If-None-Match support (client-side
+  # behaviour, invisible to a server spec).
   # The given excludes the guide 5.9 operational endpoints /health and /ready:
   # 7.16 applies to "endpoints that return resources", and caching a liveness
   # probe is an anti-pattern (no ETag/304 to advertise).
   govstack-7.16:
-    description: "GET operations should declare an ETag header on 200 and a 304 response (guide 7.16, [M+R], proxy)."
+    description: "single-resource GET operations should declare an ETag header on 200 and a 304 response (guide 7.16, [M+R], proxy)."
     message: "[7.16][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#716-etag-and-if-none-match
     severity: info
     formats: [oas3_1]
-    given: "$.paths[?(@property != '/health' && @property != '/ready')].get.responses"
+    given: "$.paths[?(@property != '/health' && @property != '/ready')].get"
     then:
-      function: responseHeaderRequired
-      functionOptions:
-        status: "200"
-        headers: [ETag]
-        alsoRequireStatus: "304"
+      function: s07-etagValidator
 
   # 7.17 [M+R] — PROXY (bucket B), notched one step: SHOULD -> info.
   # Verifies: PUT/PATCH operations declare an If-Match header parameter (at

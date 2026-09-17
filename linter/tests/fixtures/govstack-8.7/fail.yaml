@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Sample API
   version: 1.0.0
-  description: Rate-limited endpoint missing rate-limit headers.
+  description: Rate-limited endpoint whose 429 response omits Retry-After.
   contact:
     name: Sample BB Team
     url: https://example.org/contact

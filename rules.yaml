@@ -33,7 +33,7 @@ rules:
   surface: OpenAPI
   page: part-a/2-openapi-document-standards.md
   anchor: 23-no-divergent-openapi-copies
-  text: "Other locations (`spec/.gitbook/assets/`, alternative filenames, JSON copies) **MUST NOT** contain divergent copies. OpenAPI snippets in markdown documentation **MUST** load by reference from a canonical file, not duplicate it.\nAn operation-free shared component library under `api/common/` is referenced support material, not a canonical API surface or a divergent copy.\nA BB **MAY** retain historical contracts under `api/legacy/` when its documentation clearly identifies them as historical and separates them from the current API inventory. These archives are excluded from discovery of undeclared current surfaces; they do not describe the current contract. A file explicitly declared as a canonical surface or referenced by a canonical contract still participates in validation regardless of its directory."
+  text: "Other locations (`spec/.gitbook/assets/`, alternative filenames, JSON copies) **MUST NOT** contain divergent copies. OpenAPI snippets in markdown documentation **MUST** load by reference from a canonical file, not duplicate it.\nAn operation-free shared component library under `api/common/` is referenced support material, not a canonical API surface or a divergent copy.\nAn OpenAPI document under `api/examples/` that declares operations is an example contract: it illustrates how a deployment applies a canonical surface. It is not a canonical surface or a divergent copy and does not satisfy requirement coverage. Example contracts are validated under §20; operation-free component libraries there are support material.\nA BB **MAY** retain historical contracts under `api/legacy/` when its documentation clearly identifies them as historical and separates them from the current API inventory. These archives are excluded from discovery of undeclared current surfaces; they do not describe the current contract. A file explicitly declared as a canonical surface or referenced by a canonical contract still participates in validation regardless of its directory."
 - id: "2.4"
   title: "Passes openapi-spec-validator"
   class: M
@@ -105,7 +105,7 @@ rules:
   surface: AsyncAPI
   page: part-a/3-asyncapi-document-standards.md
   anchor: 33-no-divergent-asyncapi-copies
-  text: "Other locations (`spec/.gitbook/assets/`, alternative filenames, JSON copies) **MUST NOT** contain divergent AsyncAPI copies. Event snippets in markdown documentation **MUST** load by reference from a canonical file, not duplicate it.\nAn operation-free shared component library under `api/common/` is referenced support material, not a canonical API surface or a divergent copy.\nA BB **MAY** retain clearly documented historical contracts under `api/legacy/` on the same terms as §2.3. They are excluded from discovery of undeclared current surfaces, but an explicitly declared or referenced artifact still participates in validation."
+  text: "Other locations (`spec/.gitbook/assets/`, alternative filenames, JSON copies) **MUST NOT** contain divergent AsyncAPI copies. Event snippets in markdown documentation **MUST** load by reference from a canonical file, not duplicate it.\nAn operation-free shared component library under `api/common/` is referenced support material, not a canonical API surface or a divergent copy.\nAn AsyncAPI document under `api/examples/` that declares channels or operations is an example contract on the same terms as §2.3 and is validated under §20.\nA BB **MAY** retain clearly documented historical contracts under `api/legacy/` on the same terms as §2.3. They are excluded from discovery of undeclared current surfaces, but an explicitly declared or referenced artifact still participates in validation."
 - id: "3.4"
   title: "Passes an AsyncAPI validator"
   class: M
@@ -474,7 +474,7 @@ rules:
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 712-429-for-rate-limits
-  text: "An operation that enforces a caller-visible rate limit **SHOULD** declare `429 Too Many Requests` and the headers described in §8.7."
+  text: "An operation that enforces a caller-visible rate limit **SHOULD** declare `429 Too Many Requests` with the `Retry-After` header described in §8.7."
 - id: "7.13"
   title: "Server errors documented"
   class: M
@@ -510,7 +510,7 @@ rules:
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 716-etag-and-if-none-match
-  text: "Endpoints that return resources **SHOULD** advertise an `ETag` response header derived from the selected representation.\n`GET` clients **MAY** send `If-None-Match` to receive `304 Not Modified` on no change. The validator requirements for write concurrency are in §7.17."
+  text: "Endpoints that return a single resource **SHOULD** advertise an `ETag` response header derived from the selected representation.\nCollection responses, including paginated pages, **MAY** advertise an `ETag`. `GET` clients **MAY** send `If-None-Match` to receive `304 Not Modified` on no change. The validator requirements for write concurrency are in §7.17."
 - id: "7.17"
   title: "Optimistic concurrency with If-Match"
   class: M+R
@@ -618,7 +618,7 @@ rules:
   surface: OpenAPI
   page: part-b/8-headers.md
   anchor: 87-rate-limit-headers-declared
-  text: "An endpoint rate-limited by the BB itself **SHOULD** document the quota scope and **SHOULD** declare the `RateLimit` response header using the Structured Field syntax pinned from `draft-ietf-httpapi-ratelimit-headers-11`. A BB that advertises quota-policy details **SHOULD** use `RateLimit-Policy`. A `429` response **SHOULD** declare `Retry-After`; when `Retry-After` and `RateLimit` are both present, clients **SHOULD** treat `Retry-After` as authoritative. Where an API gateway or interoperability mediator owns rate limiting, the BB specification **SHOULD** state that fact instead of claiming to emit headers it does not control. The legacy `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` fields **SHOULD NOT** be described as conforming to the pinned draft.\nThe server **MAY** omit the advisory `RateLimit` and `RateLimit-Policy` headers on individual responses as allowed by the draft."
+  text: "An endpoint rate-limited by the BB itself **SHOULD** document the quota scope. Where an API gateway or interoperability mediator owns rate limiting, the BB specification **SHOULD** state that fact instead of claiming to emit headers it does not control. A `429` response **SHOULD** declare `Retry-After`; when `Retry-After` and `RateLimit` are both present, clients **SHOULD** treat `Retry-After` as authoritative. A BB that advertises quota-policy details **SHOULD** use `RateLimit-Policy`. The legacy `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` fields **SHOULD NOT** be described as conforming to `draft-ietf-httpapi-ratelimit-headers-11`.\nAn endpoint rate-limited by the BB itself **MAY** declare the advisory `RateLimit` response header using the Structured Field syntax pinned from `draft-ietf-httpapi-ratelimit-headers-11`. The server **MAY** omit the advisory `RateLimit` and `RateLimit-Policy` headers on individual responses as allowed by the draft."
 - id: "9.1"
   title: "JSON as default media type"
   class: M+R
@@ -942,7 +942,7 @@ rules:
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 128-simple-equality-filtering
-  text: "A filter containing personal data or another value prohibited from URLs by §8.6 **MUST NOT** use a query parameter and **MUST** use a documented body-based search contract such as §12.9.\nSimple equality filtering on non-personal, non-secret fields **SHOULD** use one query parameter per field."
+  text: "A filter containing personal data or another value prohibited from URLs by §8.6 **MUST NOT** use a query parameter and **MUST** use a documented body-based search contract such as §12.9.\nSimple equality filtering on non-personal, non-secret fields **SHOULD** use one query parameter per field. Filter parameters do not reuse `pageSize`, `cursor`, or `sort`, which keep their pagination and sorting meaning; a field with one of those names uses another documented parameter name."
 - id: "12.9"
   title: "Complex filtering via search"
   class: M+R
@@ -1527,7 +1527,7 @@ rules:
   surface: Universal
   page: part-e/20-conformance-and-validation.md
   anchor: 201-every-file-passes-validation
-  text: "Every canonical OpenAPI entrypoint **MUST** pass `openapi-spec-validator` for its declared qualified 3.1 patch, with local references resolved. Every canonical AsyncAPI entrypoint **MUST** pass an AsyncAPI 3 parser/validator such as `@asyncapi/parser`. A referenced schema fragment **MUST** validate against its own declared schema dialect and **MUST NOT** be rejected merely because it is not a standalone OpenAPI or AsyncAPI document."
+  text: "Every canonical OpenAPI entrypoint and OpenAPI example contract (§2.3) **MUST** pass `openapi-spec-validator` for its declared qualified 3.1 patch, with local references resolved. Every canonical AsyncAPI entrypoint and AsyncAPI example contract (§3.3) **MUST** pass an AsyncAPI 3 parser/validator such as `@asyncapi/parser`. A referenced schema fragment **MUST** validate against its own declared schema dialect and **MUST NOT** be rejected merely because it is not a standalone OpenAPI or AsyncAPI document."
 - id: "20.2"
   title: "Passes the GovStack Spectral ruleset"
   class: M
@@ -1536,7 +1536,7 @@ rules:
   surface: Universal
   page: part-e/20-conformance-and-validation.md
   anchor: 202-passes-the-govstack-spectral-ruleset
-  text: "Every BB API spec **MUST** pass the exact GovStack Spectral ruleset version declared under §20.3 for the machine-checkable rules applicable to its surface. The machine-checkable rules are those tagged `[M]`, together with the mechanical portion of `[M+R]` rules (§1.9). Ruleset `0.2.0-draft` **MUST** cover the OpenAPI, CloudEvents, and AsyncAPI documentation rules recorded in its coverage manifest. Validation **MUST** fail when the declared ruleset artifact is unavailable or differs from the exact declared version; tooling **MUST NOT** select “latest” or fall back by major/minor compatibility.\nThe ruleset and `rules.yaml` are the reference expressions of the rules (§1.5). A finding that appears to contradict a page is a defect in the guide: report it so that the page or the ruleset is corrected by erratum, rather than editing the ruleset locally."
+  text: "Every BB API spec, including each example contract, **MUST** pass the exact GovStack Spectral ruleset version declared under §20.3 for the machine-checkable rules applicable to its surface. The machine-checkable rules are those tagged `[M]`, together with the mechanical portion of `[M+R]` rules (§1.9). Ruleset `0.2.0-draft` **MUST** cover the OpenAPI, CloudEvents, and AsyncAPI documentation rules recorded in its coverage manifest. Validation **MUST** fail when the declared ruleset artifact is unavailable or differs from the exact declared version; tooling **MUST NOT** select “latest” or fall back by major/minor compatibility.\nThe ruleset and `rules.yaml` are the reference expressions of the rules (§1.5). A finding that appears to contradict a page is a defect in the guide: report it so that the page or the ruleset is corrected by erratum, rather than editing the ruleset locally."
 - id: "20.3"
   title: "Declared guide conformance version"
   class: M
@@ -1545,4 +1545,4 @@ rules:
   surface: Universal
   page: part-e/20-conformance-and-validation.md
   anchor: 203-declared-guide-conformance-version
-  text: "Each canonical specification file **MUST** declare the exact guide and ruleset versions it targets in the `info`-level `x-govstack-api-guide` object using `version` and `rulesetVersion`, each an exact SemVer value rather than a range. For this draft both values **MUST** be `0.2.0-draft`. An optional `exceptions` array **MUST** contain objects with exactly these fields: `rule` (guide rule ID), `scope` (RFC 6901 JSON Pointer into this canonical document), `rationale` (non-empty explanation), `record` (absolute HTTPS URI for the approved public record), `reviewedBy` (non-empty approving authority), `reviewedAt` (calendar date `YYYY-MM-DD`), and `expiresAt` (calendar date `YYYY-MM-DD`). An exception **MUST** suppress only its named rule at or below its declared scope. An expired entry, invalid field, or exception not approved under §1.6 **MUST** fail validation rather than suppress the rule. Offline validation **MUST NOT** require dereferencing the record URI."
+  text: "Each canonical specification file and example contract **MUST** declare the exact guide and ruleset versions it targets in the `info`-level `x-govstack-api-guide` object using `version` and `rulesetVersion`, each an exact SemVer value rather than a range. For this draft both values **MUST** be `0.2.0-draft`. An optional `exceptions` array **MUST** contain objects with exactly these fields: `rule` (guide rule ID), `scope` (RFC 6901 JSON Pointer into the declaring document), `rationale` (non-empty explanation), `record` (absolute HTTPS URI for the approved public record), `reviewedBy` (non-empty approving authority), `reviewedAt` (calendar date `YYYY-MM-DD`), and `expiresAt` (calendar date `YYYY-MM-DD`). An exception **MUST** suppress only its named rule at or below its declared scope. An expired entry, invalid field, or exception not approved under §1.6 **MUST** fail validation rather than suppress the rule. Offline validation **MUST NOT** require dereferencing the record URI."

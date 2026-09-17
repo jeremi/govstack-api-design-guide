@@ -1,22 +1,18 @@
 import { isObject } from './lib/util.js';
 
 const LEGACY_RATE_LIMIT_HEADERS = ['ratelimit-limit', 'ratelimit-remaining', 'ratelimit-reset'];
-const shouldCheck = (status) => /^2\d\d$/.test(status) || status === '429';
 
 /**
- * s08 rateLimitHeaders — proxy for guide 8.7: endpoints rate-limited by the
- * BB itself MUST declare the structured RateLimit response header, and 429
- * responses MUST additionally declare Retry-After. Legacy three-header names
- * are forbidden in `forbidLegacy` mode.
+ * s08 rateLimitHeaders — proxy for guide 8.7: a 429 response SHOULD declare
+ * Retry-After. Legacy three-header names are flagged in `forbidLegacy` mode.
+ * Declaring the advisory structured RateLimit header is optional (MAY), so
+ * its presence is not checked.
  *
  * Proxy signal: an operation that declares a 429 response is treated as
- * "rate-limited by the BB itself" (the delegated-to-gateway exception,
- * which requires only a prose statement, is not mechanically checkable).
- * RateLimit is then required on that operation's 2xx and 429 responses.
+ * rate-limited, whether the BB or a gateway enforces the quota.
  *
- * Does NOT verify: that rate limiting is actually implemented, the
- * delegated-to-gateway prose exception, or the header's runtime field
- * values.
+ * Does NOT verify: that rate limiting is actually implemented, that the quota
+ * scope or gateway ownership is documented, or the headers' runtime values.
  *
  * `given` should select an operation's `responses`, e.g.
  * `$.paths[*][get,put,post,delete,patch].responses`.
@@ -30,7 +26,6 @@ export default function rateLimitHeaders(targetVal, options, context) {
   if (!isObject(targetVal)) return;
   const base = context && Array.isArray(context.path) ? context.path : [];
   const results = [];
-  const statuses = Object.keys(targetVal);
 
   if (options?.forbidLegacy === true) {
     for (const [status, response] of Object.entries(targetVal)) {
@@ -48,7 +43,7 @@ export default function rateLimitHeaders(targetVal, options, context) {
     return results.length ? results : undefined;
   }
 
-  if (!statuses.includes('429')) return;
+  if (!Object.hasOwn(targetVal, '429')) return;
 
   const response429 = targetVal['429'];
   const declared429 = isObject(response429) && isObject(response429.headers)
@@ -56,18 +51,6 @@ export default function rateLimitHeaders(targetVal, options, context) {
     : [];
   if (!declared429.includes('retry-after')) {
     results.push({ message: '429 response must declare a "Retry-After" header', path: [...base, '429'] });
-  }
-
-  for (const status of statuses.filter(shouldCheck)) {
-    const response = targetVal[status];
-    if (!isObject(response)) continue;
-    const declared = isObject(response.headers) ? Object.keys(response.headers).map((h) => h.toLowerCase()) : [];
-    if (!declared.includes('ratelimit')) {
-      results.push({
-        message: `${status} response must declare the structured "RateLimit" header`,
-        path: [...base, status],
-      });
-    }
   }
 
   return results.length ? results : undefined;

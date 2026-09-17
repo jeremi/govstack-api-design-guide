@@ -34,3 +34,23 @@ components:
         id:
           type: string
           description: The widget's unique identifier.
+    WidgetSelector:
+      type: object
+      description: Selects a widget by one of two typed keys.
+      properties:
+        selector:
+          type: string
+          description: Selector name, constrained together with its value by oneOf.
+        value:
+          type: string
+          description: Key value for the chosen selector.
+      oneOf:
+        # Branches narrow the described properties; their descriptions carry over.
+        - description: Lookup by serial number.
+          properties:
+            selector:
+              const: bySerial
+        - description: Lookup by asset tag.
+          properties:
+            selector:
+              const: byAssetTag

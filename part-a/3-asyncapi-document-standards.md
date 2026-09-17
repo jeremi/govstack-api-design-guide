@@ -26,6 +26,8 @@ The canonical entrypoint **MAY** `$ref`-compose other repository files provided 
 
 An operation-free shared component library under `api/common/` is referenced support material, not a canonical API surface or a divergent copy.
 
+An AsyncAPI document under `api/examples/` that declares channels or operations is an example contract on the same terms as [§2.3](2-openapi-document-standards.md#23-no-divergent-openapi-copies) and is validated under [§20](../part-e/20-conformance-and-validation.md).
+
 A BB **MAY** retain clearly documented historical contracts under `api/legacy/` on the same terms as [§2.3](2-openapi-document-standards.md#23-no-divergent-openapi-copies). They are excluded from discovery of undeclared current surfaces, but an explicitly declared or referenced artifact still participates in validation.
 
 ## 3.4 Passes an AsyncAPI validator <a href="#34-passes-an-asyncapi-validator" id="34-passes-an-asyncapi-validator"></a>

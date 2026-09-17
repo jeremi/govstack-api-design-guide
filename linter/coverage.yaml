@@ -103,7 +103,7 @@ rules:
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-4.1]
-    note: "advisory proxy: warns on every missing schema description; whether a non-obvious schema has a useful description is not mechanically decidable"
+    note: "advisory proxy: warns on every missing schema description, except combinator wrappers, required-only assertions under not, and branch properties narrowing a described property; whether a non-obvious schema has a useful description is not mechanically decidable"
   - id: "4.2"
     class: "M+R"
     status: partial-proxy
@@ -293,7 +293,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-7.16]
-    note: "proxy: resource GETs declare ETag header + 304 (advisory SHOULD); exempts the 5.9 operational endpoints /health and /ready (a liveness probe is not a cacheable resource)"
+    note: "proxy: single-resource GETs declare ETag header + 304 (advisory SHOULD); skips GETs whose 200 body is a root array or items-array page (collection ETag is MAY); exempts the 5.9 operational endpoints /health and /ready (a liveness probe is not a cacheable resource)"
   - id: "7.17"
     class: "M+R"
     status: partial-proxy
@@ -353,7 +353,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-8.7, govstack-8.7-no-legacy]
-    note: "proxy: 429 responses declare Retry-After and structured RateLimit (SHOULD-level rule, proxy at info); deterministic warn flags legacy RateLimit-Limit/Remaining/Reset"
+    note: "proxy: 429 responses declare Retry-After (SHOULD-level rule, proxy at info); structured RateLimit is MAY and unchecked; quota scope and gateway ownership are review-only; deterministic warn flags legacy RateLimit-Limit/Remaining/Reset"
   - id: "9.1"
     class: "M+R"
     status: partial-proxy

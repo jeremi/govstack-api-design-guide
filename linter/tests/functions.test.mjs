@@ -22,6 +22,8 @@ import mediaTypeExpected from '../functions/mediaTypeExpected.js';
 import successResponseSchema from '../functions/s07-successResponseSchema.js';
 import creationResponses from '../functions/s07-creationResponses.js';
 import baselineResponses from '../functions/s07-baselineResponses.js';
+import etagValidator from '../functions/s07-etagValidator.js';
+import rateLimitHeaders from '../functions/s08-rateLimitHeaders.js';
 import bbCode from '../functions/s09-bbCode.js';
 import fieldErrors from '../functions/s11-fieldErrors.js';
 import problemType from '../functions/s11-problemType.js';
@@ -52,6 +54,8 @@ const ALL = {
   successResponseSchema,
   creationResponses,
   baselineResponses,
+  etagValidator,
+  rateLimitHeaders,
   bbCode,
   fieldErrors,
   problemType,
@@ -118,6 +122,44 @@ test('schemaDescriptions: properties vs all mode', () => {
   assert.equal(count(schemaDescriptions(assertion, { mode: 'all' })), 0);
 });
 
+test('schemaDescriptions: branches narrowing a described property inherit its description', () => {
+  const selector = {
+    type: 'object',
+    description: 'A typed selector.',
+    properties: {
+      kind: { type: 'string', description: 'Selector name.' },
+      values: { type: 'object', description: 'Selector values.' },
+    },
+    oneOf: [
+      { description: 'By number.', properties: { kind: { const: 'byNumber' } } },
+      { description: 'By name.', properties: { kind: { const: 'byName' } } },
+    ],
+    if: { description: 'Number selector.', properties: { kind: { const: 'byNumber' } } },
+  };
+  assert.equal(count(schemaDescriptions(selector, { mode: 'all' })), 0);
+
+  const nested = {
+    type: 'object',
+    description: 'Wrapper.',
+    properties: { inner: selector },
+  };
+  assert.equal(count(schemaDescriptions(nested, { mode: 'all' })), 0);
+
+  // A branch-only property, or a narrowing of an undescribed property, still
+  // needs its own description.
+  const undocumented = {
+    type: 'object',
+    description: 'A typed selector.',
+    properties: { kind: { type: 'string' } },
+    anyOf: [{ description: 'Extra.', properties: { kind: { const: 'a' }, extra: { type: 'string' } } }],
+  };
+  const findings = schemaDescriptions(undocumented, { mode: 'all' }, { path: ['s'] });
+  assert.deepEqual(
+    findings.map((finding) => finding.path),
+    [['s', 'properties', 'kind'], ['s', 'anyOf', 0, 'properties', 'kind'], ['s', 'anyOf', 0, 'properties', 'extra']],
+  );
+});
+
 test('responseHeaderRequired: header presence + companion status', () => {
   const responses = {
     '201': { description: 'created' },
@@ -130,6 +172,46 @@ test('responseHeaderRequired: header presence + companion status', () => {
     3, // 201 + 200 lack ETag, and no 304 present
   );
   assert.equal(count(responseHeaderRequired({}, { status: '201', headers: ['Location'], requireStatus: true })), 1);
+});
+
+test('etagValidator: single-resource GETs declare ETag and 304; collections are exempt', () => {
+  const ctx = { path: ['paths', '/v1/things/{thingId}', 'get'] };
+  const json = (schema) => ({ content: { 'application/json': { schema } } });
+  const thing = { type: 'object', properties: { thingId: { type: 'string' } } };
+
+  const bare = etagValidator({ responses: { '200': json(thing) } }, {}, ctx);
+  assert.deepEqual(
+    bare.map((finding) => finding.path),
+    [
+      ['paths', '/v1/things/{thingId}', 'get', 'responses', '200'],
+      ['paths', '/v1/things/{thingId}', 'get', 'responses'],
+    ],
+  );
+  const conditional = {
+    responses: { '200': { headers: { ETag: {} }, ...json(thing) }, '304': { description: 'unchanged' } },
+  };
+  assert.equal(count(etagValidator(conditional, {}, ctx)), 0);
+  assert.equal(count(etagValidator({ responses: { '200': { description: 'no body' } } }, {}, ctx)), 2);
+
+  const page = { type: 'object', properties: { items: { type: 'array' }, pageInfo: { type: 'object' } } };
+  const composedPage = { allOf: [{ properties: { items: { type: 'array' } } }, { required: ['items'] }] };
+  for (const schema of [page, composedPage, { type: 'array', items: thing }]) {
+    assert.equal(count(etagValidator({ responses: { '200': json(schema) } }, {}, ctx)), 0);
+  }
+  const ldPage = { responses: { '200': { content: { 'application/ld+json': { schema: page } } } } };
+  assert.equal(count(etagValidator(ldPage, {}, ctx)), 0);
+});
+
+test('rateLimitHeaders: 429 declares Retry-After; RateLimit is optional; legacy names flagged', () => {
+  assert.equal(count(rateLimitHeaders({ '200': {}, '429': { headers: { 'Retry-After': {} } } }, {})), 0);
+  assert.deepEqual(
+    rateLimitHeaders({ '200': {}, '429': {} }, {}, { path: ['r'] }),
+    [{ message: '429 response must declare a "Retry-After" header', path: ['r', '429'] }],
+  );
+  assert.equal(count(rateLimitHeaders({ '200': {} }, {})), 0);
+  const legacy = { '200': { headers: { 'RateLimit-Limit': {}, RateLimit: {} } } };
+  assert.equal(count(rateLimitHeaders(legacy, { forbidLegacy: true })), 1);
+  assert.equal(count(rateLimitHeaders(legacy, {})), 0);
 });
 
 test('operationResponses: require / forbid / counts', () => {

@@ -12,11 +12,11 @@ description: "Lints a BB's OpenAPI/AsyncAPI spec against the GovStack Cross-BB A
 
 inputs:
   openapi-path:
-    description: "Optional explicit OpenAPI path. Leave empty to use api/index.yaml or canonical discovery."
+    description: "Optional explicit OpenAPI path; explicit paths also skip api/examples. Leave empty to use api/index.yaml or canonical discovery."
     required: false
     default: ""
   asyncapi-path:
-    description: "Optional explicit AsyncAPI path. Leave empty to use api/index.yaml or canonical discovery."
+    description: "Optional explicit AsyncAPI path; explicit paths also skip api/examples. Leave empty to use api/index.yaml or canonical discovery."
     required: false
     default: ""
   fail-on:

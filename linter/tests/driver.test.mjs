@@ -388,6 +388,100 @@ components:
   }
 });
 
+test('complete example contracts under api/examples are linted and can fail the run', () => {
+  const dir = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'api/coverage.yaml': VALID_COVERAGE,
+    'api/examples/deployment.openapi.yaml': openapiMissingContact(),
+    'api/examples/nested/events.asyncapi.yaml': cleanAsyncapi(),
+    'api/examples/components.yaml': `openapi: 3.1.0
+info: { title: Example components, version: 1.0.0 }
+paths: {}
+components:
+  schemas:
+    Identifier: { type: string }
+`,
+    'api/examples/deployment.schema.json': '{"type":"object"}',
+    'api/examples/README.md': 'Illustrative deployment contracts.',
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 1, `${r.stderr}\n${r.stdout}`);
+    assert.deepEqual(
+      r.json.files.map((file) => file.path).sort(),
+      ['api/examples/deployment.openapi.yaml', 'api/examples/nested/events.asyncapi.yaml', 'api/openapi.yaml'],
+    );
+    const byPath = new Map(r.json.files.map((file) => [file.path, file.findings.map((f) => f.code)]));
+    assert.deepEqual(byPath.get('api/examples/deployment.openapi.yaml'), ['govstack-2.5-contact']);
+    assert.deepEqual(byPath.get('api/examples/nested/events.asyncapi.yaml'), []);
+    assert.deepEqual(byPath.get('api/openapi.yaml'), []);
+    assert.equal(r.json.summary.filesLinted, 3);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('example contracts declare the guide version and do not satisfy coverage', () => {
+  const exampleOnly = `  /v1/others:
+    get:
+      operationId: exampleOnly
+      responses:
+        '200': { description: ok }
+`;
+  const dir = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'api/examples/deployment.openapi.yaml': `${cleanOpenapi('0.1.0')}${exampleOnly}`,
+    'api/coverage.yaml': `version: 1
+requirements:
+  - { id: "govstack-bb-test-fr#req-1", disposition: operation, operations: [listThings] }
+  - { id: "govstack-bb-test-fr#req-2", disposition: operation, operations: [exampleOnly] }
+`,
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 1, `${r.stderr}\n${r.stdout}`);
+    const byPath = new Map(r.json.files.map((file) => [file.path, file.findings.map((f) => f.code)]));
+    assert.deepEqual(byPath.get('api/coverage.yaml'), ['coverage-missing-reference']);
+    // version and rulesetVersion both differ from the supported draft.
+    assert.deepEqual(byPath.get('api/examples/deployment.openapi.yaml'), ['guide-version', 'guide-version']);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('explicit spec flags lint only the named files, not api/examples', () => {
+  const dir = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'api/coverage.yaml': VALID_COVERAGE,
+    'api/examples/deployment.openapi.yaml': openapiMissingContact(),
+  });
+  try {
+    const r = runCliJson([
+      '--repo-root', dir, '--openapi', 'api/openapi.yaml', '--ruleset', MINI_RULESET, ...ADVISORY,
+    ]);
+    assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
+    assert.deepEqual(r.json.files.map((file) => file.path), ['api/openapi.yaml']);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('an example declared in api/index.yaml is linted once', () => {
+  const dir = makeRepo({
+    'api/index.yaml': 'version: 1\napis:\n  - type: openapi\n    path: api/examples/openapi.yaml\n',
+    'api/examples/openapi.yaml': openapiMissingContact(),
+    'api/coverage.yaml': VALID_COVERAGE,
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 1, `${r.stderr}\n${r.stdout}`);
+    assert.deepEqual(codes(r.json), ['govstack-2.5-contact']);
+    assert.equal(r.json.summary.filesLinted, 1);
+  } finally {
+    cleanup(dir);
+  }
+});
+
 test('api/legacy preserves historical contracts without hiding other undeclared specs', () => {
   const dir = makeRepo({
     'api/openapi.yaml': cleanOpenapi(),
@@ -987,6 +1081,21 @@ test('unparseable declared spec is an operational error naming the file', () => 
     const r = runCli(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
     assert.equal(r.status, 2);
     assert.match(r.stderr, /Cannot parse spec file api\/openapi\.yaml/);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('unparseable example contract is an operational error naming the file', () => {
+  const dir = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'api/coverage.yaml': VALID_COVERAGE,
+    'api/examples/broken.openapi.yaml': 'openapi: 3.1.0\ninfo: {title: [oops\n',
+  });
+  try {
+    const r = runCli(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 2);
+    assert.match(r.stderr, /Cannot parse spec file api\/examples\/broken\.openapi\.yaml/);
   } finally {
     cleanup(dir);
   }

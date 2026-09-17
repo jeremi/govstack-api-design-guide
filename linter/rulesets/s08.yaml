@@ -92,13 +92,13 @@ rules:
       function: s08-noXHeaders
 
   # 8.7 [M+R] — PROXY (bucket B), notched one step: SHOULD -> info.
-  # Verifies: an operation declaring a 429 response (proxy for "rate-limited
-  # by the BB itself") declares Retry-After on 429 and the structured
-  # RateLimit header on its 2xx and 429 responses.
-  # Does NOT verify: that rate limiting is actually implemented, the
-  # delegated-to-gateway prose exception or the header's runtime value.
+  # Verifies: an operation declaring a 429 response declares Retry-After on
+  # that 429. The structured RateLimit header is optional (MAY) and is not
+  # checked.
+  # Does NOT verify: that rate limiting is actually implemented, the quota
+  # scope or gateway-ownership statement, or the headers' runtime values.
   govstack-8.7:
-    description: "rate-limited endpoints should declare structured RateLimit and 429 Retry-After (guide 8.7, [M+R], proxy)."
+    description: "429 responses should declare Retry-After (guide 8.7, [M+R], proxy)."
     message: "[8.7][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#87-rate-limit-headers-declared
     severity: info

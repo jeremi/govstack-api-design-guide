@@ -62,7 +62,7 @@ A BB **MAY** return `404` instead when concealing the existence of a forbidden r
 
 ## 7.12 429 for rate limits <a href="#712-429-for-rate-limits" id="712-429-for-rate-limits"></a>
 
-**[R]** An operation that enforces a caller-visible rate limit **SHOULD** declare `429 Too Many Requests` and the headers described in [§8.7](../part-b/8-headers.md#87-rate-limit-headers-declared).
+**[R]** An operation that enforces a caller-visible rate limit **SHOULD** declare `429 Too Many Requests` with the `Retry-After` header described in [§8.7](../part-b/8-headers.md#87-rate-limit-headers-declared).
 
 ## 7.13 Server errors documented <a href="#713-server-errors-documented" id="713-server-errors-documented"></a>
 
@@ -80,9 +80,9 @@ Operations exposed through a gateway or dependent service **SHOULD** additionall
 
 ## 7.16 ETag and If-None-Match <a href="#716-etag-and-if-none-match" id="716-etag-and-if-none-match"></a>
 
-**[M+R]** Endpoints that return resources **SHOULD** advertise an `ETag` response header derived from the selected representation.
+**[M+R]** Endpoints that return a single resource **SHOULD** advertise an `ETag` response header derived from the selected representation.
 
-`GET` clients **MAY** send `If-None-Match` to receive `304 Not Modified` on no change. The validator requirements for write concurrency are in [§7.17](#717-optimistic-concurrency-with-if-match).
+Collection responses, including paginated pages, **MAY** advertise an `ETag`. `GET` clients **MAY** send `If-None-Match` to receive `304 Not Modified` on no change. The validator requirements for write concurrency are in [§7.17](#717-optimistic-concurrency-with-if-match).
 
 ## 7.17 Optimistic concurrency with If-Match <a href="#717-optimistic-concurrency-with-if-match" id="717-optimistic-concurrency-with-if-match"></a>
 

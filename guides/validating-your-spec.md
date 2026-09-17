@@ -25,7 +25,7 @@ This checks that the file is a structurally valid AsyncAPI 3 document. It is the
 
 ## The GovStack Spectral ruleset
 
-The exact `0.2.0-draft` ruleset that encodes this guide's `[M]` rules ([20.2](../part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset)) ships at [`linter/`](../linter/README.md). The recommended entrypoint is the driver, which discovers default canonical files or consumes `api/index.yaml`, validates `api/coverage.yaml`, runs the base validators and file-layout checks, and applies [20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) exception handling:
+The exact `0.2.0-draft` ruleset that encodes this guide's `[M]` rules ([20.2](../part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset)) ships at [`linter/`](../linter/README.md). The recommended entrypoint is the driver, which discovers default canonical files or consumes `api/index.yaml`, validates `api/coverage.yaml`, runs the base validators and file-layout checks, lints example contracts under `api/examples/`, and applies [20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) exception handling:
 
 ```bash
 cd api-design-guide/linter && npm ci

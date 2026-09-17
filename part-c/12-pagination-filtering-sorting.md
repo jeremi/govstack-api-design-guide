@@ -100,7 +100,7 @@ The GovStack default **SHOULD** be `sort`, with `field` for ascending, `-field` 
 
 **[M+R]** A filter containing personal data or another value prohibited from URLs by [§8.6](../part-b/8-headers.md#86-no-personal-data-in-addressable-locations) **MUST NOT** use a query parameter and **MUST** use a documented body-based search contract such as [§12.9](#129-complex-filtering-via-search).
 
-Simple equality filtering on non-personal, non-secret fields **SHOULD** use one query parameter per field.
+Simple equality filtering on non-personal, non-secret fields **SHOULD** use one query parameter per field. Filter parameters do not reuse `pageSize`, `cursor`, or `sort`, which keep their pagination and sorting meaning; a field with one of those names uses another documented parameter name.
 
 ## 12.9 Complex filtering via search <a href="#129-complex-filtering-via-search" id="129-complex-filtering-via-search"></a>
 

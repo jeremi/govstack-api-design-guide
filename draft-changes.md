@@ -4,6 +4,16 @@ description: "Design changes made while the API guide is being tested before pub
 
 # Draft changes
 
+## 0.2.0-draft, 2026-09-17
+
+This unpublished revision applies the guide and linter to a registry consultation contract and its example deployments:
+
+- [§8.7](part-b/8-headers.md#87-rate-limit-headers-declared) keeps quota-scope documentation, gateway-ownership statements, `Retry-After` on `429`, `RateLimit-Policy` for advertised policy details, and the caution about legacy fields as SHOULD. Declaring the advisory `RateLimit` header becomes MAY, matching its Internet-Draft status. [§7.12](part-b/7-http-status-codes.md#712-429-for-rate-limits) refers to `Retry-After` instead of every §8.7 header. The linter's §8.7 proxy checks only `Retry-After` on declared `429` responses.
+- [§7.16](part-b/7-http-status-codes.md#716-etag-and-if-none-match) recommends `ETag` for single resources; collection responses and pages MAY advertise one. The linter proxy skips GETs whose `200` body is an array or an `items` page.
+- [§2.3, §3.3](part-a/2-openapi-document-standards.md#23-no-divergent-openapi-copies), and [§20.1–§20.3](part-e/20-conformance-and-validation.md) treat operation-bearing documents under `api/examples/` as example contracts. They are not canonical surfaces, divergent copies, or coverage evidence, but they pass the base validators, declare the guide version, and pass the Spectral ruleset. This is an explicit addition to the same unpublished `0.2.0-draft`. The driver lints example contracts by default and skips them when `--openapi` or `--asyncapi` names the files to lint.
+- The §4.1 linter proxy no longer asks for a description on a combinator-branch property that narrows a described property of the enclosing object, such as a `const` selector in a `oneOf` branch.
+- [§12.8](part-c/12-pagination-filtering-sorting.md#128-simple-equality-filtering) keeps `pageSize`, `cursor`, and `sort` for pagination and sorting: a field with one of those names uses another documented filter parameter name. The rule level is unchanged.
+
 ## 0.2.0-draft, 2026-09-10
 
 This unpublished revision corrects inconsistencies in the specification-writing rules and their checklist:
