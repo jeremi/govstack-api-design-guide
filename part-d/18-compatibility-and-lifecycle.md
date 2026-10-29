@@ -21,7 +21,7 @@ The GovStack Specification Framework (CFR §5.2.2) versions the specification do
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-proxy: info.version matches SemVer; whether it identifies the contract rather than the implementation and agrees with a nonstandard version mechanism requires context
+The linter checks that `info.version` is a SemVer string, on both OpenAPI and AsyncAPI documents. A reviewer checks that it identifies the published contract rather than the implementation, and that any other version field agrees.
 <!-- verification:end -->
 
 ## 18.2 Major version in path or channel <a href="#182-major-version-in-path-or-channel" id="182-major-version-in-path-or-channel"></a>
@@ -35,7 +35,7 @@ New GovStack OpenAPI surfaces **SHOULD** carry the major version in each version
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-advisory proxy: checks recommended OpenAPI path and AsyncAPI channel forms; does not prove that another declared mechanism exposes the major version unambiguously
+The linter warns when the major version in an OpenAPI path prefix such as `/v2/` differs from `info.version`, or when an AsyncAPI channel ID lacks a matching `.v2.` segment. It does not accept or verify other version mechanisms; a reviewer does.
 <!-- verification:end -->
 
 ## 18.3 Backward-compatible minor changes <a href="#183-backward-compatible-minor-changes" id="183-backward-compatible-minor-changes"></a>
@@ -49,7 +49,7 @@ A minor increment **MAY** add an endpoint; add an optional request field whose a
 <!-- verification:start -->
 **Verification:** Additional context required for verification. Semantic review is also required.
 
-backward-compat of minor bump - needs PREVIOUS spec version (oasdiff, out of scope)
+The linter does not check this rule, because it needs the previously published version to compare against. Run a diff tool such as oasdiff on OpenAPI contracts; a reviewer checks AsyncAPI changes and the semantic cases the rule lists.
 <!-- verification:end -->
 
 ## 18.4 Breaking changes bump major version <a href="#184-breaking-changes-bump-major-version" id="184-breaking-changes-bump-major-version"></a>
@@ -61,7 +61,7 @@ A breaking change **MUST** be released as a new major version. Breaking changes 
 <!-- verification:start -->
 **Verification:** Additional context required for verification. Semantic review is also required.
 
-breaking change => major bump - needs PREVIOUS spec version (oasdiff, out of scope)
+The linter does not check this rule, because it needs the previously published version to compare against. Run a diff tool such as oasdiff on OpenAPI contracts; a reviewer checks AsyncAPI changes and behavioural breaks that no schema diff shows.
 <!-- verification:end -->
 
 ## 18.5 Deprecation and Sunset headers <a href="#185-deprecation-and-sunset-headers" id="185-deprecation-and-sunset-headers"></a>
@@ -73,9 +73,9 @@ Deprecated HTTP endpoints **MUST** return a `Deprecation` header per RFC 9745 (a
 An incompatible security correction still follows [§18.4](#184-breaking-changes-bump-major-version). When continued operation presents an unacceptable security risk, the responsible authority determines whether immediate retirement is justified under GovStack governance; the guide sets no requirement to keep an unsafe endpoint running until a replacement major exists. Retirement calls for direct notification to affected operators and migration guidance, with the headers above where the old endpoint still responds. Those headers do not replace operational communication.
 
 <!-- verification:start -->
-**Verification:** Automated specification check. Semantic review is also required.
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-deprecated operations declare Deprecation + Sunset response headers
+For each operation marked `deprecated`, the linter checks that every 2xx response declares `Deprecation` and `Sunset` headers. It does not check the `Link` header, header values, timestamp order or that the headers are actually returned; a test against a running implementation does.
 <!-- verification:end -->
 
 ## 18.6 Clients ignore unknown fields <a href="#186-clients-ignore-unknown-fields" id="186-clients-ignore-unknown-fields"></a>
@@ -85,7 +85,7 @@ deprecated operations declare Deprecation + Sunset response headers
 <!-- verification:start -->
 **Verification:** Informative; no conformance check.
 
-informative
+This entry explains why the additive changes in 18.3 do not break clients and adds no requirement of its own.
 <!-- verification:end -->
 
 ## 18.7 AsyncAPI deprecation metadata <a href="#187-asyncapi-deprecation-metadata" id="187-asyncapi-deprecation-metadata"></a>
@@ -97,9 +97,9 @@ Deprecated AsyncAPI channels, operations, and messages **MUST** declare consumer
 They **MAY** also use the experimental `x-govstack-deprecated` extension with `since`, `sunset`, `replacement`, and `reason` where supported by tooling.
 
 <!-- verification:start -->
-**Verification:** Automated specification check. Semantic review is also required.
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-validate x-govstack-deprecated shape (since/sunset/replacement/reason) + description
+The linter checks channels, operations and messages that carry `x-govstack-deprecated`: all four keys (`since`, `sunset`, `replacement`, `reason`) must be present and the `description` must mention deprecation. It cannot find entities deprecated in prose alone; a reviewer does.
 <!-- verification:end -->
 
 ## Note on retrofitting <a href="#note-on-retrofitting" id="note-on-retrofitting"></a>

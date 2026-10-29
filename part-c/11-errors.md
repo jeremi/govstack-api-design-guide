@@ -19,7 +19,7 @@ HTTP `4xx` and `5xx` responses, including fallback errors declared with `default
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-4xx/5xx and default error responses declare application/problem+json content; HEAD errors omit content. OpenAPI surface only (problem+json/status-code mechanism has no AsyncAPI equivalent).
+The linter checks that every 4xx, 5xx and `default` response in an OpenAPI document declares `application/problem+json` content with a schema, and that `HEAD` responses declare no content. The problem schema itself is checked separately.
 <!-- verification:end -->
 
 ## 11.2 Stable HTTP problem type URI <a href="#112-stable-http-problem-type-uri" id="112-stable-http-problem-type-uri"></a>
@@ -35,7 +35,7 @@ HTTP status describes the outcome of the current request; domain status describe
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-problem schema has type/title/status, omits timestamp, and any declared code is type string, after ref resolution; literal examples use the canonical type URI; that code mirrors a documented BB/external machine code and is never required to interpret a problem, status/body equality, URI dereferenceability and no-sensitive-detail clauses require review or instance tests
+The linter checks that the problem schema requires `type`, `title` and `status`, declares no `timestamp`, and types any `code` as a string, and that literal `type` examples use the canonical problem URI form. A reviewer checks the remaining clauses.
 <!-- verification:end -->
 
 ## 11.3 Trace identifier <a href="#113-trace-identifier" id="113-trace-identifier"></a>
@@ -49,7 +49,7 @@ A surface that already publishes a legacy `requestId` or `correlationId` member 
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-problem schema requires traceId after reference resolution; runtime equality with the originating W3C traceparent, including retained traceId on stored replays, is not checked
+The linter checks that the `application/problem+json` response schema lists `traceId` as required. A test against a running implementation checks that its value equals the trace-id of the request's `traceparent`.
 <!-- verification:end -->
 
 ## 11.4 Field-level errors array <a href="#114-field-level-errors-array" id="114-field-level-errors-array"></a>
@@ -86,7 +86,7 @@ For query, path, or header parameters, a BB **MAY** use field errors when its co
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-when an HTTP problem schema declares errors, it requires errors[] items with pointer/message and omits field-level code; the linter does not infer JSON-body field attribution or validate an optional parameter-to-pointer mapping
+When a problem schema declares `errors`, the linter checks that it is required, is an array, requires `pointer` and `message` in each item, and declares no item `code`. A reviewer decides which failures are attributable to request fields.
 <!-- verification:end -->
 
 ## 11.5 Stable HTTP problem fields across languages <a href="#115-stable-http-problem-fields-across-languages" id="115-stable-http-problem-fields-across-languages"></a>
@@ -100,7 +100,7 @@ HTTP Problem `title`, `detail`, and field-error `message` **MAY** be localised.
 <!-- verification:start -->
 **Verification:** Runtime verification required; outside the specification linter.
 
-problem fields stable across localised responses - runtime
+A test against a running implementation checks that `type`, `status`, `traceId`, `instance` and field-error `pointer` stay identical across localised responses.
 <!-- verification:end -->
 
 ## 11.6 Transport-neutral asynchronous errors <a href="#116-transport-neutral-asynchronous-errors" id="116-transport-neutral-asynchronous-errors"></a>
@@ -116,5 +116,5 @@ It **MAY** contain `detail` and `errors`. Each asynchronous field error contains
 <!-- verification:start -->
 **Verification:** Additional context required for verification. Semantic review is also required.
 
-shared GovStackAsyncError reference and transport-specific rejection binding require common-artifact resolution; §17.16 has a weaker in-document proxy
+The linter does not check this rule. Resolving the shared `GovStackAsyncError` schema and the transport-specific rejection binding needs the common AsyncAPI artefact, so a reviewer checks them.
 <!-- verification:end -->

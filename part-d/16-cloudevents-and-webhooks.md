@@ -21,7 +21,7 @@ Event-driven APIs **MUST** be documented. HTTP push **MUST** use OpenAPI 3.1 `we
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: OpenAPI push events live under top-level webhooks. Brokered-transport (AsyncAPI) clause not checked.
+The linter warns when an OpenAPI operation uses `callbacks` for event push instead of top-level `webhooks`. A reviewer checks that events are documented at all and that brokered transports use AsyncAPI 3.
 <!-- verification:end -->
 
 ## 16.2 CloudEvents envelope required <a href="#162-cloudevents-envelope-required" id="162-cloudevents-envelope-required"></a>
@@ -35,7 +35,7 @@ GovStack domain events **MUST** conform to the CloudEvents v1.0.2 specification 
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-event payload schema requires specversion(const "1.0")/id/source/type + data, and the webhooks surface must declare application/cloudevents+json rather than a binary-mode application/json body
+The linter checks each `webhooks` request schema requires `specversion` (const `1.0`), `id`, `source`, `type` and `data`, warns when `time` or `datacontenttype` is missing, and requires `application/cloudevents+json` without `application/json`.
 <!-- verification:end -->
 
 ## 16.3 Reverse-DNS event types <a href="#163-reverse-dns-event-types" id="163-reverse-dns-event-types"></a>
@@ -49,7 +49,7 @@ New GovStack event types **SHOULD** use the reverse-DNS shape `global.govstack.{
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-split proxy: warns on the reverse-DNS default and errors on a pinned major-version segment; BB-code registry membership, long-term stability, and global collision resistance require context
+The linter checks pinned event `type` values (`const` or `enum`): it warns when one does not follow `global.govstack.{bb-code}.{resource}.{action}` and flags a version segment such as `v1`. A reviewer checks the registered BB code, stability and uniqueness.
 <!-- verification:end -->
 
 ## 16.4 Stable CloudEvents source <a href="#164-stable-cloudevents-source" id="164-stable-cloudevents-source"></a>
@@ -81,7 +81,7 @@ An absolute URI, including a URN, **SHOULD** be used. Producers that share one `
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-OpenAPI and AsyncAPI proxies check pinned/example source values for non-empty URI-reference lexical shape and valid percent escapes; stable authority, tenant, deployment, environment, host, IP and port identities are permitted. Full URI semantics, stability, occurrence context, and source+id uniqueness require review or runtime evidence
+The linter warns when a pinned or example CloudEvents `source` value is empty or not shaped like a URI-reference with valid percent escapes, in OpenAPI webhooks and AsyncAPI. A reviewer checks stability, the occurrence context and `source` plus `id` uniqueness.
 <!-- verification:end -->
 
 ## 16.5 Optional signed event delivery <a href="#165-optional-signed-event-delivery" id="165-optional-signed-event-delivery"></a>
@@ -93,7 +93,7 @@ Event delivery **MAY** use message-level signing when the BB's threat model requ
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-conditional opt-in signing choice and profile documentation require threat-model context
+The linter does not check this rule. A reviewer checks, against the threat model, whether the BB chose to adopt signing and documented the profile.
 <!-- verification:end -->
 
 ## 16.6 Signature metadata when used <a href="#166-signature-metadata-when-used" id="166-signature-metadata-when-used"></a>
@@ -107,7 +107,7 @@ When a protocol binding defines a standard signature field, that field **SHOULD*
 <!-- verification:start -->
 **Verification:** Additional context required for verification.
 
-signature metadata naming applies only when a surface opts into signing
+The linter does not check this rule. A reviewer checks the signature metadata names (`GovStack-Signature`, `govstackSignature`) only for surfaces that adopt signing.
 <!-- verification:end -->
 
 ## 16.7 Replay-detectable signed material <a href="#167-replay-detectable-signed-material" id="167-replay-detectable-signed-material"></a>
@@ -119,7 +119,7 @@ When signing is adopted, the signed material **MUST** include the event body, th
 <!-- verification:start -->
 **Verification:** Runtime verification required; outside the specification linter.
 
-conditional signed-material contents are verified at runtime when signing is adopted
+A test against a running implementation checks that the signed material includes the event body, the event `id` and a timestamp, where signing is adopted.
 <!-- verification:end -->
 
 ## 16.8 Separate experimental signing profile <a href="#168-separate-experimental-signing-profile" id="168-separate-experimental-signing-profile"></a>
@@ -133,7 +133,7 @@ A BB **MAY** adopt this profile explicitly.
 <!-- verification:start -->
 **Verification:** Additional context required for verification.
 
-experimental OpenAPI profile and adopter-supplied key/replay contract need common-file and implementation context
+The linter does not check this rule. A reviewer checks that an adopting BB pins the experimental signing profile version and documents key discovery, rotation, replay policy, protocol mapping and conformance tests.
 <!-- verification:end -->
 
 ## 16.9 Readiness for a shared signature profile <a href="#169-readiness-for-a-shared-signature-profile" id="169-readiness-for-a-shared-signature-profile"></a>
@@ -143,7 +143,7 @@ experimental OpenAPI profile and adopter-supplied key/replay contract need commo
 <!-- verification:start -->
 **Verification:** Informative; no conformance check.
 
-readiness criteria for a future shared profile (informative)
+This entry describes when a shared signature profile could be considered and adds no requirement of its own.
 <!-- verification:end -->
 
 ## 16.10 Documented delivery-failure contract <a href="#1610-documented-delivery-failure-contract" id="1610-documented-delivery-failure-contract"></a>
@@ -155,7 +155,7 @@ HTTP webhook delivery-failure behaviour **SHOULD** be documented per subscriptio
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-"document delivery-failure contract" prose
+The linter does not check this rule. A reviewer checks that each subscription documents whether redelivery is attempted, whether failed deliveries are stored, and how a subscriber recovers them.
 <!-- verification:end -->
 
 ## 16.11 Subscription management interfaces <a href="#1611-subscription-management-interfaces" id="1611-subscription-management-interfaces"></a>
@@ -169,5 +169,5 @@ HTTP subscription management uses OpenAPI endpoints; brokered or stream-based su
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: exposed BB subscription paths provide create/list/delete; absent subscription APIs are not flagged; conditional signing-key rotation is not checked
+The linter warns when an OpenAPI document has `subscriptions` paths but lacks a collection `POST`, a collection `GET` or an item `DELETE`. A reviewer checks whether the BB should expose subscriptions, AsyncAPI control planes and signing-key rotation.
 <!-- verification:end -->

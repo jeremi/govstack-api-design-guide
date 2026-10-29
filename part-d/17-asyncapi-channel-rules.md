@@ -19,7 +19,7 @@ Each AsyncAPI document **MUST** define the BB's perspective. An operation with `
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-every operation has action in {send,receive}
+The linter checks that every operation sets `action` to `send` or `receive`. A reviewer checks that the direction matches the BB's own role as publisher or consumer.
 <!-- verification:end -->
 
 ## 17.2 Stable logical channel IDs and native addresses <a href="#172-stable-logical-channel-ids-and-native-addresses" id="172-stable-logical-channel-ids-and-native-addresses"></a>
@@ -33,7 +33,7 @@ New GovStack channel IDs **SHOULD** use `global.govstack.{bb-code}.v{major}.{res
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-advisory proxy: logical channel keys match the GovStack reverse-DNS default; stability and native-address mapping require review
+The linter warns when a logical channel ID (the key under `channels`) does not follow the GovStack dotted pattern with the BB code and major version. A reviewer checks that IDs are stable and that each maps to its native address.
 <!-- verification:end -->
 
 ## 17.3 No personal data in channels <a href="#173-no-personal-data-in-channels" id="173-no-personal-data-in-channels"></a>
@@ -45,7 +45,7 @@ Logical channel IDs, native addresses, topic names, queue names, routing keys, a
 <!-- verification:start -->
 **Verification:** Heuristic check in the optional strict profile.
 
-proxy: scan channel addresses/param names for personal-data terms
+The linter warns when a channel address or parameter name contains words such as phone, email, national ID, name or date of birth. It cannot see queue names outside the document, and a reviewer checks what values actually flow.
 <!-- verification:end -->
 
 ## 17.4 Declared channel parameters <a href="#174-declared-channel-parameters" id="174-declared-channel-parameters"></a>
@@ -57,9 +57,9 @@ Each parameter **MUST** be declared under the AsyncAPI channel `parameters` obje
 Channel parameters **MAY** be used for non-personal routing values such as tenant, ministry, service, region, resource type, or shard. A parameter whose values are open **SHOULD** carry `examples`.
 
 <!-- verification:start -->
-**Verification:** Automated specification check. Semantic review is also required.
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-every {param} in channel address declared under parameters with a non-empty description. The rule's enum/examples clauses are [R]: a parameter's value set being closed is not detectable from the document.
+The linter checks that each `{parameter}` in a channel address is declared under `parameters` with a non-empty `description`. A reviewer checks that closed value sets use `enum` and open ones carry `examples`; the linter does not.
 <!-- verification:end -->
 
 ## 17.5 No environment names in addresses <a href="#175-no-environment-names-in-addresses" id="175-no-environment-names-in-addresses"></a>
@@ -71,7 +71,7 @@ Environment names (`dev`, `test`, `prod`), broker implementation names, and depl
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: flag dev/test/prod/broker tokens in channel addresses
+The linter reports, as an information-level finding, a channel address that contains a segment such as dev, test, prod, staging or a broker name like kafka or mqtt. A reviewer checks other deployment-specific prefixes and legitimate uses.
 <!-- verification:end -->
 
 ## 17.6 Structured CloudEvents JSON payloads <a href="#176-structured-cloudevents-json-payloads" id="176-structured-cloudevents-json-payloads"></a>
@@ -83,7 +83,7 @@ AsyncAPI Message Objects for GovStack domain events **MUST** use `contentType: a
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-recognized CloudEvents Message Objects use application/cloudevents+json and carry required envelope attributes after reference resolution; identifying every domain event and misplaced domain data requires semantic review
+For messages that look like CloudEvents, the linter checks `contentType` is `application/cloudevents+json` and the payload requires and declares `specversion` (fixed to 1.0), `id`, `source` and `type`. It does not check that domain data sits under `data`; a reviewer does.
 <!-- verification:end -->
 
 ## 17.7 Shared CloudEvents envelope schema <a href="#177-shared-cloudevents-envelope-schema" id="177-shared-cloudevents-envelope-schema"></a>
@@ -118,7 +118,7 @@ components:
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-local CloudEvents envelopes are allowed; recognizable bare/wrapped async errors and explicit common envelope references use vendored common schemas; local aliases and semantic rejection identification require review
+The linter checks that a payload recognisable as an asynchronous error, or one that references the shared envelope, points at the vendored common schema file. A reviewer checks local message definitions, locally renamed error schemas and whether a message is a rejection.
 <!-- verification:end -->
 
 ## 17.8 Message headers and idempotency metadata <a href="#178-message-headers-and-idempotency-metadata" id="178-message-headers-and-idempotency-metadata"></a>
@@ -132,7 +132,7 @@ GovStack-owned transport/application message headers **SHOULD** use camelCase. S
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-message headers camelCase/no X- (strong); command idempotency-key needs command identification
+The linter warns when a header name under a component message's `headers` is not camelCase, which also catches hyphenated `X-` names. A reviewer checks the `traceparent` and idempotency key attributes, signature metadata and which messages are commands.
 <!-- verification:end -->
 
 ## 17.9 Message localisation headers <a href="#179-message-localisation-headers" id="179-message-localisation-headers"></a>
@@ -144,7 +144,7 @@ Message headers used for localisation **MUST** be `acceptLanguage` on inbound co
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: localisation headers named acceptLanguage/contentLanguage
+The linter warns when a component message header is a near miss for the localisation names, such as `Accept-Language`, `locale` or `lang`. It does not check direction or that stable fields are left untranslated; a reviewer checks both.
 <!-- verification:end -->
 
 ## 17.10 Security schemes cover every operation <a href="#1710-security-schemes-cover-every-operation" id="1710-security-schemes-cover-every-operation"></a>
@@ -156,7 +156,7 @@ AsyncAPI security schemes **MUST** be declared under `components.securitySchemes
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-every operation covered by a security scheme via servers/operations
+The linter checks that `components.securitySchemes` is non-empty and that every operation has its own `security` or sits only on servers that declare `security`. A reviewer checks that the schemes are appropriate and that signing is not the only protection.
 <!-- verification:end -->
 
 ## 17.11 Duplicate delivery contract <a href="#1711-duplicate-delivery-contract" id="1711-duplicate-delivery-contract"></a>
@@ -170,7 +170,7 @@ Specifications **MAY** document application-level idempotency or de-duplication 
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-conditional duplicate-delivery and application de-duplication contract requires protocol context
+The linter does not check this rule. A reviewer checks that duplicate handling is documented where the protocol can redeliver, and that `effectivelyOnce` is not claimed as a portable guarantee.
 <!-- verification:end -->
 
 ## 17.12 Ordering only when promised <a href="#1712-ordering-only-when-promised" id="1712-ordering-only-when-promised"></a>
@@ -182,7 +182,7 @@ Ordering **SHOULD** be documented only when consumers are allowed to rely on it.
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-ordering is documented only when promised; scope/key require protocol context
+The linter does not check this rule. A reviewer checks that ordering is described only where consumers may rely on it, and that its scope and key are identified.
 <!-- verification:end -->
 
 ## 17.13 Public delivery-management capabilities <a href="#1713-public-delivery-management-capabilities" id="1713-public-delivery-management-capabilities"></a>
@@ -196,7 +196,7 @@ Capabilities that are deployment-internal or unavailable to consumers **MAY** be
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-consumer-visible redelivery/dead-letter/retention/replay capabilities require protocol and deployment context
+The linter does not check this rule. A reviewer checks that redelivery, dead-letter handling, retention and replay are documented when consumers can use them.
 <!-- verification:end -->
 
 ## 17.14 Implementation values in protocol profiles <a href="#1714-implementation-values-in-protocol-profiles" id="1714-implementation-values-in-protocol-profiles"></a>
@@ -208,7 +208,7 @@ Concrete retry counts, backoff intervals, retention periods, replay windows, and
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-deciding which values are stable public promises rather than implementation settings requires review
+The linter does not check this rule. A reviewer decides which retry, retention and replay values are stable promises and which belong in a protocol or implementation profile.
 <!-- verification:end -->
 
 ## 17.15 No universal delivery extensions <a href="#1715-no-universal-delivery-extensions" id="1715-no-universal-delivery-extensions"></a>
@@ -220,7 +220,7 @@ deciding which values are stable public promises rather than implementation sett
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-review that standard bindings are used first and custom extensions are not treated as portable contracts
+The linter does not check this rule. A reviewer checks that standard bindings come first and that custom extensions are not presented as an interoperable delivery contract.
 <!-- verification:end -->
 
 ## 17.16 Async rejection error messages <a href="#1716-async-rejection-error-messages" id="1716-async-rejection-error-messages"></a>
@@ -232,7 +232,7 @@ Command-like messages that can be rejected asynchronously **MUST** define a reje
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: rejection message using §11 error envelope exists + correlation
+The linter warns when the document has operations but no component message that uses the asynchronous error schema, or when none of those error messages carries a correlation identifier. A reviewer checks which commands can be rejected and that the correlation points at the original message.
 <!-- verification:end -->
 
 ## 17.17 Declared request-reply correlation <a href="#1717-declared-request-reply-correlation" id="1717-declared-request-reply-correlation"></a>
@@ -244,9 +244,9 @@ When request-reply over messaging is used, the AsyncAPI operation **MUST** decla
 Request-reply over messaging **MAY** be used where the protocol and use case support it.
 
 <!-- verification:start -->
-**Verification:** Automated specification check. Semantic review is also required.
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-when reply present, declares reply channel + correlationId; else not request-reply
+For an operation that declares `reply`, the linter checks it names a reply channel or address and a correlation mechanism (a message `correlationId` or a reply address `location`). A reviewer checks that event publication is not dressed up as request-reply.
 <!-- verification:end -->
 
 ## 17.18 Correlated completion signals <a href="#1718-correlated-completion-signals" id="1718-correlated-completion-signals"></a>
@@ -258,7 +258,7 @@ Long-running asynchronous work triggered by a message **SHOULD** expose completi
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required. Semantic review is also required.
 
-"long-running" identification + correlation documentation - human
+The linter does not check this rule. A reviewer identifies long-running work triggered by a message and checks that a completion signal exists and that clients can correlate it to the initiating message.
 <!-- verification:end -->
 
 ## 17.19 Protocol bindings where relevant <a href="#1719-protocol-bindings-where-relevant" id="1719-protocol-bindings-where-relevant"></a>
@@ -272,7 +272,7 @@ At minimum, Kafka-like bindings **SHOULD** declare topic and key semantics; MQTT
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: per server protocol, channels/ops declare matching kafka/mqtt/amqp/ws bindings
+The linter warns when a server declares a protocol that uses bindings (for example Kafka, MQTT, AMQP or WebSocket) and a channel has no binding for it. It does not check the fields inside the binding; a reviewer checks topic, key, QoS and similar semantics.
 <!-- verification:end -->
 
 ## 17.20 Representative message examples <a href="#1720-representative-message-examples" id="1720-representative-message-examples"></a>
@@ -284,5 +284,5 @@ AsyncAPI documents **SHOULD** define representative message examples, including 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-advisory proxy: warns when any components.messages entry lacks an example; whether the interaction is already obvious from the schema requires review
+The linter warns when a message under `components.messages` has no `examples`. A reviewer checks that examples show headers and payload where needed and cover the command, event, error and completion families.
 <!-- verification:end -->

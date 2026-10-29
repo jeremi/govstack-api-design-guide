@@ -19,7 +19,7 @@ Every canonical OpenAPI entrypoint and OpenAPI example contract ([§2.3](../part
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-driver runs mandatory openapi-spec-validator / AsyncAPI parser; Spectral additionally checks JSON Schema type keyword syntax throughout qualified OAS 3.1 schemas, including resolved local references; custom dialects require their own validator
+The linter runs the OpenAPI and AsyncAPI base validators in conformance mode, and also flags invalid `type` values in OpenAPI schemas. Schemas in custom dialects need their own validator. A reviewer confirms such fragments are validated.
 <!-- verification:end -->
 
 ## 20.2 Passes the GovStack Spectral ruleset <a href="#202-passes-the-govstack-spectral-ruleset" id="202-passes-the-govstack-spectral-ruleset"></a>
@@ -33,7 +33,7 @@ The ruleset and `rules.yaml` are the reference expressions of the rules ([§1.5]
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-meta/self-referential (the ruleset itself)
+The linter does not check this rule. A reviewer checks that CI runs the ruleset version the specification declares, and that findings contradicting a rule page are reported as defects in the guide. The linter only supports its own version.
 <!-- verification:end -->
 
 ## 20.3 Declared guide conformance version <a href="#203-declared-guide-conformance-version" id="203-declared-guide-conformance-version"></a>
@@ -72,9 +72,9 @@ info:
 ```
 
 <!-- verification:start -->
-**Verification:** Automated specification check.
+**Verification:** Partial linter check. Remaining clauses need separate verification.
 
-exact guide/ruleset versions; scoped exceptions require known rule, rationale, HTTPS record, reviewer, review date, and unexpired expiry
+The linter flags a missing `x-govstack-api-guide` object, unsupported versions, an invalid `profile`, and exceptions that are incomplete, expired or name an unknown rule. A reviewer checks that exceptions are approved and that `legacy` is declared only for surfaces published before the BB pinned the guide.
 <!-- verification:end -->
 
 ## Note on governance <a href="#note-on-governance" id="note-on-governance"></a>

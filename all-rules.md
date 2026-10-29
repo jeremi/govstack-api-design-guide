@@ -95,7 +95,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [7.17](part-b/7-http-status-codes.md#717-optimistic-concurrency-with-if-match) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | write | OpenAPI | Optimistic concurrency with If-Match |
 | [7.18](part-b/7-http-status-codes.md#718-405-with-allow-header) | Automated specification check. | MUST | read, write | OpenAPI | 405 with Allow header |
 | [7.19](part-b/7-http-status-codes.md#719-415-for-unsupported-media-types) | Automated specification check. Semantic review is also required. | MUST | write | OpenAPI | 415 for unsupported media types |
-| [7.20](part-b/7-http-status-codes.md#720-no-store-on-error-responses) | Automated specification check. | SHOULD | read, write | OpenAPI | No-store on error responses |
+| [7.20](part-b/7-http-status-codes.md#720-no-store-on-error-responses) | Partial linter check. Remaining clauses need separate verification. | SHOULD | read, write | OpenAPI | No-store on error responses |
 | [7.21](part-b/7-http-status-codes.md#721-schemas-for-successful-response-bodies) | Automated specification check. | MUST | read, write | OpenAPI | Schemas for successful response bodies |
 
 ## 8. Headers
@@ -177,7 +177,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [13.2](part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | read, write, events | Universal | OAuth and OIDC for citizen operations |
 | [13.3](part-d/13-authentication-and-authorisation.md#133-distinct-scheme-for-bb-to-bb-calls) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | read, write, events | Universal | Distinct scheme for BB-to-BB calls |
 | [13.4](part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes) | Partial linter check. Remaining clauses need separate verification. | MUST | read, write, events | Universal | Namespaced OAuth scopes |
-| [13.5](part-d/13-authentication-and-authorisation.md#135-authorization-is-the-credential-channel) | Automated specification check. Semantic review is also required. | MUST | read, write, events | Universal | Authorization is the credential channel |
+| [13.5](part-d/13-authentication-and-authorisation.md#135-authorization-is-the-credential-channel) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | read, write, events | Universal | Authorization is the credential channel |
 | [13.6](part-d/13-authentication-and-authorisation.md#136-api-keys-only-for-operational-endpoints) | Partial linter check. Remaining clauses need separate verification. | MUST | read, write, events | Universal | API keys only for operational endpoints |
 | [13.7](part-d/13-authentication-and-authorisation.md#137-protected-transport) | Review or evidence assessment required. Semantic review is also required. | MUST | read, write, events | Universal | Protected transport |
 
@@ -228,7 +228,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [17.1](part-d/17-asyncapi-channel-rules.md#171-send-and-receive-perspective) | Automated specification check. Semantic review is also required. | MUST | events | AsyncAPI | Send and receive perspective |
 | [17.2](part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | events | AsyncAPI | Stable logical channel IDs and native addresses |
 | [17.3](part-d/17-asyncapi-channel-rules.md#173-no-personal-data-in-channels) | Heuristic check in the optional strict profile. | MUST | events | AsyncAPI | No personal data in channels |
-| [17.4](part-d/17-asyncapi-channel-rules.md#174-declared-channel-parameters) | Automated specification check. Semantic review is also required. | MUST | events | AsyncAPI | Declared channel parameters |
+| [17.4](part-d/17-asyncapi-channel-rules.md#174-declared-channel-parameters) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | events | AsyncAPI | Declared channel parameters |
 | [17.5](part-d/17-asyncapi-channel-rules.md#175-no-environment-names-in-addresses) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | SHOULD | events | AsyncAPI | No environment names in addresses |
 | [17.6](part-d/17-asyncapi-channel-rules.md#176-structured-cloudevents-json-payloads) | Partial linter check. Remaining clauses need separate verification. | MUST | events | AsyncAPI | Structured CloudEvents JSON payloads |
 | [17.7](part-d/17-asyncapi-channel-rules.md#177-shared-cloudevents-envelope-schema) | Partial linter check. Remaining clauses need separate verification. | MUST | events | AsyncAPI | Shared CloudEvents envelope schema |
@@ -241,7 +241,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [17.14](part-d/17-asyncapi-channel-rules.md#1714-implementation-values-in-protocol-profiles) | Review or evidence assessment required. | SHOULD | events | AsyncAPI | Implementation values in protocol profiles |
 | [17.15](part-d/17-asyncapi-channel-rules.md#1715-no-universal-delivery-extensions) | Review or evidence assessment required. | SHOULD | events | AsyncAPI | No universal delivery extensions |
 | [17.16](part-d/17-asyncapi-channel-rules.md#1716-async-rejection-error-messages) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | events | AsyncAPI | Async rejection error messages |
-| [17.17](part-d/17-asyncapi-channel-rules.md#1717-declared-request-reply-correlation) | Automated specification check. Semantic review is also required. | MUST | events | AsyncAPI | Declared request-reply correlation |
+| [17.17](part-d/17-asyncapi-channel-rules.md#1717-declared-request-reply-correlation) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | events | AsyncAPI | Declared request-reply correlation |
 | [17.18](part-d/17-asyncapi-channel-rules.md#1718-correlated-completion-signals) | Review or evidence assessment required. Semantic review is also required. | SHOULD | events | AsyncAPI | Correlated completion signals |
 | [17.19](part-d/17-asyncapi-channel-rules.md#1719-protocol-bindings-where-relevant) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | events | AsyncAPI | Protocol bindings where relevant |
 | [17.20](part-d/17-asyncapi-channel-rules.md#1720-representative-message-examples) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | SHOULD | events | AsyncAPI | Representative message examples |
@@ -254,9 +254,9 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [18.2](part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel) | Partial linter check. Remaining clauses need separate verification. | MUST | read, write, events | Universal | Major version in path or channel |
 | [18.3](part-d/18-compatibility-and-lifecycle.md#183-backward-compatible-minor-changes) | Additional context required for verification. Semantic review is also required. | MUST | read, write, events | Universal | Backward-compatible minor changes |
 | [18.4](part-d/18-compatibility-and-lifecycle.md#184-breaking-changes-bump-major-version) | Additional context required for verification. Semantic review is also required. | MUST | read, write, events | Universal | Breaking changes bump major version |
-| [18.5](part-d/18-compatibility-and-lifecycle.md#185-deprecation-and-sunset-headers) | Automated specification check. Semantic review is also required. | MUST | read, write, events | Universal | Deprecation and Sunset headers |
+| [18.5](part-d/18-compatibility-and-lifecycle.md#185-deprecation-and-sunset-headers) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | read, write, events | Universal | Deprecation and Sunset headers |
 | [18.6](part-d/18-compatibility-and-lifecycle.md#186-clients-ignore-unknown-fields) | Informative; no conformance check. | — | read, write, events | Universal | Clients ignore unknown fields |
-| [18.7](part-d/18-compatibility-and-lifecycle.md#187-asyncapi-deprecation-metadata) | Automated specification check. Semantic review is also required. | MUST | events | Universal | AsyncAPI deprecation metadata |
+| [18.7](part-d/18-compatibility-and-lifecycle.md#187-asyncapi-deprecation-metadata) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | events | Universal | AsyncAPI deprecation metadata |
 
 ## 19. Localisation
 
@@ -273,4 +273,4 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | --- | --- | --- | --- | --- | --- |
 | [20.1](part-e/20-conformance-and-validation.md#201-every-file-passes-validation) | Partial linter check. Remaining clauses need separate verification. | MUST | read, write, events | Universal | Every file passes validation |
 | [20.2](part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset) | Review or evidence assessment required. | MUST | read, write, events | Universal | Passes the GovStack Spectral ruleset |
-| [20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) | Automated specification check. | MUST | read, write, events | Universal | Declared guide conformance version |
+| [20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) | Partial linter check. Remaining clauses need separate verification. | MUST | read, write, events | Universal | Declared guide conformance version |

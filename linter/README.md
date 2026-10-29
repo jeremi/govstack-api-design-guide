@@ -231,13 +231,19 @@ enforcement status — it is the scope contract, machine-checked by
 | status | meaning |
 | --- | --- |
 | `implemented` | fully checked by the listed Spectral rules |
-| `partial-proxy` | an automated proxy is checked; the note says what is not |
+| `partial-proxy` | an automated proxy is checked; the detail says what is not |
 | `driver` | checked by `cli.mjs`, not Spectral |
 | `strict-only` | noisy heuristic, ships only in `strict.yaml` |
 | `needs-context` | needs an external registry, common artifact, or comparison input |
 | `runtime` | constrains wire behaviour; test-harness territory |
 | `human` | review or governance judgment |
 | `informative` | non-normative guide entry |
+
+Each entry has two text fields. `note` is maintainer evidence and is never
+rendered. `detail` is the reader text that `scripts/generate-verification.mjs`
+writes under each rule's Verification line in the chapter pages; it is one
+paragraph and is rejected if it contains an em dash, the word "proxy", a
+Spectral rule name, a JavaScript file name, `functions/`, or a blank line.
 
 Cross-version breaking-change rules (18.3/18.4) are diff territory, not lint
 territory: run [oasdiff](https://github.com/oasdiff/oasdiff) against the
@@ -255,7 +261,7 @@ is unclear, they show a shape that satisfies it.
 in a BB repo:
 
 ```yaml
-- uses: actions/checkout@v4
+- uses: actions/checkout@v7
 - uses: jeremi/govstack-api-design-guide/linter@<ref>
   with:
     fail-on: error

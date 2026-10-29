@@ -93,6 +93,21 @@ function removeGeneratedVerificationBlocks(source, sourceName) {
   return result;
 }
 
+// Reader-facing detail text must not leak maintainer vocabulary, and must stay
+// one paragraph because tools/build_rules_index.py requires exactly one.
+const DETAIL_RULES = [
+  [/\u2014/, 'must not contain an em dash'],
+  [/proxy/i, 'must not contain the word "proxy"'],
+  [/\bgovstack-\d+\.\d+\b/, 'must not contain a Spectral rule name'],
+  [/\.m?js\b/, 'must not contain a JavaScript file name'],
+  [/functions\//, 'must not mention functions/'],
+  [/\n[ \t]*\n/, 'must not contain a blank line (exactly one paragraph is allowed)'],
+];
+
+function detailRejection(detail) {
+  return DETAIL_RULES.find(([pattern]) => pattern.test(detail.trim()))?.[1] ?? null;
+}
+
 export function parseCoverage(source) {
   const document = YAML.parse(source);
   if (!document || !Array.isArray(document.rules)) {
@@ -113,6 +128,11 @@ export function parseCoverage(source) {
     if (typeof entry.note !== 'string' || entry.note.length === 0) {
       throw new Error(`coverage entry ${id} must have a non-empty note`);
     }
+    if (typeof entry.detail !== 'string' || entry.detail.trim().length === 0) {
+      throw new Error(`coverage entry ${id} must have a non-empty detail`);
+    }
+    const rejection = detailRejection(entry.detail);
+    if (rejection) throw new Error(`coverage entry ${id} detail ${rejection}`);
     coverage.set(id, { ...entry, id });
   }
   return coverage;
@@ -130,7 +150,7 @@ function verificationBlock(entry) {
     '<!-- verification:start -->',
     `**Verification:** ${verificationSummary(entry)}`,
     '',
-    entry.note,
+    entry.detail.trim(),
     '<!-- verification:end -->',
   ].join('\n');
 }

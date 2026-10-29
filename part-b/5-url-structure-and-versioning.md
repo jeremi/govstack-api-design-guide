@@ -21,7 +21,7 @@ New GovStack resource APIs **SHOULD** place it before the resource hierarchy as 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-advisory proxy: checks the recommended /v{N}/ path default and standard endpoint exemptions; does not prove that a different declared mechanism exposes the major version unambiguously
+The linter flags any path that does not start with `/v{N}/`, except the standard unversioned endpoints. A reviewer checks that a surface using another declared version mechanism still exposes its major version unambiguously.
 <!-- verification:end -->
 
 ## 5.2 Plural noun resources <a href="#52-plural-noun-resources" id="52-plural-noun-resources"></a>
@@ -35,7 +35,7 @@ One API can expose several collections, each with its documented resource scope 
 <!-- verification:start -->
 **Verification:** Heuristic check in the optional strict profile. Semantic review is also required.
 
-proxy: resource segment plural heuristic; §5.10 standard unversioned endpoints are skipped
+The linter flags literal path segments whose last word does not end in "s", skipping the standard unversioned endpoints and the `search` and `lookup` leaves. It misjudges some words, so a reviewer decides whether names are plural nouns.
 <!-- verification:end -->
 
 ## 5.3 Kebab-case path segments <a href="#53-kebab-case-path-segments" id="53-kebab-case-path-segments"></a>
@@ -47,7 +47,7 @@ Multi-word literal path segments **SHOULD** use kebab-case (`/event-subscription
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-advisory default: literal segments use kebab-case; a colon custom method is flagged with a pointer to §5.8 action sub-resources
+The linter flags literal path segments that are not lower-case kebab-case, and flags colon custom methods such as `events:search`. Path parameters, `/v{N}` segments and the standard unversioned endpoints are skipped.
 <!-- verification:end -->
 
 ## 5.4 Shallow path nesting <a href="#54-shallow-path-nesting" id="54-shallow-path-nesting"></a>
@@ -59,7 +59,7 @@ Path hierarchy **SHOULD** be shallow, with at most two levels of nesting after `
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-counts resource/action levels after /v{N}/; parameters and fixed IDs evidenced by matching Digital Registries collection metadata add no level. Undeclared literal IDs need review; a sibling template alone does not prove identifier semantics, and no blanket collection exemption applies. Retains warn severity for the shallow-path SHOULD, including genuine revision-depth deviations
+The linter counts literal path segments after `/v{N}/` and flags paths with more than two. Path parameters do not count, nor does a fixed identifier backed by matching Digital Registries collection metadata; a reviewer checks any other literal identifier.
 <!-- verification:end -->
 
 ## 5.5 Identifiers as path parameters <a href="#55-identifiers-as-path-parameters" id="55-identifiers-as-path-parameters"></a>
@@ -71,7 +71,7 @@ Resource identifiers **MUST** be path parameters, not query parameters. (`DELETE
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: flag single-resource GET/DELETE identifying via query *id param
+The linter flags query parameters on `GET` and `DELETE` operations named `id` or ending in `Id` or `_id`, so a legitimate filter such as `programId` is also flagged. A reviewer checks that identifiers are path parameters everywhere else.
 <!-- verification:end -->
 
 ## 5.6 Query parameter naming <a href="#56-query-parameter-naming" id="56-query-parameter-naming"></a>
@@ -83,7 +83,7 @@ Query parameter names **SHOULD** follow the JSON naming convention defined in [�
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-advisory default: query-param names camelCase
+The linter flags query parameter names that are not lower camelCase, on both operations and path items. A reviewer checks any further requirements of the JSON naming chapter beyond casing.
 <!-- verification:end -->
 
 ## 5.7 No verbs in CRUD paths <a href="#57-no-verbs-in-crud-paths" id="57-no-verbs-in-crud-paths"></a>
@@ -95,7 +95,7 @@ Verbs **SHOULD NOT** appear in paths for CRUD operations. (`POST /v1/events`, no
 <!-- verification:start -->
 **Verification:** Heuristic check in the optional strict profile. Semantic review is also required.
 
-proxy: CRUD-like final segments vs a lexical verb list; actual CRUD semantics require review
+The linter flags a path whose final segment contains a CRUD-like word such as `create`, `update`, `delete` or `list`. A reviewer decides whether the action is really CRUD or a domain action.
 <!-- verification:end -->
 
 ## 5.8 Custom operations <a href="#58-actions-as-sub-resources" id="58-actions-as-sub-resources"></a>
@@ -111,7 +111,7 @@ Each operation retains the HTTP semantics of [§6](6-http-methods.md). A body-ba
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-colon custom methods are flagged by govstack-5.3; choosing a resource scope and reserving action names from the collection identifier format are review-only
+The linter flags colon custom methods (a `:verb` suffix on a path segment). A reviewer checks that other custom operations are action sub-resources and that action names such as `search` are excluded from the collection's identifier format or declared reserved.
 <!-- verification:end -->
 
 ## 5.9 Health requirements (CFR reference) <a href="#59-unversioned-health-endpoint" id="59-unversioned-health-endpoint"></a>
@@ -121,7 +121,7 @@ For health check requirements, see the Cross-Functional Requirements, [Architect
 <!-- verification:start -->
 **Verification:** Informative; no conformance check.
 
-informative reference to govstack-cfr-architecture#req-15; this guide adds no health-specific contract or linter checks
+This entry points to the Cross-Functional Requirements for health checks and adds no requirement of its own.
 <!-- verification:end -->
 
 ## 5.10 Standard unversioned endpoints <a href="#510-standard-unversioned-endpoints" id="510-standard-unversioned-endpoints"></a>
@@ -135,5 +135,5 @@ No other endpoint **MAY** claim this exemption. A static document that a well-kn
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-the exemptions this rule grants are implemented where they bite (5.1/5.3 in pathSegments, 12.x in s12-collectionPagination, 13.1 by accepting an explicit `security: []`), all reading the closed set from functions/lib/standardEndpoints.js; the rule of its own enforces the prohibition, that these paths declare no mutating method. Whether a GET on such a path is a business resource in disguise is left to review.
+The linter flags `POST`, `PUT`, `PATCH` or `DELETE` on the standard unversioned paths, and exempts those paths from the version-prefix and kebab-case checks. A reviewer checks that no business resource is exposed there through `GET`.
 <!-- verification:end -->

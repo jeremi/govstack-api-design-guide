@@ -3,12 +3,19 @@
 # ../rules.yaml (every id present exactly once) and against the rule names actually defined
 # in ruleset.yaml / strict.yaml (spectral_rules lists must match, both directions).
 #
+# Each entry carries two free-text fields:
+#   note   - maintainer evidence: shorthand about how the rule is covered. Never rendered.
+#   detail - reader text: one paragraph, rendered under each rule's Verification line in the
+#            chapter pages by scripts/generate-verification.mjs. It must not contain an em
+#            dash, the word "proxy", a Spectral rule name, a JavaScript file name, "functions/",
+#            or a blank line.
+#
 # status values:
 #   implemented   - fully checked by the Spectral rules listed in spectral_rules
 #   driver        - checked by cli.mjs (file-tree layout, base validators), not by Spectral
-#   partial-proxy - Spectral checks an automated proxy; note says what it does NOT verify
+#   partial-proxy - Spectral checks an automated proxy; detail says what it does NOT verify
 #   strict-only   - noisy heuristic, ships only in strict.yaml (opt-in)
-#   needs-context - not checkable from the document alone; note names the missing input
+#   needs-context - not checkable from the document alone; detail names the missing input
 #   runtime       - constrains wire behaviour; conformance test-harness territory, not a linter's
 #   human         - review/governance judgment; no useful automated check
 #   informative   - non-normative guide entry; nothing to enforce
@@ -19,868 +26,1042 @@ rules:
     status: implemented
     spectral_rules: [govstack-2.1]
     note: "assert openapi is one of the ruleset-qualified patches 3.1.0, 3.1.1, 3.1.2"
+    detail: "The linter flags any `openapi` value other than 3.1.0, 3.1.1 or 3.1.2, which also rejects OpenAPI 3.0 and later minor versions such as 3.2."
   - id: "2.2"
     class: "M+R"
     status: driver
     spectral_rules: []
     note: "canonical file at api/openapi.yaml, single entrypoint, all $refs resolve - repo file tree"
+    detail: "The linter checks that the canonical entrypoint sits at the default path or is listed in the surface inventory as a YAML file under `api/`, that the file exists, and that no `swagger.yaml` or `swagger.json` remains. The base validator catches unresolved `$ref` links."
   - id: "2.3"
     class: "R"
     status: driver
     spectral_rules: []
     note: "no undeclared current copies; api/legacy archives excluded from discovery but explicit declarations and references still validate; historical documentation and canonical snippet use require review"
+    detail: "The linter flags OpenAPI documents found outside the declared surfaces, ignoring `api/legacy/`, `api/common/` support libraries and example directories. It does not compare file contents. A reviewer checks that documentation snippets load from the canonical file and that historical contracts are labelled."
   - id: "2.4"
     class: "M"
     status: driver
     spectral_rules: []
     note: "run openapi-spec-validator against 3.1 schema"
+    detail: "In conformance mode the linter runs the OpenAPI base validator on each canonical file and example contract, and reports a missing validator as a finding. It does not separately validate referenced schema fragments that are not OpenAPI documents."
   - id: "2.5"
     class: "M"
     status: implemented
     spectral_rules: [govstack-2.5, govstack-2.5-semver]
     note: "info has title/version/description; version matches SemVer regex; contact is advisory"
+    detail: "The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged."
   - id: "2.6"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-2.6, govstack-2.6-version]
     note: "deterministic: non-empty HTTPS servers, no loopback, no /vN duplicated between server and path; only the duplication check is informational under legacy; meaningful/fake-domain judgment remains review"
+    detail: "The linter flags missing or empty `servers`, URLs that are not `https://` or name localhost or a loopback address, and a `/vN` segment repeated from the path keys. A reviewer judges whether the URLs are meaningful and not fake production domains."
   - id: "2.7"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-2.7]
     note: "each operation has stable non-empty operationId and description; casing, summary, and tags are advisory"
+    detail: "The linter flags any operation under `paths` without a non-empty `operationId` and `description`. A reviewer checks that the description is accurate and the identifier is stable and readable. Missing `summary` and `tags` are not flagged."
   - id: "2.8"
     class: "M+R"
     status: needs-context
     spectral_rules: []
     note: "conditional Problem/ValidationProblem/FieldError/PageInfo references require the vendored schema-only common file and semantic recognition of where each schema applies"
+    detail: "The linter does not check this rule. A reviewer checks whether the vendored common file is present at the required path with a pinned version, and that the named schemas are referenced rather than copied."
   - id: "3.1"
     class: "M"
     status: implemented
     spectral_rules: [govstack-3.1]
     note: "assert asyncapi is a qualified AsyncAPI 3 version (\"3.0.0\" or \"3.1.0\")"
+    detail: "The linter flags any `asyncapi` value other than 3.0.0 or 3.1.0, which also rejects AsyncAPI 2.x and later versions."
   - id: "3.2"
     class: "M+R"
     status: driver
     spectral_rules: []
     note: "canonical api/asyncapi.yaml, one entrypoint - repo file tree"
+    detail: "The linter checks that the canonical AsyncAPI file sits at the default path or is listed in the surface inventory as a YAML file under `api/`, and that the file exists with an `asyncapi` version field. Unresolved `$ref` links are caught by the AsyncAPI validator."
   - id: "3.3"
     class: "R"
     status: driver
     spectral_rules: []
     note: "no undeclared current AsyncAPI copies; api/legacy archives excluded from discovery but explicit declarations and references still validate; historical documentation requires review"
+    detail: "The linter flags AsyncAPI documents found outside the declared surfaces, ignoring `api/legacy/`, `api/common/` support libraries and example directories. It does not compare file contents. A reviewer checks that documentation snippets load from the canonical file."
   - id: "3.4"
     class: "M"
     status: driver
     spectral_rules: []
     note: "run AsyncAPI 3.0 parser/validator"
+    detail: "In conformance mode the linter runs the AsyncAPI command line validator on each canonical file and example contract, and reports a missing validator as a finding."
   - id: "3.5"
     class: "M"
     status: implemented
     spectral_rules: [govstack-3.5, govstack-3.5-semver]
     note: "info has title/version(SemVer)/description; contact is advisory"
+    detail: "The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged."
   - id: "3.6"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-3.6, govstack-3.6-host]
     note: "servers/channels/operations/components.messages non-empty; server host not localhost"
+    detail: "The linter flags an empty or missing `servers`, `channels`, `operations` or `components.messages`, and any server `host` naming localhost or a loopback address. A reviewer checks for personal machines, undocumented placeholders, fake brokers and unlabelled documentation domains."
   - id: "3.7"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-3.7]
     note: "each op has action(send/receive), description, channel ref, and >=1 msg ref; verify op msgs resolve to channel's messages; summary and tags are advisory"
+    detail: "The linter flags an operation without `action` set to `send` or `receive`, a `description`, a `channel` reference or at least one message reference, and message references that do not point at a message on that channel. A reviewer checks that the description is accurate."
   - id: "3.8"
     class: "M"
     status: needs-context
     spectral_rules: []
     note: "local CloudEvents envelopes allowed; common component reuse requires vendored file and explicit version - needs artifact context"
+    detail: "The linter does not check this rule, because it needs the vendored common file and its pinned version. A reviewer checks the envelope, the shared error references and the vendored file. The channel rules in section 17 check CloudEvents payload shapes."
   - id: "3.9"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-3.9]
-    note: "proxy: payload schemas parse as JSON Schema + apply §9/§10 checks to payload props"
+    note: "proxy: payload property names are camelCase (the 9.2 check applied to payloads); no other §9/§10 convention is applied to payload properties, and owned versus adopted fields are not distinguished"
+    detail: "The linter flags message payload property names that are not camelCase, in all payloads and not only those the BB owns. The AsyncAPI validator checks that payloads are valid schemas. A reviewer checks the other data type and format conventions."
   - id: "4.1"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-4.1]
     note: "advisory proxy: warns on every missing schema description, except combinator wrappers, required-only assertions under not, and branch properties narrowing a described property; whether a non-obvious schema has a useful description is not mechanically decidable"
+    detail: "The linter warns about every schema without a description, in component schemas, request and response bodies and message payloads, except wrappers made only of combinators. A reviewer judges which schemas really need one and whether the text is useful."
   - id: "4.2"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-4.2]
     note: "advisory body-example presence; enum \"values documented\" proxied by description presence"
+    detail: "The linter warns about request and response bodies and AsyncAPI messages without an example, and about enums without a description. A reviewer checks that the description explains what each value means, and judges whether the values are self-explanatory."
   - id: "4.3"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-4.3]
     note: "regex scan all text for TBD/Lorem ipsum/\"a, b, c\"; cross-BB-name leakage needs external list"
+    detail: "The linter warns when any text in the document contains `TBD`, `Lorem ipsum` or the list `a, b, c`. A reviewer checks for content copied from another BB and for test plans with placeholder steps."
   - id: "4.4"
     class: "R"
     status: strict-only
     spectral_rules: [govstack-4.4]
     note: "proxy: flag identical descriptions reused across operations"
+    detail: "The linter warns when two operations share an identical description. A reviewer checks that each description matches what its operation does."
   - id: "4.5"
     class: "M+R"
     status: driver
     spectral_rules: []
     note: "driver validates canonical discovery, OpenAPI/AsyncAPI paths, explicit noApi reasons, and undeclared spec copies; protocol-standard entries block conformance until an approved registry/profile can validate them"
+    detail: "The linter checks `api/index.yaml` for `version: 1`, exactly one of `apis` or `noApi: true` with a reason, valid entries with unique YAML paths under `api/` that resolve to the declared type, and fails conformance for `standard` entries. It reports a missing declaration in conformance mode."
   - id: "4.6"
     class: "M+R"
     status: driver
     spectral_rules: []
     note: "driver validates CFR requirement headings, bodies, canonical IDs and classifiers; exact active coverage ID sets including the empty set; optional separate DRAFT mappings; disposition evidence; operation/message references; uniqueness; and planned active gaps; draft maturity is explicit in notices"
+    detail: "The linter checks requirement headings and identifiers under `spec/`, then that `api/coverage.yaml` lists each active requirement once with a valid disposition and existing operation or message IDs, and flags planned entries. A reviewer checks the dispositions are truthful and `non-api` rationales name the verification boundary."
   - id: "4.7"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-4.7, govstack-4.7-pii-apikey]
     note: "x-govstack-use-case is a non-empty string or non-empty array of non-empty strings and x-govstack-pii a boolean on OpenAPI and AsyncAPI operations and AsyncAPI messages; x-govstack-pii: true fails when any applicable security requirement references an apiKey scheme; identifier existence and the truth of the pii marker are review"
+    detail: "The linter flags an `x-govstack-use-case` that is not a non-empty string or array of non-empty strings, an `x-govstack-pii` that is not a boolean, and an OpenAPI operation marked personal data that uses an API key. A reviewer checks the identifiers and the pii marker."
   - id: "5.1"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-5.1]
     note: "advisory proxy: checks the recommended /v{N}/ path default and standard endpoint exemptions; does not prove that a different declared mechanism exposes the major version unambiguously"
+    detail: "The linter flags any path that does not start with `/v{N}/`, except the standard unversioned endpoints. A reviewer checks that a surface using another declared version mechanism still exposes its major version unambiguously."
   - id: "5.2"
     class: "M+R"
     status: strict-only
     spectral_rules: [govstack-5.2]
     note: "proxy: resource segment plural heuristic; §5.10 standard unversioned endpoints are skipped"
+    detail: "The linter flags literal path segments whose last word does not end in \"s\", skipping the standard unversioned endpoints and the `search` and `lookup` leaves. It misjudges some words, so a reviewer decides whether names are plural nouns."
   - id: "5.3"
     class: "M"
     status: implemented
     spectral_rules: [govstack-5.3]
     note: "advisory default: literal segments use kebab-case; a colon custom method is flagged with a pointer to §5.8 action sub-resources"
+    detail: "The linter flags literal path segments that are not lower-case kebab-case, and flags colon custom methods such as `events:search`. Path parameters, `/v{N}` segments and the standard unversioned endpoints are skipped."
   - id: "5.4"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-5.4]
     note: "counts resource/action levels after /v{N}/; parameters and fixed IDs evidenced by matching Digital Registries collection metadata add no level. Undeclared literal IDs need review; a sibling template alone does not prove identifier semantics, and no blanket collection exemption applies. Retains warn severity for the shallow-path SHOULD, including genuine revision-depth deviations"
+    detail: "The linter counts literal path segments after `/v{N}/` and flags paths with more than two. Path parameters do not count, nor does a fixed identifier backed by matching Digital Registries collection metadata; a reviewer checks any other literal identifier."
   - id: "5.5"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-5.5]
-    note: "proxy: flag single-resource GET/DELETE identifying via query *id param"
+    note: "proxy: flags GET/DELETE query parameters named id, *Id or *_id, including collection filters such as programId; operation-level parameters only"
+    detail: "The linter flags query parameters on `GET` and `DELETE` operations named `id` or ending in `Id` or `_id`, so a legitimate filter such as `programId` is also flagged. A reviewer checks that identifiers are path parameters everywhere else."
   - id: "5.6"
     class: "M"
     status: implemented
     spectral_rules: [govstack-5.6]
     note: "advisory default: query-param names camelCase"
+    detail: "The linter flags query parameter names that are not lower camelCase, on both operations and path items. A reviewer checks any further requirements of the JSON naming chapter beyond casing."
   - id: "5.7"
     class: "M+R"
     status: strict-only
     spectral_rules: [govstack-5.7]
     note: "proxy: CRUD-like final segments vs a lexical verb list; actual CRUD semantics require review"
+    detail: "The linter flags a path whose final segment contains a CRUD-like word such as `create`, `update`, `delete` or `list`. A reviewer decides whether the action is really CRUD or a domain action."
   - id: "5.8"
     class: "R"
     status: human
     spectral_rules: []
     note: "colon custom methods are flagged by govstack-5.3; choosing a resource scope and reserving action names from the collection identifier format are review-only"
+    detail: "The linter flags colon custom methods (a `:verb` suffix on a path segment). A reviewer checks that other custom operations are action sub-resources and that action names such as `search` are excluded from the collection's identifier format or declared reserved."
   - id: "5.9"
     class: "informative"
     status: human
     spectral_rules: []
     note: "informative reference to govstack-cfr-architecture#req-15; this guide adds no health-specific contract or linter checks"
+    detail: "This entry points to the Cross-Functional Requirements for health checks and adds no requirement of its own."
   - id: "5.10"
     class: "M"
     status: implemented
     spectral_rules: [govstack-5.10]
     note: "the exemptions this rule grants are implemented where they bite (5.1/5.3 in pathSegments, 12.x in s12-collectionPagination, 13.1 by accepting an explicit `security: []`), all reading the closed set from functions/lib/standardEndpoints.js; the rule of its own enforces the prohibition, that these paths declare no mutating method. Whether a GET on such a path is a business resource in disguise is left to review."
+    detail: "The linter flags `POST`, `PUT`, `PATCH` or `DELETE` on the standard unversioned paths, and exempts those paths from the version-prefix and kebab-case checks. A reviewer checks that no business resource is exposed there through `GET`."
   - id: "6.1"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-6.1]
     note: "GET operations declare no requestBody"
+    detail: "The linter flags a `requestBody` on any `GET` operation. A reviewer, and a test against a running implementation, check that the operation is actually safe and idempotent."
   - id: "6.2"
     class: "R"
     status: human
     spectral_rules: []
-    note: "descriptive, no normative keyword"
+    note: "no automated check; the SHOULD and MAY clauses on POST semantics and success status need review"
+    detail: "The linter does not check this rule. A reviewer checks that `POST` is used for creation or actions and that its success status matches the outcome: `201`, `202`, `200` or `204`."
   - id: "6.3"
     class: "R"
     status: runtime
     spectral_rules: []
     note: "replace-entire-resource/idempotent is runtime"
+    detail: "A test against a running implementation checks that a `PUT` replaces the whole resource and that repeating it leaves the same state."
   - id: "6.4"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-6.4]
-    note: "advisory proxy: recognises the Merge Patch default; registered alternative patch media types and documented semantics require review"
+    note: "advisory proxy: requires application/merge-patch+json on every PATCH body and rejects plain application/json, so a justified registered alternative is flagged too; documented semantics require review"
+    detail: "The linter flags a `PATCH` request body that lacks `application/merge-patch+json` or offers plain `application/json`. An operation that deliberately uses only another registered patch format is flagged too; a reviewer checks the documented patch semantics."
   - id: "6.5"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-6.5]
     note: "proxy: DELETE responses in {204(no body),200,202}"
+    detail: "The linter flags a `DELETE` that declares `201`, `203`, `205`, `206`, `207`, `208` or `226`, or a `204` that declares content. A reviewer checks that a synchronous hard delete returns `204` and that `200` or `202` is used only for soft or asynchronous deletes."
   - id: "6.6"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-6.6]
     note: "POST /search and /lookup return 200 not 201; identifying other read-only POSTs and their single-resource or collection semantics requires review"
+    detail: "The linter checks that a `POST` on a path ending in `/search` or `/lookup` declares `200` and not `201`. A reviewer finds other read-only `POST` operations and checks their single-resource or collection semantics."
   - id: "6.7"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-6.7]
     note: "proxy: collection-targeted PUT/PATCH/DELETE require >=1 param"
+    detail: "The linter flags a `PUT`, `PATCH` or `DELETE` on a path with no path parameter when the operation declares no query parameter. It does not check that the parameter limits what is changed, nor that append-only resources expose no such method."
   - id: "7.1"
     class: "R"
     status: human
     spectral_rules: []
     note: "descriptive status mapping, no MUST"
+    detail: "The linter does not check this rule. A reviewer checks that successful reads and completed non-creation actions return `200` with a representation."
   - id: "7.2"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-7.2]
     note: "checks Location on declared 201 responses; whether an operation creates a resource and therefore needs 201 requires semantic review, independent of its operationId spelling"
+    detail: "The linter checks that every declared `201` response includes a `Location` header. A reviewer checks that the operation really completes a creation, that accepted-only work uses `202`, and that the header points to the created resource."
   - id: "7.3"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-7.3, govstack-15.1]
     note: "declared 202 responses have Location checks under §7.3 and concrete content/schema checks under §15.1 where HTTP permits content; asynchronous applicability and the meaning of the local Operation resource require review"
+    detail: "The linter checks that every declared `202` response includes a `Location` header and, except for `HEAD`, content with a non-empty schema. A reviewer checks that the work really is asynchronous and that the content follows the local Operation schema."
   - id: "7.4"
     class: "R"
     status: human
     spectral_rules: []
-    note: "descriptive"
+    note: "no rule of its own; 204 with content is flagged under 7.21 and 6.5; choosing 204 over 200 needs review"
+    detail: "The linter flags a `204` response that declares content, and a `DELETE` `204` with a body. A reviewer checks that operations with no representation use `204` rather than `200`."
   - id: "7.5"
     class: "R"
     status: human
     spectral_rules: []
-    note: "descriptive"
+    note: "no rule of its own; a missing 400 is flagged by the 7.14 baseline when a body or path/query parameters exist (header parameters do not trigger it); 400 versus 422 needs review"
+    detail: "The linter flags an operation with a request body or path or query parameters that declares no `400` response, through the baseline check under 7.14. A reviewer checks that `400` is used for malformed input and `422` for semantic errors."
   - id: "7.6"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-7.6]
     note: "every 401 response declares WWW-Authenticate"
+    detail: "The linter checks that every declared `401` response lists a `WWW-Authenticate` header, and flags secured operations that declare no `401`. A reviewer checks the challenge value, such as the bearer `invalid_token` error."
   - id: "7.7"
     class: "R"
     status: human
     spectral_rules: []
-    note: "descriptive"
+    note: "no rule of its own; a missing 403 is flagged by the 7.14 baseline when security names scopes; other rejecting operations and a documented 404 choice need review"
+    detail: "The linter flags an operation whose security requirements name scopes but that declares no `403`, through the baseline check under 7.14. A reviewer checks other operations that can reject a caller, and any documented choice to return `404` instead."
   - id: "7.8"
     class: "R"
     status: human
     spectral_rules: []
-    note: "descriptive"
+    note: "no rule of its own; a missing 404 is flagged by the 7.14 baseline on templated paths; the empty-collection 200 needs review"
+    detail: "The linter flags an operation on a path with a `{param}` segment that declares no `404`, through the baseline check under 7.14. A reviewer checks that an empty collection returns `200` with an empty `items` array."
   - id: "7.9"
     class: "R"
     status: human
     spectral_rules: []
-    note: "descriptive"
+    note: "no automated check; the SHOULD clauses on 409 versus 412 need review"
+    detail: "The linter does not check this rule. A reviewer checks that operations which can conflict with current state declare `409`, and that failed preconditions use `412` instead."
   - id: "7.10"
     class: "R"
     status: human
     spectral_rules: []
-    note: "descriptive"
+    note: "no automated check; the SHOULD clauses on 410 need review"
+    detail: "The linter does not check this rule. A reviewer checks that `410` is used only for a resource or endpoint known to be permanently removed."
   - id: "7.11"
     class: "R"
     status: human
     spectral_rules: []
-    note: "descriptive"
+    note: "no automated check; the SHOULD clauses on 422 need review"
+    detail: "The linter does not check this rule. A reviewer checks that well-formed requests that violate domain validation return `422`."
   - id: "7.12"
     class: "R"
     status: human
     spectral_rules: []
-    note: "descriptive"
+    note: "no rule of its own; a 429 without Retry-After is reported (info) under 8.7; whether rate-limited operations declare 429 needs review"
+    detail: "The linter only checks that a declared `429` response lists `Retry-After`, as an information-level finding under 8.7. A reviewer checks that operations enforcing a caller-visible rate limit declare `429` at all."
   - id: "7.13"
     class: "M"
     status: implemented
     spectral_rules: [govstack-7.13]
     note: "every operation declares a 500 response"
+    detail: "The linter flags any operation under `paths` that declares no `500` response. A reviewer checks the additional `502`, `503` and `504` responses for operations behind a gateway or dependent service."
   - id: "7.14"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-7.14, govstack-7.14-creation-status, govstack-7.14-baseline-errors]
     note: "proxy: >1 code and >=1 non-2xx; creation-like POSTs expose 201/202; visible security/scope/body/parameter/path shape deterministically requires baseline 401/403/400/404"
+    detail: "The linter flags operations with fewer than two responses or no error response, creation-like `POST` operations without `201` or `202`, and missing `400`, `401`, `403` or `404` where security, parameters or path call for them. A reviewer checks completeness and use of `default`."
   - id: "7.15"
     class: "R"
     status: human
     spectral_rules: []
-    note: "descriptive"
+    note: "no rule of its own; PUT/PATCH without 412 is reported (info) under 7.17; 412 versus 409 needs review"
+    detail: "The linter only checks that `PUT` and `PATCH` operations declare a `412` response, as an information-level finding under 7.17. A reviewer checks that failed preconditions use `412` rather than `409`."
   - id: "7.16"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-7.16]
     note: "proxy: single-resource GETs declare ETag header + 304 (advisory SHOULD); skips GETs whose 200 body is a root array or items-array page (collection ETag is MAY); exempts the 5.10 operational endpoints /health and /ready (a liveness probe is not a cacheable resource)"
+    detail: "The linter flags, as an information-level finding, a `GET` returning a single resource that has no `ETag` header on its `200` response or no `304` response. Collection responses, `/health` and `/ready` are skipped; a reviewer checks the `ETag` is derived from the representation."
   - id: "7.17"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-7.17]
     note: "proxy: PUT/PATCH declare If-Match param + 412 response (advisory; the MUST applies only where optimistic concurrency is supported, which the linter cannot detect, so the proxy stays at info)"
+    detail: "The linter flags, as an information-level finding, a `PUT` or `PATCH` that declares no `If-Match` header parameter or no `412` response. It cannot tell which endpoints support optimistic concurrency; a reviewer checks strong validators, `428` and the reservation of `409`."
   - id: "7.18"
     class: "M"
     status: implemented
     spectral_rules: [govstack-7.18]
     note: "every 405 response declares Allow header"
+    detail: "The linter checks that every declared `405` response lists an `Allow` header. It does not check the listed methods; a test against a running implementation checks that the header names the methods the resource supports."
   - id: "7.19"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-7.19]
     note: "PATCH operations declare a 415 response"
+    detail: "The linter checks that every `PATCH` operation declares a `415` response. A test against a running implementation checks that an unsupported patch media type is actually rejected with `415`."
   - id: "7.20"
     class: "M"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-7.20]
-    note: "problem+json / operation-status responses declare Cache-Control (no-store)"
+    note: "proxy: problem+json responses declare a Cache-Control header; its value (no-store) and Operation-status responses are not checked"
+    detail: "The linter checks that a response offering `application/problem+json` declares a `Cache-Control` header, but not its value. A reviewer checks for `no-store` and covers Operation-status responses, which the linter does not recognise."
   - id: "7.21"
     class: "M"
     status: implemented
     spectral_rules: [govstack-7.21, govstack-15.1]
     note: "declared 2xx response media types carry non-empty schemas across paths, webhooks and nested callbacks; HEAD, 204 and 205 responses have no content. The shared §15.1 check owns 202 content/schema findings, including HEAD's no-content exception, so each defect is reported once"
+    detail: "The linter flags a `2xx` response whose media type has no schema or an empty one, and any `HEAD`, `204` or `205` response that declares content. Paths, webhooks and callbacks are covered; `202` bodies are checked under 15.1."
   - id: "8.1"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-8.1]
     note: "proxy: no apiKey scheme in query/cookie, no token-like query params"
+    detail: "The linter flags an `apiKey` security scheme placed in the query or a cookie, and path or query parameters named like a credential (token, secret, password, `apiKey`). A reviewer checks other names, URL fragments and header values."
   - id: "8.2"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-8.2]
     note: "proxy: ops taking Accept-Language declare Content-Language response header"
+    detail: "The linter checks that an operation declaring an `Accept-Language` header parameter lists `Content-Language` on each `2xx` response. A reviewer checks that the value is the language actually selected and that cacheable responses declare `Vary: Accept-Language`."
   - id: "8.3"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-14.1]
     note: "shared with §14.1: POSTs returning 201 or 202 declare Idempotency-Key; reports once under §14.1"
+    detail: "The linter flags a `POST` that declares a `201` or `202` response without an `Idempotency-Key` header parameter, reported under the idempotency rules (14.1). A reviewer decides which other `POST` endpoints need idempotency and whether an exemption applies."
   - id: "8.4"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-8.4]
     note: "proxy: operations with effective nonempty security declare W3C traceparent request header; runtime propagation remains review/test"
+    detail: "The linter flags operations with security requirements that declare no `traceparent` header parameter, using security as a stand-in for cross-service calls. A reviewer or runtime test checks propagation, `traceId` matching, `tracestate` content and unsecured cross-service operations."
   - id: "8.5"
     class: "M"
     status: implemented
     spectral_rules: [govstack-8.5]
     note: "no header parameter or response header uses the X- prefix"
+    detail: "The linter flags any header parameter or response header whose name starts with `X-`. It cannot tell a new header from an existing legacy one, so a reviewer decides whether the legacy exception applies."
   - id: "8.6"
     class: "R"
     status: strict-only
     spectral_rules: [govstack-8.6]
     note: "proxy: flag param names matching personal-data terms"
+    detail: "The linter flags path, query and header parameter names that look like personal data, such as `email`, `phone` or `nationalId`. It cannot see values or other names, so a reviewer checks that no personal data appears in addressable locations."
   - id: "8.7"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-8.7, govstack-8.7-no-legacy]
     note: "proxy: 429 responses declare Retry-After (SHOULD-level rule, proxy at info); structured RateLimit is MAY and unchecked; quota scope and gateway ownership are review-only; deterministic warn flags legacy RateLimit-Limit/Remaining/Reset"
+    detail: "The linter flags a declared `429` response without `Retry-After` (an information-level finding) and any response declaring the legacy `RateLimit-Limit`, `RateLimit-Remaining` or `RateLimit-Reset` headers. A reviewer checks quota scope, gateway ownership and use of `RateLimit-Policy`."
   - id: "8.8"
     class: "M+R"
     status: strict-only
     spectral_rules: [govstack-8.8]
     note: "proxy: flag request and response header names that look like tenant/organisation ids, customer ids, callback URLs or national/citizen ids; GovStack- prefix on cross-BB headers, plain names on BB-local headers and BB codes or versions in names need review"
+    detail: "The linter flags header names that look like tenant, organisation, customer, callback or national-identifier headers. A reviewer checks the `GovStack-` prefix, plain names for local headers, and BB codes or versions in names."
   - id: "9.1"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-9.1]
-    note: "proxy: responses use application/json; binary/export exception unknowable"
+    note: "proxy: response content offers some media type containing json (problem+json alone passes); binary/export exceptions need review"
+    detail: "The linter flags a response whose `content` offers no JSON media type; any type containing `json` counts, so it does not check that `application/json` is the default. It also flags binary and export responses, which a reviewer confirms are exceptions."
   - id: "9.2"
     class: "M"
     status: implemented
     spectral_rules: [govstack-9.2]
     note: "advisory: reusable and inline OpenAPI body fields plus AsyncAPI payload fields use camelCase"
+    detail: "The linter checks that property names in OpenAPI body schemas and AsyncAPI message payloads are camelCase. It cannot tell GovStack-owned fields from fields adopted from an external standard, so it flags both; a reviewer confirms those exceptions."
   - id: "9.3"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-9.3]
     note: "proxy: flag boolean-looking props typed string / enum [\"true\",\"false\"]"
+    detail: "The linter flags properties in reusable schemas typed `string` whose names start with a boolean-style prefix such as `is`, `has` or `can`, and enums holding only \"true\" and \"false\". A reviewer checks booleans under other names or typed as 0 and 1."
   - id: "9.4"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-9.4]
     note: "proxy: flag 3.0-style nullable:true (should be type:[...,\"null\"])"
+    detail: "The linter flags the OpenAPI 3.0 `nullable` keyword anywhere in an OpenAPI 3.1 document. It does not check that every field that can be null declares `\"null\"` in its `type`; a reviewer checks that."
   - id: "9.5"
     class: "M"
     status: implemented
     spectral_rules: [govstack-9.5]
     note: "advisory: reusable and inline OpenAPI body fields plus AsyncAPI payload fields use ASCII without spaces"
+    detail: "The linter checks that property names in OpenAPI body schemas and AsyncAPI message payloads contain no whitespace or non-ASCII characters. It cannot tell GovStack-owned fields from external-standard fields, so a reviewer confirms those exceptions."
   - id: "9.6"
     class: "R"
     status: strict-only
     spectral_rules: [govstack-9.6]
     note: "proxy: property names vs abbreviation dictionary"
+    detail: "The linter flags property names containing a word from a fixed abbreviation list, such as `qty`, `addr` or `msg`, and suggests the full word. Abbreviations outside the list are missed."
   - id: "9.7"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-9.7]
     note: "SHOULD-level proxy at info: enum string values SCREAMING_SNAKE_CASE minus the rule's carve-outs (BCP 47 tags, reverse-DNS error codes and event types, media types, x-govstack-* vocabularies, and the JOSE/COSE names not already all-caps). IANA registry membership is not visible in a document, so a registered value outside the listed set is a miss. Actual sort/fields query parameters and request-body properties identify selector enums through resolved file references; selectors reached under other names remain a known false positive."
+    detail: "The linter reports, as an information-level finding, string enum values in reusable schemas that are not SCREAMING_SNAKE_CASE, skipping language tags, reverse-DNS identifiers, media types and listed JOSE and COSE names. A reviewer checks other IANA-registered values."
   - id: "9.8"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-9.8]
     note: "HTTP response resource roots do not set additionalProperties:false; classifying emitted event resources requires review; closed operation request schemas and nested payloads are permitted"
+    detail: "The linter flags an OpenAPI response body schema that sets `additionalProperties: false` at its top level. Closed request schemas and nested objects pass. A reviewer checks emitted event schemas and that clients can ignore unknown enum values."
   - id: "9.9"
     class: "R"
     status: partial-proxy
     spectral_rules: [govstack-9.9]
     note: "proxy: flag closed enums lacking x-extensible-enum/UNKNOWN fallback; request-only field-selection and sort-key enums are exempt, while schemas also emitted in responses or events retain the check"
+    detail: "The linter reports, as an information-level finding, string enums in reusable schemas with neither `x-extensible-enum` nor a fallback member such as `UNKNOWN`. It cannot tell which value sets will grow, so a reviewer judges whether a flagged fixed set is acceptable."
   - id: "9.10"
     class: "M+R"
     status: strict-only
     spectral_rules: [govstack-9.10]
     note: "proxy: GovStack-semantic extensions use x-govstack- prefix (weak)"
+    detail: "The linter flags `x-` keys that mention GovStack without the exact `x-govstack-` prefix, and bare `x-deprecated` or `x-api-guide`. A reviewer decides which other extensions are GovStack-defined."
   - id: "9.11"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-9.11]
     note: "in-doc: extract bb-code from canonical problem-type URIs, OAuth scopes, event types and logical channel IDs; verify identical + regex ^[a-z][a-z0-9-]{1,30}$; protocol-native address values are excluded; ecosystem uniqueness needs registry"
+    detail: "The linter extracts BB codes from OAuth scopes, reverse-DNS identifiers and problem-type URIs, and checks each matches the code pattern and that the document uses one code throughout. Ecosystem-wide uniqueness needs a register, and a reviewer checks the rest."
   - id: "10.1"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-10.1]
     note: "proxy: resource id fields are strings; source ownership, scoped uniqueness, stability and URL disclosure require review; UUID is not required"
+    detail: "The linter flags properties named `id` or ending in `Id` that do not declare `type: string`. A reviewer checks uniqueness within the scope, stability, opacity, URL safety and personal-data disclosure."
   - id: "10.2"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-10.2]
     note: "proxy: At-named fields explicitly declare string date/date-time alternatives; Timestamp fields declare date-time only. Checks allOf/anyOf/oneOf and resolved references, with bounded expansion; instance validity and uppercase UTC Z serialization remain runtime obligations"
+    detail: "The linter checks that properties ending in `At` declare a string with `format: date` or `date-time`, and that properties ending in `Timestamp` declare `date-time`. A test against a running implementation checks UTC values with the `Z` designator."
   - id: "10.3"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-10.3]
     note: "proxy: date-named fields declare format:date"
+    detail: "The linter checks that properties ending in `Date` declare `type: string` with `format: date`. Date fields with other names, and whether values are valid calendar dates, are left to a reviewer and to tests against a running implementation."
   - id: "10.4"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-10.4]
-    note: "proxy: money fields are {amount:string,currency} object, not type:number"
+    note: "proxy: forbids number/integer on fields named *amount, *price or *balance; the {amount, currency} object or decimal-string shape is not checked"
+    detail: "The linter flags properties whose names end in `amount`, `price` or `balance` (any case) when typed `number` or `integer`. It does not check for the `{ amount, currency }` object or a decimal string; a reviewer checks that."
   - id: "10.5"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-10.5]
     note: "proxy: phone fields string with E.164 pattern"
+    detail: "The linter checks that properties with `phone` in the name are strings with exactly the pattern `^\\+[1-9]\\d{1,14}$`, and flags any other pattern. Other field names, and whether a number is real, are left to a reviewer."
   - id: "10.6"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-10.6]
     note: "proxy: email fields declare format:email"
+    detail: "The linter checks that properties with `email` in the name are strings declared with `format: email`. A reviewer checks that display names stay out of the value, and a test checks that real values follow the syntax."
   - id: "10.7"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-10.7]
     note: "proxy: base64 fields declare contentEncoding:base64 + maxLength"
+    detail: "The linter checks that properties with `signature`, `certificate`, `qrCode`, `qr_code` or `attestation` in the name declare a string with `contentEncoding: base64` and a `maxLength`. A reviewer checks other base64 fields and that large binaries use `multipart/form-data` or a dedicated endpoint."
   - id: "10.8"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-10.8]
-    note: "proxy: country fields match ^[A-Z]{2}$ / ISO enum"
+    note: "proxy: country fields carry exactly ^[A-Z]{2}$; an enum of ISO codes without that pattern is flagged; code assignment is not checked"
+    detail: "The linter checks that properties with `country` in the name are strings with exactly the pattern `^[A-Z]{2}$`. It does not check that the code is assigned, and a field limited by an `enum` of codes without that pattern is flagged."
   - id: "10.9"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-10.9]
     note: "proxy: language fields match BCP-47 pattern"
+    detail: "The linter checks that properties with `language` or `locale` in the name are strings declaring one specific common-case BCP 47 pattern, and flags any other pattern. A reviewer judges whether a fuller BCP 47 pattern is acceptable."
   - id: "10.10"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-10.10]
     note: "proxy: currency fields match ^[A-Z]{3}$"
+    detail: "The linter checks that properties named `currency`, starting with `currency` or containing `Currency` are strings with exactly the pattern `^[A-Z]{3}$`. It does not check that the code is assigned, and an `enum` of codes without the pattern is flagged."
   - id: "10.11"
     class: "M"
     status: implemented
     spectral_rules: [govstack-10.11-openapi, govstack-10.11-asyncapi]
     note: "no declared media type or contentType sets charset to an encoding other than UTF-8. Payload bytes themselves are outside a document linter's reach."
+    detail: "The linter flags any media type under request or response `content`, and any AsyncAPI `contentType`, that sets a `charset` other than UTF-8. A test against a running implementation checks the payload bytes."
   - id: "11.1"
     class: "M"
     status: implemented
     spectral_rules: [govstack-11.1]
     note: "4xx/5xx and default error responses declare application/problem+json content; HEAD errors omit content. OpenAPI surface only (problem+json/status-code mechanism has no AsyncAPI equivalent)."
+    detail: "The linter checks that every 4xx, 5xx and `default` response in an OpenAPI document declares `application/problem+json` content with a schema, and that `HEAD` responses declare no content. The problem schema itself is checked separately."
   - id: "11.2"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-11.2, govstack-11.2-type]
     note: "problem schema has type/title/status, omits timestamp, and any declared code is type string, after ref resolution; literal examples use the canonical type URI; that code mirrors a documented BB/external machine code and is never required to interpret a problem, status/body equality, URI dereferenceability and no-sensitive-detail clauses require review or instance tests"
+    detail: "The linter checks that the problem schema requires `type`, `title` and `status`, declares no `timestamp`, and types any `code` as a string, and that literal `type` examples use the canonical problem URI form. A reviewer checks the remaining clauses."
   - id: "11.3"
     class: "M"
     status: implemented
     spectral_rules: [govstack-11.3]
     note: "problem schema requires traceId after reference resolution; runtime equality with the originating W3C traceparent, including retained traceId on stored replays, is not checked"
+    detail: "The linter checks that the `application/problem+json` response schema lists `traceId` as required. A test against a running implementation checks that its value equals the trace-id of the request's `traceparent`."
   - id: "11.4"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-11.4]
     note: "when an HTTP problem schema declares errors, it requires errors[] items with pointer/message and omits field-level code; the linter does not infer JSON-body field attribution or validate an optional parameter-to-pointer mapping"
+    detail: "When a problem schema declares `errors`, the linter checks that it is required, is an array, requires `pointer` and `message` in each item, and declares no item `code`. A reviewer decides which failures are attributable to request fields."
   - id: "11.5"
     class: "R"
     status: runtime
     spectral_rules: []
     note: "problem fields stable across localised responses - runtime"
+    detail: "A test against a running implementation checks that `type`, `status`, `traceId`, `instance` and field-error `pointer` stay identical across localised responses."
   - id: "11.6"
     class: "M+R"
     status: needs-context
     spectral_rules: []
     note: "shared GovStackAsyncError reference and transport-specific rejection binding require common-artifact resolution; §17.16 has a weaker in-document proxy"
+    detail: "The linter does not check this rule. Resolving the shared `GovStackAsyncError` schema and the transport-specific rejection binding needs the common AsyncAPI artefact, so a reviewer checks them."
   - id: "12.1"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-12.1]
     note: "proxy: likely collection paths declare pagination parameters; exempts standard unversioned endpoints and response arrays with maxItems bounds; nested array bounds, relationship collection classification, and completeness of the permitted view require semantic review"
+    detail: "The linter flags a GET on a path not ending in a path parameter that declares neither `pageSize` nor `offset`, unless the response array has `maxItems` or the path is a standard unversioned endpoint. A reviewer checks what counts as a collection."
   - id: "12.2"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-12.2]
     note: "proxy: paginated lists declare pageSize+cursor; fixed or variable page-size semantics, cursor integrity, expiry and repeated criteria require review; exempts standard unversioned and schema-bounded endpoints"
+    detail: "The linter flags a collection GET that does not declare both `pageSize` and `cursor` query parameters, unless it uses `offset`, is bounded by `maxItems` or is a standard unversioned endpoint. A reviewer checks cursor integrity, expiry and ordering."
   - id: "12.3"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-12.3]
     note: "proxy: paginated response schema requires items and pageInfo with a nullable, non-empty nextCursor and does not declare hasMore; runtime continuation including short or empty pages and total exact/estimated plus snapshot/current semantics require review"
+    detail: "For collection GETs without `offset`, the linter checks that the 200 `application/json` schema requires `items` and `pageInfo`, that `pageInfo` requires a nullable, non-empty `nextCursor` and declares no `hasMore`. A reviewer checks `total` and runtime continuation."
   - id: "12.4"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-12.4]
     note: "pageSize param schema has default and maximum; exempts the 5.10 standard unversioned endpoints and collections bounded by their own maxItems, on the same terms as 12.1"
+    detail: "The linter checks that a collection GET declares a `pageSize` parameter whose schema has a `default` and a `maximum`, with the same exemptions as the other pagination checks."
   - id: "12.5"
     class: "R"
     status: human
     spectral_rules: []
     note: "permissive MAY"
+    detail: "The linter does not check this rule. The pagination envelope checks accept a response with or without `total`."
   - id: "12.6"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-12.6]
     note: "if offset param present, envelope {items,offset,limit,total?}: items/offset/limit required, total optional and integer when declared; the statement that total is omitted and short-page end-of-traversal semantics are review"
+    detail: "When a collection GET declares an `offset` parameter, the linter checks that the 200 response schema requires `items`, `offset` and `limit`, that `items` is an array and that any `total` is an integer. A reviewer checks the statement about omitting `total` and short pages."
   - id: "12.7"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-12.7-name, govstack-12.7-grammar]
-    note: "advisory proxy: checks the recommended sort name and field/-field grammar; allowed fields, direction documentation, default order, and stable tie-breaker require review"
+    note: "advisory proxy: flags orderBy/sortBy and a sort parameter that is not a string with a non-empty pattern; the pattern itself is not examined; allowed fields, direction documentation, default order and tie-breaker require review"
+    detail: "The linter flags parameters named `orderBy` or `sortBy`, and a `sort` parameter that is not a string with a `pattern`. It does not check what the pattern allows; a reviewer checks allowed fields, direction syntax, default order and tie-breaker."
   - id: "12.8"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-12.8]
     note: "proxy: flag operator-style filter params (field[gte], generic filter)"
+    detail: "The linter flags query parameters named with a bracketed operator suffix such as `field[gte]`, and parameters named `filter` or `filters`. A reviewer checks that other filters are equality only, carry no personal data and avoid reserved names."
   - id: "12.9"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-12.9-body, govstack-12.9-response]
     note: "proxy: POST /search carries pageSize/cursor in body with the §12.3 envelope, or offset/limit with the §12.6 envelope (an offset body selects the offset contract, so a mismatch is flagged); follow-up criteria and other search semantics require review"
+    detail: "For `POST` operations on paths ending in `/search`, the linter checks that the request body declares `pageSize` and `cursor`, or `offset` and `limit`, and that the 200 response uses the matching envelope. A reviewer checks that follow-up requests repeat the criteria."
   - id: "12.10"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-12.10]
     note: "when a fields query parameter is declared: a string without an enum, or a string array (enum allowed on items) with style form and explode false; not required; and the operation declares 400 (4XX accepted); top-level-name semantics, always-returned members, the unknown-name Problem type and no authorisation widening are review/runtime"
+    detail: "When an operation declares a `fields` query parameter, the linter checks that it is optional, is a string without `enum` or a string array with `explode: false`, and that the operation declares `400` or `4XX`. A reviewer or test checks names, always-returned members and authorisation."
   - id: "13.1"
     class: "M"
     status: implemented
     spectral_rules: [govstack-13.1]
     note: "root security + securitySchemes present and every operation covered (or explicit override); the 5.10 standard unversioned endpoints satisfy it with an explicit `security: []`, which counts as that override"
+    detail: "The linter checks that an OpenAPI document declares at least one scheme under `components.securitySchemes` and that every operation is covered by the root `security` requirement or its own `security` entry, including an explicit empty one. The AsyncAPI side is checked under 17.10."
   - id: "13.2"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-13.2, govstack-13.2-forbidden-flows]
     note: "proxy: an openIdConnect/oauth2 scheme exists, or the resource-server alternative (type http, scheme bearer, bearerFormat JWT); deterministic error forbids password and implicit OAuth2 flows. Not checked: that the resource-server case really is one, or that its accepted issuers and required audience are documented"
+    detail: "The linter warns when an OpenAPI document declares no `openIdConnect` or `oauth2` scheme (or an `http` bearer JWT scheme), and flags OAuth 2.0 password and implicit flows. A reviewer checks which operations are citizen-facing, the discovery URL, and the documented issuers and audience."
   - id: "13.3"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-13.3]
-    note: "proxy: an mTLS/client-credentials/X509 scheme exists"
+    note: "proxy: an OpenAPI mutualTLS scheme or an oauth2 scheme with a clientCredentials flow exists; AsyncAPI schemes are not examined"
+    detail: "The linter warns when an OpenAPI document declares no `mutualTLS` scheme and no `oauth2` scheme with a `clientCredentials` flow. A reviewer checks which operations cross a BB-to-BB boundary, audience and scope restriction, sender-constrained tokens, and AsyncAPI schemes."
   - id: "13.4"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-13.4]
-    note: "proxy: scope strings match bb:{bb-code}:{resource}:{action}. Only fires where scopes are declared, so an API authorizing on token claims instead is silent here; that its required claims are documented per operation is left to review"
+    note: "proxy: OAuth flow scopes match bb:{bb-code}:{resource}:{action}, the global.govstack reverse-DNS form, or a bare resource.action. Only fires where scopes are declared in OAuth flows; claim-based authorisation and per-operation documentation are left to review"
+    detail: "The linter warns when an OAuth scope declared in a flow does not match an accepted naming shape: `bb:{bb-code}:{resource}:{action}`, the `global.govstack` reverse-DNS form, or `resource.action`. A reviewer checks the registered BB code, per-operation scope or claim documentation, and consistency."
   - id: "13.5"
     class: "M+R"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-13.5]
-    note: "checks apiKey schemes for query/cookie placement; HTTP token Authorization, mTLS, and protocol-native credential behaviour require review"
+    note: "proxy: apiKey schemes must not sit in query or cookie; path and fragment credentials, Authorization header use and protocol-native behaviour require review"
+    detail: "The linter flags an `apiKey` security scheme that places the credential in the query string or a cookie. A reviewer checks that HTTP tokens use the `Authorization` header, path or fragment credentials, and protocol-native credential behaviour."
   - id: "13.6"
     class: "R"
     status: partial-proxy
     spectral_rules: [govstack-13.6]
     note: "proxy: apiKey applied only to operational (/health-like) ops"
+    detail: "The linter warns when an `apiKey` scheme is applied to an operation whose path has no health-like segment (such as `health`, `live`, `ready`, `metrics` or `ping`). It cannot tell which operations handle personal data; a reviewer checks that."
   - id: "13.7"
     class: "M+R"
     status: human
     spectral_rules: []
     note: "externally reachable surface classification, equivalent AsyncAPI transport protection, negotiated TLS version, and deployment TLS configuration require protocol and runtime review; §2.6 separately checks declared OpenAPI server URLs"
+    detail: "The linter does not check this rule. A reviewer checks which servers are externally reachable, AsyncAPI transport protection and TLS configuration; a test against a running deployment checks the negotiated TLS version."
   - id: "14.1"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-14.1]
-    note: "proxy: POSTs returning 201 or 202 accept Idempotency-Key; other semantic triggers and natural-idempotency exemptions require review"
+    note: "proxy: POSTs returning 201 or 202 declare an Idempotency-Key header parameter (required: true is not checked); other semantic triggers and natural-idempotency exemptions require review"
+    detail: "The linter warns when a `POST` that declares a `201` or `202` response has no `Idempotency-Key` header parameter. A reviewer checks the other triggers (value movement, messages, subscriptions), the optional tiers, and natural-idempotency exemptions."
   - id: "14.2"
     class: "R"
     status: human
     spectral_rules: []
     note: "review the specification's accepted key syntax and maximum length; key generation and rejection behaviour also require implementation-level tests"
+    detail: "The linter does not check this rule. A reviewer checks the documented key syntax and maximum length; a test against a running implementation checks key handling and the `400` rejection of malformed or oversized keys."
   - id: "14.3"
     class: "R"
     status: human
     spectral_rules: []
     note: "\"document replay window\" prose"
+    detail: "The linter does not check this rule. A reviewer checks that the replay window, or the parameter controlling it, and the behaviour after expiry are documented."
   - id: "14.4"
     class: "R"
     status: runtime
     spectral_rules: []
     note: "replay preserves the original result and stored Problem traceId; current-attempt tracing headers are separate - runtime"
+    detail: "A test against a running implementation checks that a replayed request returns the original status, body and result headers, with per-attempt headers regenerated."
   - id: "14.5"
     class: "R"
     status: runtime
     spectral_rules: []
     note: "422/409 on key-reuse/fingerprint - runtime"
+    detail: "A test against a running implementation checks the lookup scope and fingerprint, the `422` on key reuse with a different request, and the `409` while the original is in flight."
   - id: "14.6"
     class: "R"
     status: human
     spectral_rules: []
     note: "\"document per-operation duplicate handling\" - human"
+    detail: "The linter does not check this rule. A reviewer checks that each naturally idempotent operation documents how it handles duplicate submissions."
   - id: "15.1"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-15.1, govstack-7.3]
     note: "§15.1 checks concrete non-empty content schemas on declared non-HEAD 202 responses and forbids HEAD 202 content; §7.3 owns Location checks. Whether work is asynchronous and whether the representation denotes its local Operation resource require semantic review"
+    detail: "The linter flags a non-`HEAD` `202` response that declares no content or a media type with an empty schema, and a `HEAD` `202` that declares content. A separate check covers `Location`; a reviewer checks that the work is asynchronous and the body is an Operation."
   - id: "15.2"
     class: "M+R"
     status: human
     spectral_rules: []
     note: "local Operation identifier and state-dependent shape require semantic review; no ecosystem field names or formats are prescribed"
+    detail: "The linter does not check this rule. A reviewer checks that the local Operation schema documents its identifier, state, result, error and progress fields, and when each is present."
   - id: "15.3"
     class: "M+R"
     status: human
     spectral_rules: []
     note: "terminal/non-terminal lifecycle and result/error/cancellation semantics require review; no fixed enum is prescribed"
+    detail: "The linter does not check this rule. A reviewer checks that terminal and non-terminal states are distinguished and that result, error, polling and cancellation behaviour is documented per state."
   - id: "15.4"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-15.4]
-    note: "proxy: canonical GET /v1/operations/{operationId} present when Operations used. level MUST in rules.yaml (class M+R)."
+    note: "proxy: GET /v{N}/operations/{operationId} present when an Operation schema or /operations/ path exists; that Location points at the polled URI is not checked"
+    detail: "The linter warns when an OpenAPI document has an `Operation` schema or an `/operations/` path but no `GET /v{N}/operations/{operationId}` path. A reviewer checks the polling response shape, the `Location` target and `Retry-After`."
   - id: "15.5"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-15.5]
     note: "advisory proxy: checks the conventional cancellation path; does not prove that cancellation support or non-support is documented and discoverable by another mechanism"
+    detail: "The linter warns about an `/operations/.../cancel` path that is not `/v{N}/operations/{operationId}/cancel`, or that has no `POST`. A reviewer checks that cancellation, or its absence, is documented and discoverable."
   - id: "15.6"
     class: "R"
     status: human
     spectral_rules: []
     note: "SHOULD + \"long-running\" semantic - advisory"
+    detail: "The linter does not check this rule. A reviewer checks whether long-running operations offer completion notification through a webhook."
   - id: "15.7"
     class: "R"
     status: human
     spectral_rules: []
     note: "\"document result retention\" prose"
+    detail: "The linter does not check this rule. A reviewer checks that Operation result retention, or the parameter that controls it, is documented."
   - id: "15.8"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-15.8, govstack-15.8-callbacks, govstack-15.8-format]
     note: "deterministic: request body callbackUrl requires a callbacks object (subscription paths exempt); proxies: no header/query parameter named like /callback/i, callbackUrl declares format: uri; the https requirement, the runtime expression referencing callbackUrl, the callback body shape and callback authentication are NOT checked"
+    detail: "The linter flags a header or query parameter named like \"callback\", flags a request body `callbackUrl` with no `callbacks` object, and warns when it lacks `format: uri`. A reviewer checks `https`, the runtime expression, the callback body and its authentication."
   - id: "16.1"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-16.1]
     note: "proxy: OpenAPI push events live under top-level webhooks. Brokered-transport (AsyncAPI) clause not checked."
+    detail: "The linter warns when an OpenAPI operation uses `callbacks` for event push instead of top-level `webhooks`. A reviewer checks that events are documented at all and that brokered transports use AsyncAPI 3."
   - id: "16.2"
     class: "M"
     status: implemented
     spectral_rules: [govstack-16.2, govstack-16.2-recommended, govstack-16.2-structured]
     note: "event payload schema requires specversion(const \"1.0\")/id/source/type + data, and the webhooks surface must declare application/cloudevents+json rather than a binary-mode application/json body"
+    detail: "The linter checks each `webhooks` request schema requires `specversion` (const `1.0`), `id`, `source`, `type` and `data`, warns when `time` or `datacontenttype` is missing, and requires `application/cloudevents+json` without `application/json`."
   - id: "16.3"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-16.3, govstack-16.3-no-version]
     note: "split proxy: warns on the reverse-DNS default and errors on a pinned major-version segment; BB-code registry membership, long-term stability, and global collision resistance require context"
+    detail: "The linter checks pinned event `type` values (`const` or `enum`): it warns when one does not follow `global.govstack.{bb-code}.{resource}.{action}` and flags a version segment such as `v1`. A reviewer checks the registered BB code, stability and uniqueness."
   - id: "16.4"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-16.4, govstack-16.4-async]
     note: "OpenAPI and AsyncAPI proxies check pinned/example source values for non-empty URI-reference lexical shape and valid percent escapes; stable authority, tenant, deployment, environment, host, IP and port identities are permitted. Full URI semantics, stability, occurrence context, and source+id uniqueness require review or runtime evidence"
+    detail: "The linter warns when a pinned or example CloudEvents `source` value is empty or not shaped like a URI-reference with valid percent escapes, in OpenAPI webhooks and AsyncAPI. A reviewer checks stability, the occurrence context and `source` plus `id` uniqueness."
   - id: "16.5"
     class: "R"
     status: human
     spectral_rules: []
     note: "conditional opt-in signing choice and profile documentation require threat-model context"
+    detail: "The linter does not check this rule. A reviewer checks, against the threat model, whether the BB chose to adopt signing and documented the profile."
   - id: "16.6"
     class: "R"
     status: needs-context
     spectral_rules: []
     note: "signature metadata naming applies only when a surface opts into signing"
+    detail: "The linter does not check this rule. A reviewer checks the signature metadata names (`GovStack-Signature`, `govstackSignature`) only for surfaces that adopt signing."
   - id: "16.7"
     class: "R"
     status: runtime
     spectral_rules: []
     note: "conditional signed-material contents are verified at runtime when signing is adopted"
+    detail: "A test against a running implementation checks that the signed material includes the event body, the event `id` and a timestamp, where signing is adopted."
   - id: "16.8"
     class: "R"
     status: needs-context
     spectral_rules: []
     note: "experimental OpenAPI profile and adopter-supplied key/replay contract need common-file and implementation context"
+    detail: "The linter does not check this rule. A reviewer checks that an adopting BB pins the experimental signing profile version and documents key discovery, rotation, replay policy, protocol mapping and conformance tests."
   - id: "16.9"
     class: "informative"
     status: informative
     spectral_rules: []
     note: "readiness criteria for a future shared profile (informative)"
+    detail: "This entry describes when a shared signature profile could be considered and adds no requirement of its own."
   - id: "16.10"
     class: "R"
     status: human
     spectral_rules: []
     note: "\"document delivery-failure contract\" prose"
+    detail: "The linter does not check this rule. A reviewer checks that each subscription documents whether redelivery is attempted, whether failed deliveries are stored, and how a subscriber recovers them."
   - id: "16.11"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-16.11]
     note: "proxy: exposed BB subscription paths provide create/list/delete; absent subscription APIs are not flagged; conditional signing-key rotation is not checked"
+    detail: "The linter warns when an OpenAPI document has `subscriptions` paths but lacks a collection `POST`, a collection `GET` or an item `DELETE`. A reviewer checks whether the BB should expose subscriptions, AsyncAPI control planes and signing-key rotation."
   - id: "17.1"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-17.1]
     note: "every operation has action in {send,receive}"
+    detail: "The linter checks that every operation sets `action` to `send` or `receive`. A reviewer checks that the direction matches the BB's own role as publisher or consumer."
   - id: "17.2"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-17.2]
     note: "advisory proxy: logical channel keys match the GovStack reverse-DNS default; stability and native-address mapping require review"
+    detail: "The linter warns when a logical channel ID (the key under `channels`) does not follow the GovStack dotted pattern with the BB code and major version. A reviewer checks that IDs are stable and that each maps to its native address."
   - id: "17.3"
     class: "R"
     status: strict-only
     spectral_rules: [govstack-17.3]
     note: "proxy: scan channel addresses/param names for personal-data terms"
+    detail: "The linter warns when a channel address or parameter name contains words such as phone, email, national ID, name or date of birth. It cannot see queue names outside the document, and a reviewer checks what values actually flow."
   - id: "17.4"
     class: "M+R"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-17.4]
-    note: "every {param} in channel address declared under parameters with a non-empty description. The rule's enum/examples clauses are [R]: a parameter's value set being closed is not detectable from the document."
+    note: "proxy: every {param} in a channel address is declared under parameters with a non-empty description; the enum and examples clauses need review, since a closed value set is not detectable from the document"
+    detail: "The linter checks that each `{parameter}` in a channel address is declared under `parameters` with a non-empty `description`. A reviewer checks that closed value sets use `enum` and open ones carry `examples`; the linter does not."
   - id: "17.5"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-17.5]
     note: "proxy: flag dev/test/prod/broker tokens in channel addresses"
+    detail: "The linter reports, as an information-level finding, a channel address that contains a segment such as dev, test, prod, staging or a broker name like kafka or mqtt. A reviewer checks other deployment-specific prefixes and legitimate uses."
   - id: "17.6"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-17.6]
     note: "recognized CloudEvents Message Objects use application/cloudevents+json and carry required envelope attributes after reference resolution; identifying every domain event and misplaced domain data requires semantic review"
+    detail: "For messages that look like CloudEvents, the linter checks `contentType` is `application/cloudevents+json` and the payload requires and declares `specversion` (fixed to 1.0), `id`, `source` and `type`. It does not check that domain data sits under `data`; a reviewer does."
   - id: "17.7"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-17.7]
     note: "local CloudEvents envelopes are allowed; recognizable bare/wrapped async errors and explicit common envelope references use vendored common schemas; local aliases and semantic rejection identification require review"
+    detail: "The linter checks that a payload recognisable as an asynchronous error, or one that references the shared envelope, points at the vendored common schema file. A reviewer checks local message definitions, locally renamed error schemas and whether a message is a rejection."
   - id: "17.8"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-17.8]
     note: "message headers camelCase/no X- (strong); command idempotency-key needs command identification"
+    detail: "The linter warns when a header name under a component message's `headers` is not camelCase, which also catches hyphenated `X-` names. A reviewer checks the `traceparent` and idempotency key attributes, signature metadata and which messages are commands."
   - id: "17.9"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-17.9]
     note: "proxy: localisation headers named acceptLanguage/contentLanguage"
+    detail: "The linter warns when a component message header is a near miss for the localisation names, such as `Accept-Language`, `locale` or `lang`. It does not check direction or that stable fields are left untranslated; a reviewer checks both."
   - id: "17.10"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-17.10]
     note: "every operation covered by a security scheme via servers/operations"
+    detail: "The linter checks that `components.securitySchemes` is non-empty and that every operation has its own `security` or sits only on servers that declare `security`. A reviewer checks that the schemes are appropriate and that signing is not the only protection."
   - id: "17.11"
     class: "R"
     status: human
     spectral_rules: []
     note: "conditional duplicate-delivery and application de-duplication contract requires protocol context"
+    detail: "The linter does not check this rule. A reviewer checks that duplicate handling is documented where the protocol can redeliver, and that `effectivelyOnce` is not claimed as a portable guarantee."
   - id: "17.12"
     class: "R"
     status: human
     spectral_rules: []
     note: "ordering is documented only when promised; scope/key require protocol context"
+    detail: "The linter does not check this rule. A reviewer checks that ordering is described only where consumers may rely on it, and that its scope and key are identified."
   - id: "17.13"
     class: "R"
     status: human
     spectral_rules: []
     note: "consumer-visible redelivery/dead-letter/retention/replay capabilities require protocol and deployment context"
+    detail: "The linter does not check this rule. A reviewer checks that redelivery, dead-letter handling, retention and replay are documented when consumers can use them."
   - id: "17.14"
     class: "R"
     status: human
     spectral_rules: []
     note: "deciding which values are stable public promises rather than implementation settings requires review"
+    detail: "The linter does not check this rule. A reviewer decides which retry, retention and replay values are stable promises and which belong in a protocol or implementation profile."
   - id: "17.15"
     class: "R"
     status: human
     spectral_rules: []
     note: "review that standard bindings are used first and custom extensions are not treated as portable contracts"
+    detail: "The linter does not check this rule. A reviewer checks that standard bindings come first and that custom extensions are not presented as an interoperable delivery contract."
   - id: "17.16"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-17.16]
     note: "proxy: rejection message using §11 error envelope exists + correlation"
+    detail: "The linter warns when the document has operations but no component message that uses the asynchronous error schema, or when none of those error messages carries a correlation identifier. A reviewer checks which commands can be rejected and that the correlation points at the original message."
   - id: "17.17"
     class: "M+R"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-17.17]
-    note: "when reply present, declares reply channel + correlationId; else not request-reply"
+    note: "proxy: when reply is present, a reply channel or address and a correlation mechanism are declared; fire-and-forget presented as request-reply is not detectable"
+    detail: "For an operation that declares `reply`, the linter checks it names a reply channel or address and a correlation mechanism (a message `correlationId` or a reply address `location`). A reviewer checks that event publication is not dressed up as request-reply."
   - id: "17.18"
     class: "M+R"
     status: human
     spectral_rules: []
     note: "\"long-running\" identification + correlation documentation - human"
+    detail: "The linter does not check this rule. A reviewer identifies long-running work triggered by a message and checks that a completion signal exists and that clients can correlate it to the initiating message."
   - id: "17.19"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-17.19]
     note: "proxy: per server protocol, channels/ops declare matching kafka/mqtt/amqp/ws bindings"
+    detail: "The linter warns when a server declares a protocol that uses bindings (for example Kafka, MQTT, AMQP or WebSocket) and a channel has no binding for it. It does not check the fields inside the binding; a reviewer checks topic, key, QoS and similar semantics."
   - id: "17.20"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-17.20]
     note: "advisory proxy: warns when any components.messages entry lacks an example; whether the interaction is already obvious from the schema requires review"
+    detail: "The linter warns when a message under `components.messages` has no `examples`. A reviewer checks that examples show headers and payload where needed and cover the command, event, error and completion families."
   - id: "18.1"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-18.1]
     note: "proxy: info.version matches SemVer; whether it identifies the contract rather than the implementation and agrees with a nonstandard version mechanism requires context"
+    detail: "The linter checks that `info.version` is a SemVer string, on both OpenAPI and AsyncAPI documents. A reviewer checks that it identifies the published contract rather than the implementation, and that any other version field agrees."
   - id: "18.2"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-18.2-openapi, govstack-18.2-asyncapi]
     note: "advisory proxy: checks recommended OpenAPI path and AsyncAPI channel forms; does not prove that another declared mechanism exposes the major version unambiguously"
+    detail: "The linter warns when the major version in an OpenAPI path prefix such as `/v2/` differs from `info.version`, or when an AsyncAPI channel ID lacks a matching `.v2.` segment. It does not accept or verify other version mechanisms; a reviewer does."
   - id: "18.3"
     class: "M+R"
     status: needs-context
     spectral_rules: []
     note: "backward-compat of minor bump - needs PREVIOUS spec version (oasdiff, out of scope)"
+    detail: "The linter does not check this rule, because it needs the previously published version to compare against. Run a diff tool such as oasdiff on OpenAPI contracts; a reviewer checks AsyncAPI changes and the semantic cases the rule lists."
   - id: "18.4"
     class: "M+R"
     status: needs-context
     spectral_rules: []
     note: "breaking change => major bump - needs PREVIOUS spec version (oasdiff, out of scope)"
+    detail: "The linter does not check this rule, because it needs the previously published version to compare against. Run a diff tool such as oasdiff on OpenAPI contracts; a reviewer checks AsyncAPI changes and behavioural breaks that no schema diff shows."
   - id: "18.5"
     class: "M+R"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-18.5]
-    note: "deprecated operations declare Deprecation + Sunset response headers"
+    note: "proxy: deprecated operations declare Deprecation and Sunset on 2xx responses (Sunset is required even where no removal is planned); the Link rel=deprecation header and Sunset-not-before-Deprecation order are not checked"
+    detail: "For each operation marked `deprecated`, the linter checks that every 2xx response declares `Deprecation` and `Sunset` headers. It does not check the `Link` header, header values, timestamp order or that the headers are actually returned; a test against a running implementation does."
   - id: "18.6"
     class: "informative"
     status: informative
     spectral_rules: []
     note: "informative"
+    detail: "This entry explains why the additive changes in 18.3 do not break clients and adds no requirement of its own."
   - id: "18.7"
     class: "M+R"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-18.7, govstack-18.7-description]
-    note: "validate x-govstack-deprecated shape (since/sunset/replacement/reason) + description"
+    note: "proxy: validates the x-govstack-deprecated shape (since/sunset/replacement/reason) and the description mention, only where the extension is present; entities deprecated in prose alone are not examined"
+    detail: "The linter checks channels, operations and messages that carry `x-govstack-deprecated`: all four keys (`since`, `sunset`, `replacement`, `reason`) must be present and the `description` must mention deprecation. It cannot find entities deprecated in prose alone; a reviewer does."
   - id: "19.1"
     class: "R"
     status: runtime
     spectral_rules: []
     note: "honouring request language runtime"
+    detail: "A test against a running implementation checks that error text, labels and status messages follow the request language, and that an unsupported language falls back to the declared default."
   - id: "19.2"
     class: "R"
     status: runtime
     spectral_rules: []
     note: "not translating stable content runtime"
+    detail: "A test against a running implementation checks that problem types, error codes, enum values, identifiers, timestamps and currency codes are never translated."
   - id: "19.3"
     class: "R"
     status: human
     spectral_rules: []
     note: "review the declared default response language for HTTP and event specifications; English is advisory where deployment policy or law does not select another default"
+    detail: "The linter does not check this rule. A reviewer checks that the specification states its default response language, and that English is used as the fallback where deployment policy or law does not choose another."
   - id: "19.4"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-19.4-openapi, govstack-19.4-asyncapi]
     note: "proxy: localised responses declare Content-Language/contentLanguage header"
+    detail: "The linter warns when an OpenAPI operation takes an `Accept-Language` header but no response declares `Content-Language`, and when an AsyncAPI channel has an `acceptLanguage` message but no `contentLanguage` message. A reviewer checks every other localised response."
   - id: "20.1"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-20.1-schema-types]
     note: "driver runs mandatory openapi-spec-validator / AsyncAPI parser; Spectral additionally checks JSON Schema type keyword syntax throughout qualified OAS 3.1 schemas, including resolved local references; custom dialects require their own validator"
+    detail: "The linter runs the OpenAPI and AsyncAPI base validators in conformance mode, and also flags invalid `type` values in OpenAPI schemas. Schemas in custom dialects need their own validator. A reviewer confirms such fragments are validated."
   - id: "20.2"
     class: "M"
     status: human
     spectral_rules: []
     note: "meta/self-referential (the ruleset itself)"
+    detail: "The linter does not check this rule. A reviewer checks that CI runs the ruleset version the specification declares, and that findings contradicting a rule page are reported as defects in the guide. The linter only supports its own version."
   - id: "20.3"
     class: "M"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-20.3, govstack-20.3-exceptions]
-    note: "exact guide/ruleset versions; scoped exceptions require known rule, rationale, HTTPS record, reviewer, review date, and unexpired expiry"
+    note: "proxy: exact guide/ruleset versions; scoped exceptions require known rule, rationale, HTTPS record, reviewer, review date and unexpired expiry; actual approval under §1.6 and legacy-surface eligibility require review"
+    detail: "The linter flags a missing `x-govstack-api-guide` object, unsupported versions, an invalid `profile`, and exceptions that are incomplete, expired or name an unknown rule. A reviewer checks that exceptions are approved and that `legacy` is declared only for surfaces published before the BB pinned the guide."

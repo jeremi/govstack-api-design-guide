@@ -19,7 +19,7 @@ HTTP authentication tokens **MUST** travel in the `Authorization` header. Creden
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: no apiKey scheme in query/cookie, no token-like query params
+The linter flags an `apiKey` security scheme placed in the query or a cookie, and path or query parameters named like a credential (token, secret, password, `apiKey`). A reviewer checks other names, URL fragments and header values.
 <!-- verification:end -->
 
 ## 8.2 Accept-Language and Content-Language <a href="#82-accept-language-and-content-language" id="82-accept-language-and-content-language"></a>
@@ -31,7 +31,7 @@ Localisation requests **MUST** use `Accept-Language`; a localised response **MUS
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: ops taking Accept-Language declare Content-Language response header
+The linter checks that an operation declaring an `Accept-Language` header parameter lists `Content-Language` on each `2xx` response. A reviewer checks that the value is the language actually selected and that cacheable responses declare `Vary: Accept-Language`.
 <!-- verification:end -->
 
 ## 8.3 Idempotency-Key header accepted <a href="#83-idempotency-key-header-accepted" id="83-idempotency-key-header-accepted"></a>
@@ -43,7 +43,7 @@ POST endpoints that require idempotency under [§14](../part-d/14-idempotency.md
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-shared with §14.1: POSTs returning 201 or 202 declare Idempotency-Key; reports once under §14.1
+The linter flags a `POST` that declares a `201` or `202` response without an `Idempotency-Key` header parameter, reported under the idempotency rules (14.1). A reviewer decides which other `POST` endpoints need idempotency and whether an exemption applies.
 <!-- verification:end -->
 
 ## 8.4 W3C Trace Context correlation <a href="#84-w3c-trace-context-correlation" id="84-w3c-trace-context-correlation"></a>
@@ -57,7 +57,7 @@ The operation **MAY** also declare `tracestate`. A separate business or support 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: operations with effective nonempty security declare W3C traceparent request header; runtime propagation remains review/test
+The linter flags operations with security requirements that declare no `traceparent` header parameter, using security as a stand-in for cross-service calls. A reviewer or runtime test checks propagation, `traceId` matching, `tracestate` content and unsecured cross-service operations.
 <!-- verification:end -->
 
 ## 8.5 No new X- prefixed headers <a href="#85-no-new-x--prefixed-headers" id="85-no-new-x--prefixed-headers"></a>
@@ -71,7 +71,7 @@ Existing private `X-` headers **MAY** remain only on an unchanged legacy major v
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-no header parameter or response header uses the X- prefix
+The linter flags any header parameter or response header whose name starts with `X-`. It cannot tell a new header from an existing legacy one, so a reviewer decides whether the legacy exception applies.
 <!-- verification:end -->
 
 ## 8.6 No personal data in addressable locations <a href="#86-no-personal-data-in-addressable-locations" id="86-no-personal-data-in-addressable-locations"></a>
@@ -83,7 +83,7 @@ Personal data (national identifier, phone, email, name, date of birth, exact add
 <!-- verification:start -->
 **Verification:** Heuristic check in the optional strict profile.
 
-proxy: flag param names matching personal-data terms
+The linter flags path, query and header parameter names that look like personal data, such as `email`, `phone` or `nationalId`. It cannot see values or other names, so a reviewer checks that no personal data appears in addressable locations.
 <!-- verification:end -->
 
 ## 8.7 Rate-limit headers declared <a href="#87-rate-limit-headers-declared" id="87-rate-limit-headers-declared"></a>
@@ -97,7 +97,7 @@ An endpoint rate-limited by the BB itself **MAY** declare the advisory `RateLimi
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: 429 responses declare Retry-After (SHOULD-level rule, proxy at info); structured RateLimit is MAY and unchecked; quota scope and gateway ownership are review-only; deterministic warn flags legacy RateLimit-Limit/Remaining/Reset
+The linter flags a declared `429` response without `Retry-After` (an information-level finding) and any response declaring the legacy `RateLimit-Limit`, `RateLimit-Remaining` or `RateLimit-Reset` headers. A reviewer checks quota scope, gateway ownership and use of `RateLimit-Policy`.
 <!-- verification:end -->
 
 ## 8.8 Custom header naming and placement <a href="#88-custom-header-naming-and-placement" id="88-custom-header-naming-and-placement"></a>
@@ -111,5 +111,5 @@ A header required by an interoperability mediator, for example the client-identi
 <!-- verification:start -->
 **Verification:** Heuristic check in the optional strict profile. Semantic review is also required.
 
-proxy: flag request and response header names that look like tenant/organisation ids, customer ids, callback URLs or national/citizen ids; GovStack- prefix on cross-BB headers, plain names on BB-local headers and BB codes or versions in names need review
+The linter flags header names that look like tenant, organisation, customer, callback or national-identifier headers. A reviewer checks the `GovStack-` prefix, plain names for local headers, and BB codes or versions in names.
 <!-- verification:end -->

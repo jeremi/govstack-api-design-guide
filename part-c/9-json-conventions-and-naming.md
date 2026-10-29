@@ -19,7 +19,7 @@ Default response media type **MUST** be `application/json` unless the resource i
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: responses use application/json; binary/export exception unknowable
+The linter flags a response whose `content` offers no JSON media type; any type containing `json` counts, so it does not check that `application/json` is the default. It also flags binary and export responses, which a reviewer confirms are exceptions.
 <!-- verification:end -->
 
 ## 9.2 camelCase field names <a href="#92-camelcase-field-names" id="92-camelcase-field-names"></a>
@@ -31,7 +31,7 @@ GovStack-owned JSON field names **SHOULD** use `camelCase` consistently within a
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-advisory: reusable and inline OpenAPI body fields plus AsyncAPI payload fields use camelCase
+The linter checks that property names in OpenAPI body schemas and AsyncAPI message payloads are camelCase. It cannot tell GovStack-owned fields from fields adopted from an external standard, so it flags both; a reviewer confirms those exceptions.
 <!-- verification:end -->
 
 ## 9.3 Real JSON booleans <a href="#93-real-json-booleans" id="93-real-json-booleans"></a>
@@ -43,7 +43,7 @@ Boolean fields **MUST** be JSON booleans (`true`/`false`), not strings.
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-proxy: flag boolean-looking props typed string / enum ["true","false"]
+The linter flags properties in reusable schemas typed `string` whose names start with a boolean-style prefix such as `is`, `has` or `can`, and enums holding only "true" and "false". A reviewer checks booleans under other names or typed as 0 and 1.
 <!-- verification:end -->
 
 ## 9.4 Explicit nullability <a href="#94-explicit-nullability" id="94-explicit-nullability"></a>
@@ -55,7 +55,7 @@ Nullability **MUST** be explicit (`type: [..., "null"]` per OpenAPI 3.1).
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-proxy: flag 3.0-style nullable:true (should be type:[...,"null"])
+The linter flags the OpenAPI 3.0 `nullable` keyword anywhere in an OpenAPI 3.1 document. It does not check that every field that can be null declares `"null"` in its `type`; a reviewer checks that.
 <!-- verification:end -->
 
 ## 9.5 No spaces or non-ASCII names <a href="#95-no-spaces-or-non-ascii-names" id="95-no-spaces-or-non-ascii-names"></a>
@@ -67,7 +67,7 @@ GovStack-owned field names **SHOULD** use ASCII identifiers without spaces. Fiel
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-advisory: reusable and inline OpenAPI body fields plus AsyncAPI payload fields use ASCII without spaces
+The linter checks that property names in OpenAPI body schemas and AsyncAPI message payloads contain no whitespace or non-ASCII characters. It cannot tell GovStack-owned fields from external-standard fields, so a reviewer confirms those exceptions.
 <!-- verification:end -->
 
 ## 9.6 Avoid abbreviations <a href="#96-avoid-abbreviations" id="96-avoid-abbreviations"></a>
@@ -79,7 +79,7 @@ Abbreviations **SHOULD NOT** be used (prefer `quantity` over `qty`).
 <!-- verification:start -->
 **Verification:** Heuristic check in the optional strict profile.
 
-proxy: property names vs abbreviation dictionary
+The linter flags property names containing a word from a fixed abbreviation list, such as `qty`, `addr` or `msg`, and suggests the full word. Abbreviations outside the list are missed.
 <!-- verification:end -->
 
 ## 9.7 Screaming snake case enum values <a href="#97-screaming-snake-case-enum-values" id="97-screaming-snake-case-enum-values"></a>
@@ -93,7 +93,7 @@ Values whose form is fixed elsewhere are outside this casing recommendation and 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-SHOULD-level proxy at info: enum string values SCREAMING_SNAKE_CASE minus the rule's carve-outs (BCP 47 tags, reverse-DNS error codes and event types, media types, x-govstack-* vocabularies, and the JOSE/COSE names not already all-caps). IANA registry membership is not visible in a document, so a registered value outside the listed set is a miss. Actual sort/fields query parameters and request-body properties identify selector enums through resolved file references; selectors reached under other names remain a known false positive.
+The linter reports, as an information-level finding, string enum values in reusable schemas that are not SCREAMING_SNAKE_CASE, skipping language tags, reverse-DNS identifiers, media types and listed JOSE and COSE names. A reviewer checks other IANA-registered values.
 <!-- verification:end -->
 
 ## 9.8 Forward-compatible schemas <a href="#98-forward-compatible-schemas" id="98-forward-compatible-schemas"></a>
@@ -109,7 +109,7 @@ Nested objects and arrays follow the representation schema. The shallow URL hier
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-HTTP response resource roots do not set additionalProperties:false; classifying emitted event resources requires review; closed operation request schemas and nested payloads are permitted
+The linter flags an OpenAPI response body schema that sets `additionalProperties: false` at its top level. Closed request schemas and nested objects pass. A reviewer checks emitted event schemas and that clients can ignore unknown enum values.
 <!-- verification:end -->
 
 ## 9.9 No closed enums for growing sets <a href="#99-no-closed-enums-for-growing-sets" id="99-no-closed-enums-for-growing-sets"></a>
@@ -125,7 +125,7 @@ Request-only field-selection and sort-key vocabularies **MAY** use closed enums:
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-proxy: flag closed enums lacking x-extensible-enum/UNKNOWN fallback; request-only field-selection and sort-key enums are exempt, while schemas also emitted in responses or events retain the check
+The linter reports, as an information-level finding, string enums in reusable schemas with neither `x-extensible-enum` nor a fallback member such as `UNKNOWN`. It cannot tell which value sets will grow, so a reviewer judges whether a flagged fixed set is acceptable.
 <!-- verification:end -->
 
 ## 9.10 GovStack extension prefix <a href="#910-govstack-extension-prefix" id="910-govstack-extension-prefix"></a>
@@ -139,7 +139,7 @@ An extension owned by one BB **MAY** use the more specific prefix `x-govstack-{b
 <!-- verification:start -->
 **Verification:** Heuristic check in the optional strict profile. Semantic review is also required.
 
-proxy: GovStack-semantic extensions use x-govstack- prefix (weak)
+The linter flags `x-` keys that mention GovStack without the exact `x-govstack-` prefix, and bare `x-deprecated` or `x-api-guide`. A reviewer decides which other extensions are GovStack-defined.
 <!-- verification:end -->
 
 ## 9.11 Single registered BB code <a href="#911-single-registered-bb-code" id="911-single-registered-bb-code"></a>
@@ -153,7 +153,7 @@ Until GovStack publishes a canonical register, codes **SHOULD** be agreed throug
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-in-doc: extract bb-code from canonical problem-type URIs, OAuth scopes, event types and logical channel IDs; verify identical + regex ^[a-z][a-z0-9-]{1,30}$; protocol-native address values are excluded; ecosystem uniqueness needs registry
+The linter extracts BB codes from OAuth scopes, reverse-DNS identifiers and problem-type URIs, and checks each matches the code pattern and that the document uses one code throughout. Ecosystem-wide uniqueness needs a register, and a reviewer checks the rest.
 <!-- verification:end -->
 
 ## Note on 9.2 <a href="#note-on-92" id="note-on-92"></a>

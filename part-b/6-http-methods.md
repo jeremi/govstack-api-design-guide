@@ -19,7 +19,7 @@ description: "Rules defining the meaning, safety, and idempotency guarantees of 
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-GET operations declare no requestBody
+The linter flags a `requestBody` on any `GET` operation. A reviewer, and a test against a running implementation, check that the operation is actually safe and idempotent.
 <!-- verification:end -->
 
 ## 6.2 POST creates or performs actions <a href="#62-post-creates-or-performs-actions" id="62-post-creates-or-performs-actions"></a>
@@ -33,7 +33,7 @@ A POST action **MAY** be naturally idempotent or made retry-safe under [§14](..
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-descriptive, no normative keyword
+The linter does not check this rule. A reviewer checks that `POST` is used for creation or actions and that its success status matches the outcome: `201`, `202`, `200` or `204`.
 <!-- verification:end -->
 
 ## 6.3 PUT replaces the entire resource <a href="#63-put-replaces-the-entire-resource" id="63-put-replaces-the-entire-resource"></a>
@@ -45,7 +45,7 @@ descriptive, no normative keyword
 <!-- verification:start -->
 **Verification:** Runtime verification required; outside the specification linter.
 
-replace-entire-resource/idempotent is runtime
+A test against a running implementation checks that a `PUT` replaces the whole resource and that repeating it leaves the same state.
 <!-- verification:end -->
 
 ## 6.4 PATCH uses a registered patch format <a href="#64-patch-uses-a-registered-patch-format" id="64-patch-uses-a-registered-patch-format"></a>
@@ -61,7 +61,7 @@ Endpoints where setting a field to `null` must be distinguishable from removing 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-advisory proxy: recognises the Merge Patch default; registered alternative patch media types and documented semantics require review
+The linter flags a `PATCH` request body that lacks `application/merge-patch+json` or offers plain `application/json`. An operation that deliberately uses only another registered patch format is flagged too; a reviewer checks the documented patch semantics.
 <!-- verification:end -->
 
 ## 6.5 DELETE response semantics <a href="#65-delete-response-semantics" id="65-delete-response-semantics"></a>
@@ -75,7 +75,7 @@ Soft delete or async delete (audit retention, undo window) **MAY** return `200` 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: DELETE responses in {204(no body),200,202}
+The linter flags a `DELETE` that declares `201`, `203`, `205`, `206`, `207`, `208` or `226`, or a `204` that declares content. A reviewer checks that a synchronous hard delete returns `204` and that `200` or `202` is used only for soft or asynchronous deletes.
 <!-- verification:end -->
 
 ## 6.6 POST search for complex queries <a href="#66-post-search-for-complex-queries" id="66-post-search-for-complex-queries"></a>
@@ -91,7 +91,7 @@ Exact lookup is a single-resource operation: it does not acquire pagination mere
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-POST /search and /lookup return 200 not 201; identifying other read-only POSTs and their single-resource or collection semantics requires review
+The linter checks that a `POST` on a path ending in `/search` or `/lookup` declares `200` and not `201`. A reviewer finds other read-only `POST` operations and checks their single-resource or collection semantics.
 <!-- verification:end -->
 
 ## 6.7 Bulk mutation needs explicit selection <a href="#67-bulk-mutation-needs-explicit-selection" id="67-bulk-mutation-needs-explicit-selection"></a>
@@ -103,5 +103,5 @@ A bulk-mutating or bulk-deleting operation (a `PUT`, `PATCH`, or `DELETE` whose 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: collection-targeted PUT/PATCH/DELETE require >=1 param
+The linter flags a `PUT`, `PATCH` or `DELETE` on a path with no path parameter when the operation declares no query parameter. It does not check that the parameter limits what is changed, nor that append-only resources expose no such method.
 <!-- verification:end -->

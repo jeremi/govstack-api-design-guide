@@ -22,22 +22,26 @@ rules:
     class: "informative"
     status: human
     spectral_rules: []
-    note: "informative reference only"
+    note: "maintainer evidence: informative reference only"
+    detail: "informative reference only"
   - id: "7.2"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-7.2]
-    note: "checks Location; operation semantics require review"
+    note: "maintainer evidence: checks Location; operation semantics require review"
+    detail: "checks Location; operation semantics require review"
   - id: "10.2"
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-10.2]
-    note: "checks declared formats; serialized values remain runtime obligations"
+    note: "maintainer evidence: checks declared formats; serialized values remain runtime obligations"
+    detail: "checks declared formats; serialized values remain runtime obligations"
   - id: "14.4"
     class: "R"
     status: runtime
     spectral_rules: []
-    note: "replay behaviour is runtime"
+    note: "maintainer evidence: replay behaviour is runtime"
+    detail: "replay behaviour is runtime"
 `;
 
 const SOURCE = `# Fixture
@@ -102,7 +106,7 @@ test('generation is idempotent', () => {
 });
 
 test('places rule verification before the next non-rule H2 heading', () => {
-  const coverage = parseCoverage('rules:\n  - id: "1.1"\n    class: "M"\n    status: implemented\n    note: "checks the declaration"\n');
+  const coverage = parseCoverage('rules:\n  - id: "1.1"\n    class: "M"\n    status: implemented\n    note: "maintainer evidence: checks the declaration"\n    detail: "checks the declaration"\n');
   const source = `## 1.1 Rule <a href="#11-rule" id="11-rule"></a>
 
 **[M]** Normative text.
@@ -119,7 +123,7 @@ This non-rule note must remain outside the rule.
 });
 
 test('ignores numbered headings and visible badge samples inside fenced Markdown', () => {
-  const coverage = parseCoverage('rules:\n  - id: "1.1"\n    class: "M"\n    status: implemented\n    note: "checks the declaration"\n');
+  const coverage = parseCoverage('rules:\n  - id: "1.1"\n    class: "M"\n    status: implemented\n    note: "maintainer evidence: checks the declaration"\n    detail: "checks the declaration"\n');
   const fencedExample = `\`\`\`markdown
 ## 9.9 Example rule <a href="#99-example-rule" id="99-example-rule"></a>
 
@@ -140,14 +144,14 @@ ${fencedExample}
 
 test('rejects duplicate coverage ids', () => {
   assert.throws(
-    () => parseCoverage(`${COVERAGE}\n  - id: "10.2"\n    class: "M"\n    status: implemented\n    note: "duplicate"\n`),
+    () => parseCoverage(`${COVERAGE}\n  - id: "10.2"\n    class: "M"\n    status: implemented\n    note: "maintainer evidence: duplicate"\n    detail: "duplicate"\n`),
     /duplicate coverage entry.*10\.2/i,
   );
 });
 
 test('rejects unknown coverage statuses', () => {
   assert.throws(
-    () => parseCoverage('rules:\n  - id: "1.1"\n    class: "M"\n    status: magic\n    note: "unknown"\n'),
+    () => parseCoverage('rules:\n  - id: "1.1"\n    class: "M"\n    status: magic\n    note: "maintainer evidence: unknown"\n    detail: "unknown"\n'),
     /unknown coverage status.*magic/i,
   );
 });
@@ -161,13 +165,13 @@ test('rejects a rule without coverage', () => {
 
 test('rejects a coverage entry without a source rule', () => {
   assert.throws(
-    () => transformGuideFiles(new Map([['fixture.md', SOURCE]]), parseCoverage(`${COVERAGE}\n  - id: "20.9"\n    class: "M"\n    status: human\n    note: "not in the source"\n`)),
+    () => transformGuideFiles(new Map([['fixture.md', SOURCE]]), parseCoverage(`${COVERAGE}\n  - id: "20.9"\n    class: "M"\n    status: human\n    note: "maintainer evidence: not in the source"\n    detail: "not in the source"\n`)),
     /coverage entry.*20\.9.*no matching source rule/i,
   );
 });
 
 test('rejects coverage class drift', () => {
-  const coverage = parseCoverage('rules:\n  - id: "1.1"\n    class: "R"\n    status: human\n    note: "review"\n');
+  const coverage = parseCoverage('rules:\n  - id: "1.1"\n    class: "R"\n    status: human\n    note: "maintainer evidence: review"\n    detail: "review"\n');
   assert.throws(
     () => transformGuideFile('## 1.1 Rule <a href="#11-rule" id="11-rule"></a>\n\n**[M]** Text.\n', coverage, 'fixture.md'),
     /class mismatch.*1\.1.*source M.*coverage R/i,
@@ -181,7 +185,7 @@ test('--check reports drift, while write mode converges and then passes', async 
   const partDir = join(root, 'part-a');
   await mkdir(linterDir, { recursive: true });
   await mkdir(partDir, { recursive: true });
-  await writeFile(join(linterDir, 'coverage.yaml'), 'rules:\n  - id: "1.1"\n    class: "M"\n    status: implemented\n    note: "checks the declaration"\n');
+  await writeFile(join(linterDir, 'coverage.yaml'), 'rules:\n  - id: "1.1"\n    class: "M"\n    status: implemented\n    note: "maintainer evidence: checks the declaration"\n    detail: "checks the declaration"\n');
   await writeFile(join(partDir, '1-fixture.md'), '## 1.1 Rule <a href="#11-rule" id="11-rule"></a>\n\n**[M]** Text.\n');
 
   await assert.rejects(
@@ -192,6 +196,71 @@ test('--check reports drift, while write mode converges and then passes', async 
   assert.deepEqual(changed, ['part-a/1-fixture.md']);
   assert.deepEqual(await generateVerificationDetails({ guideDir: root, check: true }), []);
   assert.match(await readFile(join(partDir, '1-fixture.md'), 'utf8'), /Automated specification check\./);
+});
+
+function entryWith(fields) {
+  const lines = Object.entries(fields).map(([key, value]) => `    ${key}: ${JSON.stringify(value)}`);
+  return `rules:\n  - id: "3.4"\n    class: "M"\n    status: implemented\n${lines.join('\n')}\n`;
+}
+
+test('renders detail and never the maintainer note', () => {
+  const coverage = parseCoverage(entryWith({ note: 'maintainer shorthand: govstack-3.4 proxy', detail: 'reader text' }));
+  const result = transformGuideFile(
+    '## 3.4 Rule <a href="#34-rule" id="34-rule"></a>\n\n**[M]** Text.\n',
+    coverage,
+    'fixture.md',
+  );
+
+  assert.match(result, /\*\*Verification:\*\* Automated specification check\.\n\nreader text\n<!-- verification:end -->/);
+  assert.doesNotMatch(result, /maintainer shorthand/);
+});
+
+test('rejects a missing detail', () => {
+  assert.throws(
+    () => parseCoverage(entryWith({ note: 'evidence' })),
+    /coverage entry 3\.4 must have a non-empty detail/i,
+  );
+});
+
+test('rejects an empty or blank detail', () => {
+  for (const detail of ['', '   ']) {
+    assert.throws(
+      () => parseCoverage(entryWith({ note: 'evidence', detail })),
+      /coverage entry 3\.4 must have a non-empty detail/i,
+    );
+  }
+});
+
+test('rejects a non-string detail', () => {
+  assert.throws(
+    () => parseCoverage(entryWith({ note: 'evidence', detail: 42 })),
+    /coverage entry 3\.4 must have a non-empty detail/i,
+  );
+});
+
+const FORBIDDEN_DETAILS = [
+  ['an em dash', 'checks the field — not the value', /em dash/i],
+  ['the word proxy', 'an automated Proxy of the rule', /proxy/i],
+  ['the word proxy in lower case', 'a proxy check', /proxy/i],
+  ['a Spectral rule name', 'covered by govstack-3.4 today', /Spectral rule name/i],
+  ['a JavaScript file name', 'implemented in check-thing.mjs', /JavaScript file name/i],
+  ['a plain JavaScript file name', 'implemented in check-thing.js', /JavaScript file name/i],
+  ['a functions path', 'see functions/check-thing for details', /functions\//i],
+  ['a blank line', 'first paragraph\n\nsecond paragraph', /blank line|exactly one/i],
+];
+
+for (const [label, detail, reason] of FORBIDDEN_DETAILS) {
+  test(`rejects a detail containing ${label}`, () => {
+    assert.throws(
+      () => parseCoverage(entryWith({ note: 'evidence', detail })),
+      (error) => /coverage entry 3\.4/.test(error.message) && reason.test(error.message),
+    );
+  });
+}
+
+test('accepts a multi-line detail without a blank line and a hyphenated rule reference', () => {
+  const coverage = parseCoverage(entryWith({ note: 'evidence', detail: 'first line\nsecond line, see rule 3.4 and the JSON Schema file.' }));
+  assert.equal(coverage.get('3.4').detail, 'first line\nsecond line, see rule 3.4 and the JSON Schema file.');
 });
 
 test('the checked-in guide matches coverage-derived verification details', async () => {

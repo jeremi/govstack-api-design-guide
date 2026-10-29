@@ -19,7 +19,7 @@ An event-driven BB surface other than HTTP push webhooks **MUST** be documented 
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-assert asyncapi is a qualified AsyncAPI 3 version ("3.0.0" or "3.1.0")
+The linter flags any `asyncapi` value other than 3.0.0 or 3.1.0, which also rejects AsyncAPI 2.x and later versions.
 <!-- verification:end -->
 
 ## 3.2 One canonical AsyncAPI entrypoint <a href="#32-one-canonical-asyncapi-entrypoint" id="32-one-canonical-asyncapi-entrypoint"></a>
@@ -33,7 +33,7 @@ The canonical entrypoint **MAY** `$ref`-compose other repository files provided 
 <!-- verification:start -->
 **Verification:** Automated repository or validator checks. Semantic review is also required.
 
-canonical api/asyncapi.yaml, one entrypoint - repo file tree
+The linter checks that the canonical AsyncAPI file sits at the default path or is listed in the surface inventory as a YAML file under `api/`, and that the file exists with an `asyncapi` version field. Unresolved `$ref` links are caught by the AsyncAPI validator.
 <!-- verification:end -->
 
 ## 3.3 No divergent AsyncAPI copies <a href="#33-no-divergent-asyncapi-copies" id="33-no-divergent-asyncapi-copies"></a>
@@ -51,7 +51,7 @@ A BB **MAY** retain clearly documented historical contracts under `api/legacy/` 
 <!-- verification:start -->
 **Verification:** Automated repository or validator checks.
 
-no undeclared current AsyncAPI copies; api/legacy archives excluded from discovery but explicit declarations and references still validate; historical documentation requires review
+The linter flags AsyncAPI documents found outside the declared surfaces, ignoring `api/legacy/`, `api/common/` support libraries and example directories. It does not compare file contents. A reviewer checks that documentation snippets load from the canonical file.
 <!-- verification:end -->
 
 ## 3.4 Passes an AsyncAPI validator <a href="#34-passes-an-asyncapi-validator" id="34-passes-an-asyncapi-validator"></a>
@@ -63,7 +63,7 @@ The file **MUST** pass a parser/validator for its declared AsyncAPI 3 version (f
 <!-- verification:start -->
 **Verification:** Automated repository or validator checks.
 
-run AsyncAPI 3.0 parser/validator
+In conformance mode the linter runs the AsyncAPI command line validator on each canonical file and example contract, and reports a missing validator as a finding.
 <!-- verification:end -->
 
 ## 3.5 Complete AsyncAPI info block <a href="#35-complete-asyncapi-info-block" id="35-complete-asyncapi-info-block"></a>
@@ -77,7 +77,7 @@ It **SHOULD** include `contact`; repository governance may supply the maintainer
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-info has title/version(SemVer)/description; contact is advisory
+The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged.
 <!-- verification:end -->
 
 ## 3.6 Servers channels operations and messages <a href="#36-servers-channels-operations-and-messages" id="36-servers-channels-operations-and-messages"></a>
@@ -91,7 +91,7 @@ Reference specifications that are not tied to a live broker **SHOULD** use param
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-servers/channels/operations/components.messages non-empty; server host not localhost
+The linter flags an empty or missing `servers`, `channels`, `operations` or `components.messages`, and any server `host` naming localhost or a loopback address. A reviewer checks for personal machines, undocumented placeholders, fake brokers and unlabelled documentation domains.
 <!-- verification:end -->
 
 ## 3.7 Complete AsyncAPI operation metadata <a href="#37-complete-asyncapi-operation-metadata" id="37-complete-asyncapi-operation-metadata"></a>
@@ -105,7 +105,7 @@ A concise `summary` and at least one useful `tag` **SHOULD** be present when the
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-each op has action(send/receive), description, channel ref, and >=1 msg ref; verify op msgs resolve to channel's messages; summary and tags are advisory
+The linter flags an operation without `action` set to `send` or `receive`, a `description`, a `channel` reference or at least one message reference, and message references that do not point at a message on that channel. A reviewer checks that the description is accurate.
 <!-- verification:end -->
 
 ## 3.8 Pinned vendored AsyncAPI components <a href="#38-pinned-vendored-asyncapi-components" id="38-pinned-vendored-asyncapi-components"></a>
@@ -119,7 +119,7 @@ The shared `CloudEventEnvelope` **SHOULD** be reused when its event-type constra
 <!-- verification:start -->
 **Verification:** Additional context required for verification.
 
-local CloudEvents envelopes allowed; common component reuse requires vendored file and explicit version - needs artifact context
+The linter does not check this rule, because it needs the vendored common file and its pinned version. A reviewer checks the envelope, the shared error references and the vendored file. The channel rules in section 17 check CloudEvents payload shapes.
 <!-- verification:end -->
 
 ## 3.9 JSON Schema payload conventions <a href="#39-json-schema-payload-conventions" id="39-json-schema-payload-conventions"></a>
@@ -131,5 +131,5 @@ AsyncAPI documents **MUST** use JSON Schema compatible with their declared Async
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-proxy: payload schemas parse as JSON Schema + apply §9/§10 checks to payload props
+The linter flags message payload property names that are not camelCase, in all payloads and not only those the BB owns. The AsyncAPI validator checks that payloads are valid schemas. A reviewer checks the other data type and format conventions.
 <!-- verification:end -->

@@ -25,7 +25,7 @@ Read-like POSTs such as search **MAY** support it.
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: POSTs returning 201 or 202 accept Idempotency-Key; other semantic triggers and natural-idempotency exemptions require review
+The linter warns when a `POST` that declares a `201` or `202` response has no `Idempotency-Key` header parameter. A reviewer checks the other triggers (value movement, messages, subscriptions), the optional tiers, and natural-idempotency exemptions.
 <!-- verification:end -->
 
 ## 14.2 Opaque client-generated keys <a href="#142-opaque-client-generated-keys" id="142-opaque-client-generated-keys"></a>
@@ -39,7 +39,7 @@ It **SHOULD** be a UUID.
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-review the specification's accepted key syntax and maximum length; key generation and rejection behaviour also require implementation-level tests
+The linter does not check this rule. A reviewer checks the documented key syntax and maximum length; a test against a running implementation checks key handling and the `400` rejection of malformed or oversized keys.
 <!-- verification:end -->
 
 ## 14.3 Documented replay window <a href="#143-documented-replay-window" id="143-documented-replay-window"></a>
@@ -53,7 +53,7 @@ After expiry the server **MAY** process the same key as a new request only if th
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-"document replay window" prose
+The linter does not check this rule. A reviewer checks that the replay window, or the parameter controlling it, and the behaviour after expiry are documented.
 <!-- verification:end -->
 
 ## 14.4 Replay returns original response <a href="#144-replay-returns-original-response" id="144-replay-returns-original-response"></a>
@@ -67,7 +67,7 @@ A stored HTTP Problem retains the original failure's `traceId`, as allowed by [Â
 <!-- verification:start -->
 **Verification:** Runtime verification required; outside the specification linter.
 
-replay preserves the original result and stored Problem traceId; current-attempt tracing headers are separate - runtime
+A test against a running implementation checks that a replayed request returns the original status, body and result headers, with per-attempt headers regenerated.
 <!-- verification:end -->
 
 ## 14.5 Key reuse and fingerprint mismatch <a href="#145-key-reuse-and-fingerprint-mismatch" id="145-key-reuse-and-fingerprint-mismatch"></a>
@@ -81,7 +81,7 @@ Draft revision 07, however, expresses the status-code choices as **SHOULD**.
 <!-- verification:start -->
 **Verification:** Runtime verification required; outside the specification linter.
 
-422/409 on key-reuse/fingerprint - runtime
+A test against a running implementation checks the lookup scope and fingerprint, the `422` on key reuse with a different request, and the `409` while the original is in flight.
 <!-- verification:end -->
 
 ## 14.6 Naturally idempotent designs <a href="#146-naturally-idempotent-designs" id="146-naturally-idempotent-designs"></a>
@@ -95,5 +95,5 @@ Naturally idempotent designs **MAY** satisfy this section without an `Idempotenc
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-"document per-operation duplicate handling" - human
+The linter does not check this rule. A reviewer checks that each naturally idempotent operation documents how it handles duplicate submissions.
 <!-- verification:end -->

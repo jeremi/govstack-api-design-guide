@@ -19,7 +19,7 @@ Each BB API spec **MUST** declare a security scheme block and apply it by defaul
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-root security + securitySchemes present and every operation covered (or explicit override); the 5.10 standard unversioned endpoints satisfy it with an explicit `security: []`, which counts as that override
+The linter checks that an OpenAPI document declares at least one scheme under `components.securitySchemes` and that every operation is covered by the root `security` requirement or its own `security` entry, including an explicit empty one. The AsyncAPI side is checked under 17.10.
 <!-- verification:end -->
 
 ## 13.2 OAuth and OIDC for citizen operations <a href="#132-oauth-and-oidc-for-citizen-operations" id="132-oauth-and-oidc-for-citizen-operations"></a>
@@ -33,7 +33,7 @@ An API that is purely a resource server, validating access tokens issued by an a
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: an openIdConnect/oauth2 scheme exists, or the resource-server alternative (type http, scheme bearer, bearerFormat JWT); deterministic error forbids password and implicit OAuth2 flows. Not checked: that the resource-server case really is one, or that its accepted issuers and required audience are documented
+The linter warns when an OpenAPI document declares no `openIdConnect` or `oauth2` scheme (or an `http` bearer JWT scheme), and flags OAuth 2.0 password and implicit flows. A reviewer checks which operations are citizen-facing, the discovery URL, and the documented issuers and audience.
 <!-- verification:end -->
 
 ## 13.3 Distinct scheme for BB-to-BB calls <a href="#133-distinct-scheme-for-bb-to-bb-calls" id="133-distinct-scheme-for-bb-to-bb-calls"></a>
@@ -49,7 +49,7 @@ When the GovStack shared component library (`govstack-openapi-common.yaml`, publ
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: an mTLS/client-credentials/X509 scheme exists
+The linter warns when an OpenAPI document declares no `mutualTLS` scheme and no `oauth2` scheme with a `clientCredentials` flow. A reviewer checks which operations cross a BB-to-BB boundary, audience and scope restriction, sender-constrained tokens, and AsyncAPI schemes.
 <!-- verification:end -->
 
 ## 13.4 Namespaced OAuth scopes <a href="#134-namespaced-oauth-scopes" id="134-namespaced-oauth-scopes"></a>
@@ -63,7 +63,7 @@ New GovStack scopes **SHOULD** use `bb:{bb-code}:{resource}:{action}`. The `{bb-
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-proxy: scope strings match bb:{bb-code}:{resource}:{action}. Only fires where scopes are declared, so an API authorizing on token claims instead is silent here; that its required claims are documented per operation is left to review
+The linter warns when an OAuth scope declared in a flow does not match an accepted naming shape: `bb:{bb-code}:{resource}:{action}`, the `global.govstack` reverse-DNS form, or `resource.action`. A reviewer checks the registered BB code, per-operation scope or claim documentation, and consistency.
 <!-- verification:end -->
 
 ## 13.5 Authorization is the credential channel <a href="#135-authorization-is-the-credential-channel" id="135-authorization-is-the-credential-channel"></a>
@@ -73,9 +73,9 @@ proxy: scope strings match bb:{bb-code}:{resource}:{action}. Only fires where sc
 Credentials **MUST NOT** be declared in URL paths, query parameters, cookies, or fragments. HTTP authentication tokens **MUST** use the `Authorization` header. Protocol-native authentication, such as broker SASL, uses the credential mechanism of its declared security scheme under [§13.3](#133-distinct-scheme-for-bb-to-bb-calls); it does not require an HTTP header. Mutual TLS authenticates at the transport layer. Operational API keys permitted by [§13.6](#136-api-keys-only-for-operational-endpoints) use their declared header.
 
 <!-- verification:start -->
-**Verification:** Automated specification check. Semantic review is also required.
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-checks apiKey schemes for query/cookie placement; HTTP token Authorization, mTLS, and protocol-native credential behaviour require review
+The linter flags an `apiKey` security scheme that places the credential in the query string or a cookie. A reviewer checks that HTTP tokens use the `Authorization` header, path or fragment credentials, and protocol-native credential behaviour.
 <!-- verification:end -->
 
 ## 13.6 API keys only for operational endpoints <a href="#136-api-keys-only-for-operational-endpoints" id="136-api-keys-only-for-operational-endpoints"></a>
@@ -89,7 +89,7 @@ API keys **MAY** be declared on operational endpoints (`/health` and similar per
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-proxy: apiKey applied only to operational (/health-like) ops
+The linter warns when an `apiKey` scheme is applied to an operation whose path has no health-like segment (such as `health`, `live`, `ready`, `metrics` or `ping`). It cannot tell which operations handle personal data; a reviewer checks that.
 <!-- verification:end -->
 
 ## Note on consent propagation <a href="#note-on-consent-propagation" id="note-on-consent-propagation"></a>
@@ -105,5 +105,5 @@ Every externally reachable OpenAPI server URL and HTTP webhook callback URL **MU
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required. Semantic review is also required.
 
-externally reachable surface classification, equivalent AsyncAPI transport protection, negotiated TLS version, and deployment TLS configuration require protocol and runtime review; §2.6 separately checks declared OpenAPI server URLs
+The linter does not check this rule. A reviewer checks which servers are externally reachable, AsyncAPI transport protection and TLS configuration; a test against a running deployment checks the negotiated TLS version.
 <!-- verification:end -->

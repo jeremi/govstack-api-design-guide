@@ -40,7 +40,7 @@ properties:
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: likely collection paths declare pagination parameters; exempts standard unversioned endpoints and response arrays with maxItems bounds; nested array bounds, relationship collection classification, and completeness of the permitted view require semantic review
+The linter flags a GET on a path not ending in a path parameter that declares neither `pageSize` nor `offset`, unless the response array has `maxItems` or the path is a standard unversioned endpoint. A reviewer checks what counts as a collection.
 <!-- verification:end -->
 
 ## 12.2 Cursor pagination by default <a href="#122-cursor-pagination-by-default" id="122-cursor-pagination-by-default"></a>
@@ -58,7 +58,7 @@ Cursor pagination defines continuation, not an implementation technique or a sna
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: paginated lists declare pageSize+cursor; fixed or variable page-size semantics, cursor integrity, expiry and repeated criteria require review; exempts standard unversioned and schema-bounded endpoints
+The linter flags a collection GET that does not declare both `pageSize` and `cursor` query parameters, unless it uses `offset`, is bounded by `maxItems` or is a standard unversioned endpoint. A reviewer checks cursor integrity, expiry and ordering.
 <!-- verification:end -->
 
 ## 12.3 Cursor pagination envelope <a href="#123-cursor-pagination-envelope" id="123-cursor-pagination-envelope"></a>
@@ -86,7 +86,7 @@ A page **MAY** contain fewer than `pageSize` items, including no items, while st
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-proxy: paginated response schema requires items and pageInfo with a nullable, non-empty nextCursor and does not declare hasMore; runtime continuation including short or empty pages and total exact/estimated plus snapshot/current semantics require review
+For collection GETs without `offset`, the linter checks that the 200 `application/json` schema requires `items` and `pageInfo`, that `pageInfo` requires a nullable, non-empty `nextCursor` and declares no `hasMore`. A reviewer checks `total` and runtime continuation.
 <!-- verification:end -->
 
 ## 12.4 Documented pageSize bounds <a href="#124-documented-pagesize-bounds" id="124-documented-pagesize-bounds"></a>
@@ -98,7 +98,7 @@ proxy: paginated response schema requires items and pageInfo with a nullable, no
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-pageSize param schema has default and maximum; exempts the 5.10 standard unversioned endpoints and collections bounded by their own maxItems, on the same terms as 12.1
+The linter checks that a collection GET declares a `pageSize` parameter whose schema has a `default` and a `maximum`, with the same exemptions as the other pagination checks.
 <!-- verification:end -->
 
 ## 12.5 Optional total count <a href="#125-optional-total-count" id="125-optional-total-count"></a>
@@ -110,7 +110,7 @@ pageSize param schema has default and maximum; exempts the 5.10 standard unversi
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-permissive MAY
+The linter does not check this rule. The pagination envelope checks accept a response with or without `total`.
 <!-- verification:end -->
 
 ## 12.6 Offset pagination envelope <a href="#126-offset-pagination-envelope" id="126-offset-pagination-envelope"></a>
@@ -137,7 +137,7 @@ An operation **MAY** use offset pagination instead of cursor pagination when its
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-if offset param present, envelope {items,offset,limit,total?}: items/offset/limit required, total optional and integer when declared; the statement that total is omitted and short-page end-of-traversal semantics are review
+When a collection GET declares an `offset` parameter, the linter checks that the 200 response schema requires `items`, `offset` and `limit`, that `items` is an array and that any `total` is an integer. A reviewer checks the statement about omitting `total` and short pages.
 <!-- verification:end -->
 
 ## 12.7 Sort parameter convention <a href="#127-sort-parameter-convention" id="127-sort-parameter-convention"></a>
@@ -151,7 +151,7 @@ The GovStack default **SHOULD** be `sort`, with `field` for ascending, `-field` 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-advisory proxy: checks the recommended sort name and field/-field grammar; allowed fields, direction documentation, default order, and stable tie-breaker require review
+The linter flags parameters named `orderBy` or `sortBy`, and a `sort` parameter that is not a string with a `pattern`. It does not check what the pattern allows; a reviewer checks allowed fields, direction syntax, default order and tie-breaker.
 <!-- verification:end -->
 
 ## 12.8 Simple equality filtering <a href="#128-simple-equality-filtering" id="128-simple-equality-filtering"></a>
@@ -165,7 +165,7 @@ Simple equality filtering on non-personal, non-secret fields **SHOULD** use one 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: flag operator-style filter params (field[gte], generic filter)
+The linter flags query parameters named with a bracketed operator suffix such as `field[gte]`, and parameters named `filter` or `filters`. A reviewer checks that other filters are equality only, carry no personal data and avoid reserved names.
 <!-- verification:end -->
 
 ## 12.9 Complex filtering via search <a href="#129-complex-filtering-via-search" id="129-complex-filtering-via-search"></a>
@@ -179,7 +179,7 @@ Complex filtering and any filtering that contains personal data **SHOULD** use a
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: POST /search carries pageSize/cursor in body with the §12.3 envelope, or offset/limit with the §12.6 envelope (an offset body selects the offset contract, so a mismatch is flagged); follow-up criteria and other search semantics require review
+For `POST` operations on paths ending in `/search`, the linter checks that the request body declares `pageSize` and `cursor`, or `offset` and `limit`, and that the 200 response uses the matching envelope. A reviewer checks that follow-up requests repeat the criteria.
 <!-- verification:end -->
 
 ## 12.10 Response field selection <a href="#1210-sparse-fieldsets-out-of-scope" id="1210-sparse-fieldsets-out-of-scope"></a>
@@ -193,5 +193,5 @@ An API **MAY** support `fields`; support is optional in GovStack, and where it i
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-when a fields query parameter is declared: a string without an enum, or a string array (enum allowed on items) with style form and explode false; not required; and the operation declares 400 (4XX accepted); top-level-name semantics, always-returned members, the unknown-name Problem type and no authorisation widening are review/runtime
+When an operation declares a `fields` query parameter, the linter checks that it is optional, is a string without `enum` or a string array with `explode: false`, and that the operation declares `400` or `4XX`. A reviewer or test checks names, always-returned members and authorisation.
 <!-- verification:end -->

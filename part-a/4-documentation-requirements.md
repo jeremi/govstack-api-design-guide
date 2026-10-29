@@ -21,7 +21,7 @@ Other schemas **SHOULD** have concise descriptions. Filler text added only to sa
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-advisory proxy: warns on every missing schema description, except combinator wrappers, required-only assertions under not, and branch properties narrowing a described property; whether a non-obvious schema has a useful description is not mechanically decidable
+The linter warns about every schema without a description, in component schemas, request and response bodies and message payloads, except wrappers made only of combinators. A reviewer judges which schemas really need one and whether the text is useful.
 <!-- verification:end -->
 
 ## 4.2 Examples for bodies and enums <a href="#42-examples-for-bodies-and-enums" id="42-examples-for-bodies-and-enums"></a>
@@ -35,7 +35,7 @@ Request and response bodies **SHOULD** have representative examples, especially 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-advisory body-example presence; enum "values documented" proxied by description presence
+The linter warns about request and response bodies and AsyncAPI messages without an example, and about enums without a description. A reviewer checks that the description explains what each value means, and judges whether the values are self-explanatory.
 <!-- verification:end -->
 
 ## 4.3 No placeholder text <a href="#43-no-placeholder-text" id="43-no-placeholder-text"></a>
@@ -47,7 +47,7 @@ The spec **MUST NOT** contain placeholder text: `TBD`, `Lorem ipsum`, `a, b, c`,
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-regex scan all text for TBD/Lorem ipsum/"a, b, c"; cross-BB-name leakage needs external list
+The linter warns when any text in the document contains `TBD`, `Lorem ipsum` or the list `a, b, c`. A reviewer checks for content copied from another BB and for test plans with placeholder steps.
 <!-- verification:end -->
 
 ## 4.4 Accurate operation descriptions <a href="#44-accurate-operation-descriptions" id="44-accurate-operation-descriptions"></a>
@@ -59,7 +59,7 @@ Operation `description` **MUST** describe what the operation actually does. (Cop
 <!-- verification:start -->
 **Verification:** Heuristic check in the optional strict profile.
 
-proxy: flag identical descriptions reused across operations
+The linter warns when two operations share an identical description. A reviewer checks that each description matches what its operation does.
 <!-- verification:end -->
 
 ## 4.5 API surface inventory <a href="#45-api-surface-inventory" id="45-api-surface-inventory"></a>
@@ -101,7 +101,7 @@ apis:
 <!-- verification:start -->
 **Verification:** Automated repository or validator checks. Semantic review is also required.
 
-driver validates canonical discovery, OpenAPI/AsyncAPI paths, explicit noApi reasons, and undeclared spec copies; protocol-standard entries block conformance until an approved registry/profile can validate them
+The linter checks `api/index.yaml` for `version: 1`, exactly one of `apis` or `noApi: true` with a reason, valid entries with unique YAML paths under `api/` that resolve to the declared type, and fails conformance for `standard` entries. It reports a missing declaration in conformance mode.
 <!-- verification:end -->
 
 ## 4.6 Functional-requirement traceability <a href="#46-functional-requirement-traceability" id="46-functional-requirement-traceability"></a>
@@ -147,7 +147,7 @@ draftRequirements:
 <!-- verification:start -->
 **Verification:** Automated repository or validator checks. Semantic review is also required.
 
-driver validates CFR requirement headings, bodies, canonical IDs and classifiers; exact active coverage ID sets including the empty set; optional separate DRAFT mappings; disposition evidence; operation/message references; uniqueness; and planned active gaps; draft maturity is explicit in notices
+The linter checks requirement headings and identifiers under `spec/`, then that `api/coverage.yaml` lists each active requirement once with a valid disposition and existing operation or message IDs, and flags planned entries. A reviewer checks the dispositions are truthful and `non-api` rationales name the verification boundary.
 <!-- verification:end -->
 
 ## 4.7 Operation metadata extensions <a href="#47-operation-metadata-extensions" id="47-operation-metadata-extensions"></a>
@@ -176,5 +176,5 @@ paths:
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-x-govstack-use-case is a non-empty string or non-empty array of non-empty strings and x-govstack-pii a boolean on OpenAPI and AsyncAPI operations and AsyncAPI messages; x-govstack-pii: true fails when any applicable security requirement references an apiKey scheme; identifier existence and the truth of the pii marker are review
+The linter flags an `x-govstack-use-case` that is not a non-empty string or array of non-empty strings, an `x-govstack-pii` that is not a boolean, and an OpenAPI operation marked personal data that uses an API key. A reviewer checks the identifiers and the pii marker.
 <!-- verification:end -->

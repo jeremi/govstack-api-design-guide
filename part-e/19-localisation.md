@@ -23,7 +23,7 @@ A deployment offering one language satisfies this rule by declaring that support
 <!-- verification:start -->
 **Verification:** Runtime verification required; outside the specification linter.
 
-honouring request language runtime
+A test against a running implementation checks that error text, labels and status messages follow the request language, and that an unsupported language falls back to the declared default.
 <!-- verification:end -->
 
 ## 19.2 Never translate stable content <a href="#192-never-translate-stable-content" id="192-never-translate-stable-content"></a>
@@ -35,7 +35,7 @@ Stable content (HTTP Problem `type`, transport-neutral asynchronous error `code`
 <!-- verification:start -->
 **Verification:** Runtime verification required; outside the specification linter.
 
-not translating stable content runtime
+A test against a running implementation checks that problem types, error codes, enum values, identifiers, timestamps and currency codes are never translated.
 <!-- verification:end -->
 
 ## 19.3 Declared default language <a href="#193-declared-default-language" id="193-declared-default-language"></a>
@@ -49,7 +49,7 @@ English **SHOULD** be used as the cross-border fallback when deployment policy o
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-review the declared default response language for HTTP and event specifications; English is advisory where deployment policy or law does not select another default
+The linter does not check this rule. A reviewer checks that the specification states its default response language, and that English is used as the fallback where deployment policy or law does not choose another.
 <!-- verification:end -->
 
 ## 19.4 Declare the response language <a href="#194-declare-the-response-language" id="194-declare-the-response-language"></a>
@@ -61,5 +61,5 @@ Responses or messages with localised content **MUST** include the response langu
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: localised responses declare Content-Language/contentLanguage header
+The linter warns when an OpenAPI operation takes an `Accept-Language` header but no response declares `Content-Language`, and when an AsyncAPI channel has an `acceptLanguage` message but no `contentLanguage` message. A reviewer checks every other localised response.
 <!-- verification:end -->

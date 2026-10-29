@@ -272,7 +272,7 @@ def strip_verification_block(body_lines):
         raise BuildError("verification block requires a blank line after its summary")
     detail_paragraphs = group_paragraphs(block[2:])
     if len(detail_paragraphs) != 1:
-        raise BuildError("verification block must contain exactly one coverage-note paragraph")
+        raise BuildError("verification block must contain exactly one coverage detail paragraph")
 
     return (
         lines[:start],

@@ -19,7 +19,7 @@ A successful read or completed non-creation action that returns a representation
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-descriptive status mapping, no MUST
+The linter does not check this rule. A reviewer checks that successful reads and completed non-creation actions return `200` with a representation.
 <!-- verification:end -->
 
 ## 7.2 201 Created with Location <a href="#72-201-created-with-location" id="72-201-created-with-location"></a>
@@ -35,7 +35,7 @@ When the requested operation is the creation of a job or Operation resource and 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-checks Location on declared 201 responses; whether an operation creates a resource and therefore needs 201 requires semantic review, independent of its operationId spelling
+The linter checks that every declared `201` response includes a `Location` header. A reviewer checks that the operation really completes a creation, that accepted-only work uses `202`, and that the header points to the created resource.
 <!-- verification:end -->
 
 ## 7.3 202 Accepted for async operations <a href="#73-202-accepted-for-async-operations" id="73-202-accepted-for-async-operations"></a>
@@ -49,7 +49,7 @@ A request whose requested operation is the creation of a job or Operation resour
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-declared 202 responses have Location checks under §7.3 and concrete content/schema checks under §15.1 where HTTP permits content; asynchronous applicability and the meaning of the local Operation resource require review
+The linter checks that every declared `202` response includes a `Location` header and, except for `HEAD`, content with a non-empty schema. A reviewer checks that the work really is asynchronous and that the content follows the local Operation schema.
 <!-- verification:end -->
 
 ## 7.4 204 for void responses <a href="#74-204-for-void-responses" id="74-204-for-void-responses"></a>
@@ -61,7 +61,7 @@ A successful synchronous DELETE or other successful operation with no response r
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-descriptive
+The linter flags a `204` response that declares content, and a `DELETE` `204` with a body. A reviewer checks that operations with no representation use `204` rather than `200`.
 <!-- verification:end -->
 
 ## 7.5 400 for malformed requests <a href="#75-400-for-malformed-requests" id="75-400-for-malformed-requests"></a>
@@ -75,7 +75,7 @@ Well-formed input that violates domain semantics **SHOULD** use `422` under [§7
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-descriptive
+The linter flags an operation with a request body or path or query parameters that declares no `400` response, through the baseline check under 7.14. A reviewer checks that `400` is used for malformed input and `422` for semantic errors.
 <!-- verification:end -->
 
 ## 7.6 401 with WWW-Authenticate <a href="#76-401-with-www-authenticate" id="76-401-with-www-authenticate"></a>
@@ -89,7 +89,7 @@ For an OAuth 2.0 bearer scheme ([§13.2](../part-d/13-authentication-and-authori
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-every 401 response declares WWW-Authenticate
+The linter checks that every declared `401` response lists a `WWW-Authenticate` header, and flags secured operations that declare no `401`. A reviewer checks the challenge value, such as the bearer `invalid_token` error.
 <!-- verification:end -->
 
 ## 7.7 403 when not authorised <a href="#77-403-when-not-authorised" id="77-403-when-not-authorised"></a>
@@ -103,7 +103,7 @@ A BB **MAY** return `404` instead when concealing the existence of a forbidden r
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-descriptive
+The linter flags an operation whose security requirements name scopes but that declares no `403`, through the baseline check under 7.14. A reviewer checks other operations that can reject a caller, and any documented choice to return `404` instead.
 <!-- verification:end -->
 
 ## 7.8 404 for missing resources <a href="#78-404-for-missing-resources" id="78-404-for-missing-resources"></a>
@@ -115,7 +115,7 @@ Every operation that addresses a specific resource **MUST** declare `404 Not Fou
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-descriptive
+The linter flags an operation on a path with a `{param}` segment that declares no `404`, through the baseline check under 7.14. A reviewer checks that an empty collection returns `200` with an empty `items` array.
 <!-- verification:end -->
 
 ## 7.9 409 for state conflicts <a href="#79-409-for-state-conflicts" id="79-409-for-state-conflicts"></a>
@@ -127,7 +127,7 @@ An operation that creates a uniquely keyed resource, performs a state transition
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-descriptive
+The linter does not check this rule. A reviewer checks that operations which can conflict with current state declare `409`, and that failed preconditions use `412` instead.
 <!-- verification:end -->
 
 ## 7.10 410 for permanent removal <a href="#710-410-for-permanent-removal" id="710-410-for-permanent-removal"></a>
@@ -139,7 +139,7 @@ A server **SHOULD** use `410 Gone` only when it knows that a resource or endpoin
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-descriptive
+The linter does not check this rule. A reviewer checks that `410` is used only for a resource or endpoint known to be permanently removed.
 <!-- verification:end -->
 
 ## 7.11 422 for semantic errors <a href="#711-422-for-semantic-errors" id="711-422-for-semantic-errors"></a>
@@ -151,7 +151,7 @@ A well-formed request that violates domain validation or other semantic constrai
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-descriptive
+The linter does not check this rule. A reviewer checks that well-formed requests that violate domain validation return `422`.
 <!-- verification:end -->
 
 ## 7.12 429 for rate limits <a href="#712-429-for-rate-limits" id="712-429-for-rate-limits"></a>
@@ -163,7 +163,7 @@ An operation that enforces a caller-visible rate limit **SHOULD** declare `429 T
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-descriptive
+The linter only checks that a declared `429` response lists `Retry-After`, as an information-level finding under 8.7. A reviewer checks that operations enforcing a caller-visible rate limit declare `429` at all.
 <!-- verification:end -->
 
 ## 7.13 Server errors documented <a href="#713-server-errors-documented" id="713-server-errors-documented"></a>
@@ -177,7 +177,7 @@ Operations exposed through a gateway or dependent service **SHOULD** additionall
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-every operation declares a 500 response
+The linter flags any operation under `paths` that declares no `500` response. A reviewer checks the additional `502`, `503` and `504` responses for operations behind a gateway or dependent service.
 <!-- verification:end -->
 
 ## 7.14 All status codes declared <a href="#714-all-status-codes-declared" id="714-all-status-codes-declared"></a>
@@ -191,7 +191,7 @@ A `default` response **MUST NOT** replace an explicitly required status code. No
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-proxy: >1 code and >=1 non-2xx; creation-like POSTs expose 201/202; visible security/scope/body/parameter/path shape deterministically requires baseline 401/403/400/404
+The linter flags operations with fewer than two responses or no error response, creation-like `POST` operations without `201` or `202`, and missing `400`, `401`, `403` or `404` where security, parameters or path call for them. A reviewer checks completeness and use of `default`.
 <!-- verification:end -->
 
 ## 7.15 412 for failed preconditions <a href="#715-412-for-failed-preconditions" id="715-412-for-failed-preconditions"></a>
@@ -203,7 +203,7 @@ A failed conditional request precondition such as `If-Match` **SHOULD** use `412
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-descriptive
+The linter only checks that `PUT` and `PATCH` operations declare a `412` response, as an information-level finding under 7.17. A reviewer checks that failed preconditions use `412` rather than `409`.
 <!-- verification:end -->
 
 ## 7.16 ETag and If-None-Match <a href="#716-etag-and-if-none-match" id="716-etag-and-if-none-match"></a>
@@ -217,7 +217,7 @@ Collection responses, including paginated pages, **MAY** advertise an `ETag`. `G
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: single-resource GETs declare ETag header + 304 (advisory SHOULD); skips GETs whose 200 body is a root array or items-array page (collection ETag is MAY); exempts the 5.10 operational endpoints /health and /ready (a liveness probe is not a cacheable resource)
+The linter flags, as an information-level finding, a `GET` returning a single resource that has no `ETag` header on its `200` response or no `304` response. Collection responses, `/health` and `/ready` are skipped; a reviewer checks the `ETag` is derived from the representation.
 <!-- verification:end -->
 
 ## 7.17 Optimistic concurrency with If-Match <a href="#717-optimistic-concurrency-with-if-match" id="717-optimistic-concurrency-with-if-match"></a>
@@ -231,7 +231,7 @@ An endpoint that supports optimistic concurrency **MUST** accept `If-Match` carr
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: PUT/PATCH declare If-Match param + 412 response (advisory; the MUST applies only where optimistic concurrency is supported, which the linter cannot detect, so the proxy stays at info)
+The linter flags, as an information-level finding, a `PUT` or `PATCH` that declares no `If-Match` header parameter or no `412` response. It cannot tell which endpoints support optimistic concurrency; a reviewer checks strong validators, `428` and the reservation of `409`.
 <!-- verification:end -->
 
 ## 7.18 405 with Allow header <a href="#718-405-with-allow-header" id="718-405-with-allow-header"></a>
@@ -243,7 +243,7 @@ proxy: PUT/PATCH declare If-Match param + 412 response (advisory; the MUST appli
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-every 405 response declares Allow header
+The linter checks that every declared `405` response lists an `Allow` header. It does not check the listed methods; a test against a running implementation checks that the header names the methods the resource supports.
 <!-- verification:end -->
 
 ## 7.19 415 for unsupported media types <a href="#719-415-for-unsupported-media-types" id="719-415-for-unsupported-media-types"></a>
@@ -257,7 +257,7 @@ every 405 response declares Allow header
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-PATCH operations declare a 415 response
+The linter checks that every `PATCH` operation declares a `415` response. A test against a running implementation checks that an unsupported patch media type is actually rejected with `415`.
 <!-- verification:end -->
 
 ## 7.20 No-store on error responses <a href="#720-no-store-on-error-responses" id="720-no-store-on-error-responses"></a>
@@ -267,9 +267,9 @@ PATCH operations declare a 415 response
 Error responses (`application/problem+json`) and Operation-status responses ([§15](../part-d/15-asynchronous-operations.md)) **SHOULD** declare `Cache-Control: no-store`, so a shared cache cannot replay a transient failure or stale operation state. Broader caching behaviour is operational and out of scope ([§1.2](../1-introduction.md#12-scope)).
 
 <!-- verification:start -->
-**Verification:** Automated specification check.
+**Verification:** Partial linter check. Remaining clauses need separate verification.
 
-problem+json / operation-status responses declare Cache-Control (no-store)
+The linter checks that a response offering `application/problem+json` declares a `Cache-Control` header, but not its value. A reviewer checks for `no-store` and covers Operation-status responses, which the linter does not recognise.
 <!-- verification:end -->
 
 ## 7.21 Schemas for successful response bodies <a href="#721-schemas-for-successful-response-bodies" id="721-schemas-for-successful-response-bodies"></a>
@@ -281,5 +281,5 @@ Every declared `2xx` response that carries a body **MUST** declare at least one 
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-declared 2xx response media types carry non-empty schemas across paths, webhooks and nested callbacks; HEAD, 204 and 205 responses have no content. The shared §15.1 check owns 202 content/schema findings, including HEAD's no-content exception, so each defect is reported once
+The linter flags a `2xx` response whose media type has no schema or an empty one, and any `HEAD`, `204` or `205` response that declares content. Paths, webhooks and callbacks are covered; `202` bodies are checked under 15.1.
 <!-- verification:end -->

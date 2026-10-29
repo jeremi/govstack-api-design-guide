@@ -16,7 +16,7 @@ When renaming a rule heading, register its original anchor in `PRESERVED_RULE_AN
 
 Run `python3 tools/test_anchors.py` when changing anchor handling.
 
-Keep the hidden `rule-class` comment as compatibility metadata. The visible Verification blocks are generated from `linter/coverage.yaml`; update that manifest when the available checks or their limits change, then regenerate the blocks. Do not edit the generated blocks by hand. They describe verification coverage, not requirement strength or test results.
+Keep the hidden `rule-class` comment as compatibility metadata. The visible Verification blocks are generated from `linter/coverage.yaml`; update that manifest when the available checks or their limits change, then regenerate the blocks. The reader text is each entry's `detail`; its `note` is maintainer evidence and is never rendered. Do not edit the generated blocks by hand. They describe verification coverage, not requirement strength or test results.
 
 ## Regenerating the machine layer
 
@@ -26,7 +26,7 @@ Regenerate verification details before building the indexes. The verification ge
 node linter/scripts/generate-verification.mjs
 ```
 
-This updates each rule's Verification block from the coverage manifest while preserving the requirement text, identifiers, anchors, and hidden compatibility class. The index builder excludes these generated notes from the normative text in `rules.yaml` and uses their summaries in the reader indexes.
+This updates each rule's Verification block from the coverage manifest while preserving the requirement text, identifiers, anchors, and hidden compatibility class. The index builder excludes these generated details from the normative text in `rules.yaml` and uses their summaries in the reader indexes.
 
 ```bash
 python3 tools/build_rules_index.py

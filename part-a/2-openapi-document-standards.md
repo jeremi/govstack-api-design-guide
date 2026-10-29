@@ -19,7 +19,7 @@ The spec **MUST** declare an explicit, published OpenAPI 3.1 patch version quali
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-assert openapi is one of the ruleset-qualified patches 3.1.0, 3.1.1, 3.1.2
+The linter flags any `openapi` value other than 3.1.0, 3.1.1 or 3.1.2, which also rejects OpenAPI 3.0 and later minor versions such as 3.2.
 <!-- verification:end -->
 
 ## 2.2 One canonical OpenAPI entrypoint <a href="#22-one-canonical-openapi-entrypoint" id="22-one-canonical-openapi-entrypoint"></a>
@@ -33,7 +33,7 @@ The canonical entrypoint **MAY** `$ref`-compose other repository files provided 
 <!-- verification:start -->
 **Verification:** Automated repository or validator checks. Semantic review is also required.
 
-canonical file at api/openapi.yaml, single entrypoint, all $refs resolve - repo file tree
+The linter checks that the canonical entrypoint sits at the default path or is listed in the surface inventory as a YAML file under `api/`, that the file exists, and that no `swagger.yaml` or `swagger.json` remains. The base validator catches unresolved `$ref` links.
 <!-- verification:end -->
 
 ## 2.3 No divergent OpenAPI copies <a href="#23-no-divergent-openapi-copies" id="23-no-divergent-openapi-copies"></a>
@@ -51,7 +51,7 @@ A BB **MAY** retain historical contracts under `api/legacy/` when its documentat
 <!-- verification:start -->
 **Verification:** Automated repository or validator checks.
 
-no undeclared current copies; api/legacy archives excluded from discovery but explicit declarations and references still validate; historical documentation and canonical snippet use require review
+The linter flags OpenAPI documents found outside the declared surfaces, ignoring `api/legacy/`, `api/common/` support libraries and example directories. It does not compare file contents. A reviewer checks that documentation snippets load from the canonical file and that historical contracts are labelled.
 <!-- verification:end -->
 
 ## 2.4 Passes openapi-spec-validator <a href="#24-passes-openapi-spec-validator" id="24-passes-openapi-spec-validator"></a>
@@ -63,7 +63,7 @@ The canonical entrypoint **MUST** pass `openapi-spec-validator` for its declared
 <!-- verification:start -->
 **Verification:** Automated repository or validator checks.
 
-run openapi-spec-validator against 3.1 schema
+In conformance mode the linter runs the OpenAPI base validator on each canonical file and example contract, and reports a missing validator as a finding. It does not separately validate referenced schema fragments that are not OpenAPI documents.
 <!-- verification:end -->
 
 ## 2.5 Complete info block <a href="#25-complete-info-block" id="25-complete-info-block"></a>
@@ -77,7 +77,7 @@ The info block **SHOULD** include `contact`; repository governance may supply th
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-info has title/version/description; version matches SemVer regex; contact is advisory
+The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged.
 <!-- verification:end -->
 
 ## 2.6 Meaningful servers block <a href="#26-meaningful-servers-block" id="26-meaningful-servers-block"></a>
@@ -91,7 +91,7 @@ Reference specifications that are not tied to a live implementation **SHOULD** u
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-deterministic: non-empty HTTPS servers, no loopback, no /vN duplicated between server and path; only the duplication check is informational under legacy; meaningful/fake-domain judgment remains review
+The linter flags missing or empty `servers`, URLs that are not `https://` or name localhost or a loopback address, and a `/vN` segment repeated from the path keys. A reviewer judges whether the URLs are meaningful and not fake production domains.
 <!-- verification:end -->
 
 ## 2.7 Complete operation metadata <a href="#27-complete-operation-metadata" id="27-complete-operation-metadata"></a>
@@ -105,7 +105,7 @@ An `operationId` **SHOULD** use a readable camelCase verb-noun form. A concise `
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-each operation has stable non-empty operationId and description; casing, summary, and tags are advisory
+The linter flags any operation under `paths` without a non-empty `operationId` and `description`. A reviewer checks that the description is accurate and the identifier is stable and readable. Missing `summary` and `tags` are not flagged.
 <!-- verification:end -->
 
 ## 2.8 Conditional vendored OpenAPI schemas <a href="#28-conditional-vendored-openapi-schemas" id="28-conditional-vendored-openapi-schemas"></a>
@@ -123,5 +123,5 @@ Vendoring is required when reuse is chosen because GovStack BBs are deployed in 
 <!-- verification:start -->
 **Verification:** Additional context required for verification. Semantic review is also required.
 
-conditional Problem/ValidationProblem/FieldError/PageInfo references require the vendored schema-only common file and semantic recognition of where each schema applies
+The linter does not check this rule. A reviewer checks whether the vendored common file is present at the required path with a pinned version, and that the named schemas are referenced rather than copied.
 <!-- verification:end -->

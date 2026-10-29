@@ -27,7 +27,7 @@ The documented scope and identifier together identify the resource. Reusing a so
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: resource id fields are strings; source ownership, scoped uniqueness, stability and URL disclosure require review; UUID is not required
+The linter flags properties named `id` or ending in `Id` that do not declare `type: string`. A reviewer checks uniqueness within the scope, stability, opacity, URL safety and personal-data disclosure.
 <!-- verification:end -->
 
 ## 10.2 RFC 3339 timestamps <a href="#102-rfc-3339-timestamps" id="102-rfc-3339-timestamps"></a>
@@ -39,7 +39,7 @@ Timestamps **MUST** be RFC 3339 in UTC, serialized with the `Z` designator and d
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-proxy: At-named fields explicitly declare string date/date-time alternatives; Timestamp fields declare date-time only. Checks allOf/anyOf/oneOf and resolved references, with bounded expansion; instance validity and uppercase UTC Z serialization remain runtime obligations
+The linter checks that properties ending in `At` declare a string with `format: date` or `date-time`, and that properties ending in `Timestamp` declare `date-time`. A test against a running implementation checks UTC values with the `Z` designator.
 <!-- verification:end -->
 
 ## 10.3 RFC 3339 calendar dates <a href="#103-rfc-3339-calendar-dates" id="103-rfc-3339-calendar-dates"></a>
@@ -51,7 +51,7 @@ Dates without time **MUST** be RFC 3339 calendar dates, declared as `format: dat
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-proxy: date-named fields declare format:date
+The linter checks that properties ending in `Date` declare `type: string` with `format: date`. Date fields with other names, and whether values are valid calendar dates, are left to a reviewer and to tests against a running implementation.
 <!-- verification:end -->
 
 ## 10.4 Decimal-string monetary amounts <a href="#104-decimal-string-monetary-amounts" id="104-decimal-string-monetary-amounts"></a>
@@ -63,7 +63,7 @@ Monetary amounts **MUST** use the object `{ amount: string (decimal), currency: 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: money fields are {amount:string,currency} object, not type:number
+The linter flags properties whose names end in `amount`, `price` or `balance` (any case) when typed `number` or `integer`. It does not check for the `{ amount, currency }` object or a decimal string; a reviewer checks that.
 <!-- verification:end -->
 
 ## 10.5 E.164 phone numbers <a href="#105-e164-phone-numbers" id="105-e164-phone-numbers"></a>
@@ -75,7 +75,7 @@ Phone numbers **MUST** be E.164 strings.
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: phone fields string with E.164 pattern
+The linter checks that properties with `phone` in the name are strings with exactly the pattern `^\+[1-9]\d{1,14}$`, and flags any other pattern. Other field names, and whether a number is real, are left to a reviewer.
 <!-- verification:end -->
 
 ## 10.6 Email addresses <a href="#106-rfc-5322-email-addresses" id="106-rfc-5322-email-addresses"></a>
@@ -89,7 +89,7 @@ Display names belong in separate fields, not in the email address value.
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: email fields declare format:email
+The linter checks that properties with `email` in the name are strings declared with `format: email`. A reviewer checks that display names stay out of the value, and a test checks that real values follow the syntax.
 <!-- verification:end -->
 
 ## 10.7 Binary uploads and base64 payloads <a href="#107-binary-uploads-and-base64-payloads" id="107-binary-uploads-and-base64-payloads"></a>
@@ -103,7 +103,7 @@ Small inline payloads (signatures, certificates, QR codes, attestations) **MAY**
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: base64 fields declare contentEncoding:base64 + maxLength
+The linter checks that properties with `signature`, `certificate`, `qrCode`, `qr_code` or `attestation` in the name declare a string with `contentEncoding: base64` and a `maxLength`. A reviewer checks other base64 fields and that large binaries use `multipart/form-data` or a dedicated endpoint.
 <!-- verification:end -->
 
 ## 10.8 ISO 3166-1 country codes <a href="#108-iso-3166-1-country-codes" id="108-iso-3166-1-country-codes"></a>
@@ -115,7 +115,7 @@ Country codes **MUST** be ISO 3166-1 alpha-2.
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: country fields match ^[A-Z]{2}$ / ISO enum
+The linter checks that properties with `country` in the name are strings with exactly the pattern `^[A-Z]{2}$`. It does not check that the code is assigned, and a field limited by an `enum` of codes without that pattern is flagged.
 <!-- verification:end -->
 
 ## 10.9 BCP 47 language codes <a href="#109-bcp-47-language-codes" id="109-bcp-47-language-codes"></a>
@@ -127,7 +127,7 @@ Language codes **MUST** be BCP 47.
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: language fields match BCP-47 pattern
+The linter checks that properties with `language` or `locale` in the name are strings declaring one specific common-case BCP 47 pattern, and flags any other pattern. A reviewer judges whether a fuller BCP 47 pattern is acceptable.
 <!-- verification:end -->
 
 ## 10.10 ISO 4217 currency codes <a href="#1010-iso-4217-currency-codes" id="1010-iso-4217-currency-codes"></a>
@@ -139,7 +139,7 @@ Currency codes **MUST** be ISO 4217.
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: currency fields match ^[A-Z]{3}$
+The linter checks that properties named `currency`, starting with `currency` or containing `Currency` are strings with exactly the pattern `^[A-Z]{3}$`. It does not check that the code is assigned, and an `enum` of codes without the pattern is flagged.
 <!-- verification:end -->
 
 ## 10.11 UTF-8 text encoding <a href="#1011-utf-8-text-encoding" id="1011-utf-8-text-encoding"></a>
@@ -153,5 +153,5 @@ Text in API payloads **MUST** be UTF-8. A media type declared anywhere in the sp
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-no declared media type or contentType sets charset to an encoding other than UTF-8. Payload bytes themselves are outside a document linter's reach.
+The linter flags any media type under request or response `content`, and any AsyncAPI `contentType`, that sets a `charset` other than UTF-8. A test against a running implementation checks the payload bytes.
 <!-- verification:end -->

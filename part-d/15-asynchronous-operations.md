@@ -21,7 +21,7 @@ Creating a job or Operation resource that is itself addressable when the respons
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-§15.1 checks concrete non-empty content schemas on declared non-HEAD 202 responses and forbids HEAD 202 content; §7.3 owns Location checks. Whether work is asynchronous and whether the representation denotes its local Operation resource require semantic review
+The linter flags a non-`HEAD` `202` response that declares no content or a media type with an empty schema, and a `HEAD` `202` that declares content. A separate check covers `Location`; a reviewer checks that the work is asynchronous and the body is an Operation.
 <!-- verification:end -->
 
 ## 15.2 Local Operation resource shape <a href="#152-local-operation-resource-shape" id="152-local-operation-resource-shape"></a>
@@ -35,7 +35,7 @@ The response schema is required by [§7.21](../part-b/7-http-status-codes.md#721
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required. Semantic review is also required.
 
-local Operation identifier and state-dependent shape require semantic review; no ecosystem field names or formats are prescribed
+The linter does not check this rule. A reviewer checks that the local Operation schema documents its identifier, state, result, error and progress fields, and when each is present.
 <!-- verification:end -->
 
 ## 15.3 Documented Operation lifecycle <a href="#153-documented-operation-lifecycle" id="153-documented-operation-lifecycle"></a>
@@ -59,7 +59,7 @@ The local Operation contract **SHOULD** distinguish terminal from non-terminal s
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required. Semantic review is also required.
 
-terminal/non-terminal lifecycle and result/error/cancellation semantics require review; no fixed enum is prescribed
+The linter does not check this rule. A reviewer checks that terminal and non-terminal states are distinguished and that result, error, polling and cancellation behaviour is documented per state.
 <!-- verification:end -->
 
 ## 15.4 Polling the Operation resource <a href="#154-polling-the-operation-resource" id="154-polling-the-operation-resource"></a>
@@ -73,7 +73,7 @@ The conventional path **SHOULD** be `/v{major}/operations/{operationId}`. A non-
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-proxy: canonical GET /v1/operations/{operationId} present when Operations used. level MUST in rules.yaml (class M+R).
+The linter warns when an OpenAPI document has an `Operation` schema or an `/operations/` path but no `GET /v{N}/operations/{operationId}` path. A reviewer checks the polling response shape, the `Location` target and `Retry-After`.
 <!-- verification:end -->
 
 ## 15.5 Cancellation via cancel sub-resource <a href="#155-cancellation-via-cancel-sub-resource" id="155-cancellation-via-cancel-sub-resource"></a>
@@ -87,7 +87,7 @@ The conventional action **SHOULD** be `POST /v{major}/operations/{operationId}/c
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-advisory proxy: checks the conventional cancellation path; does not prove that cancellation support or non-support is documented and discoverable by another mechanism
+The linter warns about an `/operations/.../cancel` path that is not `/v{N}/operations/{operationId}/cancel`, or that has no `POST`. A reviewer checks that cancellation, or its absence, is documented and discoverable.
 <!-- verification:end -->
 
 ## 15.6 Webhook completion notification <a href="#156-webhook-completion-notification" id="156-webhook-completion-notification"></a>
@@ -99,7 +99,7 @@ Long-running operations **SHOULD** support completion notification via webhook (
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-SHOULD + "long-running" semantic - advisory
+The linter does not check this rule. A reviewer checks whether long-running operations offer completion notification through a webhook.
 <!-- verification:end -->
 
 ## 15.7 Documented result retention <a href="#157-documented-result-retention" id="157-documented-result-retention"></a>
@@ -111,7 +111,7 @@ Operation result availability **SHOULD** be documented as a consumer-visible con
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required.
 
-"document result retention" prose
+The linter does not check this rule. A reviewer checks that Operation result retention, or the parameter that controls it, is documented.
 <!-- verification:end -->
 
 ## 15.8 Per-request callback URL <a href="#158-per-request-callback-url" id="158-per-request-callback-url"></a>
@@ -163,5 +163,5 @@ paths:
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-deterministic: request body callbackUrl requires a callbacks object (subscription paths exempt); proxies: no header/query parameter named like /callback/i, callbackUrl declares format: uri; the https requirement, the runtime expression referencing callbackUrl, the callback body shape and callback authentication are NOT checked
+The linter flags a header or query parameter named like "callback", flags a request body `callbackUrl` with no `callbacks` object, and warns when it lacks `format: uri`. A reviewer checks `https`, the runtime expression, the callback body and its authentication.
 <!-- verification:end -->

@@ -51,7 +51,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [7.14](part-b/7-http-status-codes.md#714-all-status-codes-declared) | MUST | Partial linter check. Remaining clauses need separate verification. | All status codes declared |
 | [7.16](part-b/7-http-status-codes.md#716-etag-and-if-none-match) | SHOULD | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | ETag and If-None-Match |
 | [7.18](part-b/7-http-status-codes.md#718-405-with-allow-header) | MUST | Automated specification check. | 405 with Allow header |
-| [7.20](part-b/7-http-status-codes.md#720-no-store-on-error-responses) | SHOULD | Automated specification check. | No-store on error responses |
+| [7.20](part-b/7-http-status-codes.md#720-no-store-on-error-responses) | SHOULD | Partial linter check. Remaining clauses need separate verification. | No-store on error responses |
 | [7.21](part-b/7-http-status-codes.md#721-schemas-for-successful-response-bodies) | MUST | Automated specification check. | Schemas for successful response bodies |
 | [8.1](part-b/8-headers.md#81-credentials-in-authorization-header) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Credentials in Authorization header |
 | [8.2](part-b/8-headers.md#82-accept-language-and-content-language) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Accept-Language and Content-Language |
@@ -100,7 +100,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [13.2](part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | OAuth and OIDC for citizen operations |
 | [13.3](part-d/13-authentication-and-authorisation.md#133-distinct-scheme-for-bb-to-bb-calls) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Distinct scheme for BB-to-BB calls |
 | [13.4](part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes) | MUST | Partial linter check. Remaining clauses need separate verification. | Namespaced OAuth scopes |
-| [13.5](part-d/13-authentication-and-authorisation.md#135-authorization-is-the-credential-channel) | MUST | Automated specification check. Semantic review is also required. | Authorization is the credential channel |
+| [13.5](part-d/13-authentication-and-authorisation.md#135-authorization-is-the-credential-channel) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Authorization is the credential channel |
 | [13.6](part-d/13-authentication-and-authorisation.md#136-api-keys-only-for-operational-endpoints) | MUST | Partial linter check. Remaining clauses need separate verification. | API keys only for operational endpoints |
 | [13.7](part-d/13-authentication-and-authorisation.md#137-protected-transport) | MUST | Review or evidence assessment required. Semantic review is also required. | Protected transport |
 | [14.2](part-d/14-idempotency.md#142-opaque-client-generated-keys) | MUST | Review or evidence assessment required. | Opaque client-generated keys |
@@ -108,13 +108,13 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [18.2](part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel) | MUST | Partial linter check. Remaining clauses need separate verification. | Major version in path or channel |
 | [18.3](part-d/18-compatibility-and-lifecycle.md#183-backward-compatible-minor-changes) | MUST | Additional context required for verification. Semantic review is also required. | Backward-compatible minor changes |
 | [18.4](part-d/18-compatibility-and-lifecycle.md#184-breaking-changes-bump-major-version) | MUST | Additional context required for verification. Semantic review is also required. | Breaking changes bump major version |
-| [18.5](part-d/18-compatibility-and-lifecycle.md#185-deprecation-and-sunset-headers) | MUST | Automated specification check. Semantic review is also required. | Deprecation and Sunset headers |
+| [18.5](part-d/18-compatibility-and-lifecycle.md#185-deprecation-and-sunset-headers) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Deprecation and Sunset headers |
 | [18.6](part-d/18-compatibility-and-lifecycle.md#186-clients-ignore-unknown-fields) | — | Informative; no conformance check. | Clients ignore unknown fields |
 | [19.3](part-e/19-localisation.md#193-declared-default-language) | MUST | Review or evidence assessment required. | Declared default language |
 | [19.4](part-e/19-localisation.md#194-declare-the-response-language) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Declare the response language |
 | [20.1](part-e/20-conformance-and-validation.md#201-every-file-passes-validation) | MUST | Partial linter check. Remaining clauses need separate verification. | Every file passes validation |
 | [20.2](part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset) | MUST | Review or evidence assessment required. | Passes the GovStack Spectral ruleset |
-| [20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) | MUST | Automated specification check. | Declared guide conformance version |
+| [20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) | MUST | Partial linter check. Remaining clauses need separate verification. | Declared guide conformance version |
 
 ## HTTP APIs with mutations (in addition to the read-only rules)
 
@@ -172,7 +172,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [7.17](part-b/7-http-status-codes.md#717-optimistic-concurrency-with-if-match) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Optimistic concurrency with If-Match |
 | [7.18](part-b/7-http-status-codes.md#718-405-with-allow-header) | MUST | Automated specification check. | 405 with Allow header |
 | [7.19](part-b/7-http-status-codes.md#719-415-for-unsupported-media-types) | MUST | Automated specification check. Semantic review is also required. | 415 for unsupported media types |
-| [7.20](part-b/7-http-status-codes.md#720-no-store-on-error-responses) | SHOULD | Automated specification check. | No-store on error responses |
+| [7.20](part-b/7-http-status-codes.md#720-no-store-on-error-responses) | SHOULD | Partial linter check. Remaining clauses need separate verification. | No-store on error responses |
 | [7.21](part-b/7-http-status-codes.md#721-schemas-for-successful-response-bodies) | MUST | Automated specification check. | Schemas for successful response bodies |
 | [8.1](part-b/8-headers.md#81-credentials-in-authorization-header) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Credentials in Authorization header |
 | [8.2](part-b/8-headers.md#82-accept-language-and-content-language) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Accept-Language and Content-Language |
@@ -222,7 +222,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [13.2](part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | OAuth and OIDC for citizen operations |
 | [13.3](part-d/13-authentication-and-authorisation.md#133-distinct-scheme-for-bb-to-bb-calls) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Distinct scheme for BB-to-BB calls |
 | [13.4](part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes) | MUST | Partial linter check. Remaining clauses need separate verification. | Namespaced OAuth scopes |
-| [13.5](part-d/13-authentication-and-authorisation.md#135-authorization-is-the-credential-channel) | MUST | Automated specification check. Semantic review is also required. | Authorization is the credential channel |
+| [13.5](part-d/13-authentication-and-authorisation.md#135-authorization-is-the-credential-channel) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Authorization is the credential channel |
 | [13.6](part-d/13-authentication-and-authorisation.md#136-api-keys-only-for-operational-endpoints) | MUST | Partial linter check. Remaining clauses need separate verification. | API keys only for operational endpoints |
 | [13.7](part-d/13-authentication-and-authorisation.md#137-protected-transport) | MUST | Review or evidence assessment required. Semantic review is also required. | Protected transport |
 | [14.1](part-d/14-idempotency.md#141-idempotency-key-on-non-idempotent-posts) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Idempotency-Key on non-idempotent POSTs |
@@ -241,13 +241,13 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [18.2](part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel) | MUST | Partial linter check. Remaining clauses need separate verification. | Major version in path or channel |
 | [18.3](part-d/18-compatibility-and-lifecycle.md#183-backward-compatible-minor-changes) | MUST | Additional context required for verification. Semantic review is also required. | Backward-compatible minor changes |
 | [18.4](part-d/18-compatibility-and-lifecycle.md#184-breaking-changes-bump-major-version) | MUST | Additional context required for verification. Semantic review is also required. | Breaking changes bump major version |
-| [18.5](part-d/18-compatibility-and-lifecycle.md#185-deprecation-and-sunset-headers) | MUST | Automated specification check. Semantic review is also required. | Deprecation and Sunset headers |
+| [18.5](part-d/18-compatibility-and-lifecycle.md#185-deprecation-and-sunset-headers) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Deprecation and Sunset headers |
 | [18.6](part-d/18-compatibility-and-lifecycle.md#186-clients-ignore-unknown-fields) | — | Informative; no conformance check. | Clients ignore unknown fields |
 | [19.3](part-e/19-localisation.md#193-declared-default-language) | MUST | Review or evidence assessment required. | Declared default language |
 | [19.4](part-e/19-localisation.md#194-declare-the-response-language) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Declare the response language |
 | [20.1](part-e/20-conformance-and-validation.md#201-every-file-passes-validation) | MUST | Partial linter check. Remaining clauses need separate verification. | Every file passes validation |
 | [20.2](part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset) | MUST | Review or evidence assessment required. | Passes the GovStack Spectral ruleset |
-| [20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) | MUST | Automated specification check. | Declared guide conformance version |
+| [20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) | MUST | Partial linter check. Remaining clauses need separate verification. | Declared guide conformance version |
 
 ## Event and webhook surfaces
 
@@ -298,7 +298,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [13.2](part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | OAuth and OIDC for citizen operations |
 | [13.3](part-d/13-authentication-and-authorisation.md#133-distinct-scheme-for-bb-to-bb-calls) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Distinct scheme for BB-to-BB calls |
 | [13.4](part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes) | MUST | Partial linter check. Remaining clauses need separate verification. | Namespaced OAuth scopes |
-| [13.5](part-d/13-authentication-and-authorisation.md#135-authorization-is-the-credential-channel) | MUST | Automated specification check. Semantic review is also required. | Authorization is the credential channel |
+| [13.5](part-d/13-authentication-and-authorisation.md#135-authorization-is-the-credential-channel) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Authorization is the credential channel |
 | [13.6](part-d/13-authentication-and-authorisation.md#136-api-keys-only-for-operational-endpoints) | MUST | Partial linter check. Remaining clauses need separate verification. | API keys only for operational endpoints |
 | [13.7](part-d/13-authentication-and-authorisation.md#137-protected-transport) | MUST | Review or evidence assessment required. Semantic review is also required. | Protected transport |
 | [16.1](part-d/16-cloudevents-and-webhooks.md#161-event-surfaces-documented) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Event surfaces documented |
@@ -314,7 +314,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [17.1](part-d/17-asyncapi-channel-rules.md#171-send-and-receive-perspective) | MUST | Automated specification check. Semantic review is also required. | Send and receive perspective |
 | [17.2](part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Stable logical channel IDs and native addresses |
 | [17.3](part-d/17-asyncapi-channel-rules.md#173-no-personal-data-in-channels) | MUST | Heuristic check in the optional strict profile. | No personal data in channels |
-| [17.4](part-d/17-asyncapi-channel-rules.md#174-declared-channel-parameters) | MUST | Automated specification check. Semantic review is also required. | Declared channel parameters |
+| [17.4](part-d/17-asyncapi-channel-rules.md#174-declared-channel-parameters) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Declared channel parameters |
 | [17.5](part-d/17-asyncapi-channel-rules.md#175-no-environment-names-in-addresses) | SHOULD | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | No environment names in addresses |
 | [17.6](part-d/17-asyncapi-channel-rules.md#176-structured-cloudevents-json-payloads) | MUST | Partial linter check. Remaining clauses need separate verification. | Structured CloudEvents JSON payloads |
 | [17.7](part-d/17-asyncapi-channel-rules.md#177-shared-cloudevents-envelope-schema) | MUST | Partial linter check. Remaining clauses need separate verification. | Shared CloudEvents envelope schema |
@@ -327,7 +327,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [17.14](part-d/17-asyncapi-channel-rules.md#1714-implementation-values-in-protocol-profiles) | SHOULD | Review or evidence assessment required. | Implementation values in protocol profiles |
 | [17.15](part-d/17-asyncapi-channel-rules.md#1715-no-universal-delivery-extensions) | SHOULD | Review or evidence assessment required. | No universal delivery extensions |
 | [17.16](part-d/17-asyncapi-channel-rules.md#1716-async-rejection-error-messages) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Async rejection error messages |
-| [17.17](part-d/17-asyncapi-channel-rules.md#1717-declared-request-reply-correlation) | MUST | Automated specification check. Semantic review is also required. | Declared request-reply correlation |
+| [17.17](part-d/17-asyncapi-channel-rules.md#1717-declared-request-reply-correlation) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Declared request-reply correlation |
 | [17.18](part-d/17-asyncapi-channel-rules.md#1718-correlated-completion-signals) | SHOULD | Review or evidence assessment required. Semantic review is also required. | Correlated completion signals |
 | [17.19](part-d/17-asyncapi-channel-rules.md#1719-protocol-bindings-where-relevant) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Protocol bindings where relevant |
 | [17.20](part-d/17-asyncapi-channel-rules.md#1720-representative-message-examples) | SHOULD | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Representative message examples |
@@ -335,14 +335,14 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [18.2](part-d/18-compatibility-and-lifecycle.md#182-major-version-in-path-or-channel) | MUST | Partial linter check. Remaining clauses need separate verification. | Major version in path or channel |
 | [18.3](part-d/18-compatibility-and-lifecycle.md#183-backward-compatible-minor-changes) | MUST | Additional context required for verification. Semantic review is also required. | Backward-compatible minor changes |
 | [18.4](part-d/18-compatibility-and-lifecycle.md#184-breaking-changes-bump-major-version) | MUST | Additional context required for verification. Semantic review is also required. | Breaking changes bump major version |
-| [18.5](part-d/18-compatibility-and-lifecycle.md#185-deprecation-and-sunset-headers) | MUST | Automated specification check. Semantic review is also required. | Deprecation and Sunset headers |
+| [18.5](part-d/18-compatibility-and-lifecycle.md#185-deprecation-and-sunset-headers) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Deprecation and Sunset headers |
 | [18.6](part-d/18-compatibility-and-lifecycle.md#186-clients-ignore-unknown-fields) | — | Informative; no conformance check. | Clients ignore unknown fields |
-| [18.7](part-d/18-compatibility-and-lifecycle.md#187-asyncapi-deprecation-metadata) | MUST | Automated specification check. Semantic review is also required. | AsyncAPI deprecation metadata |
+| [18.7](part-d/18-compatibility-and-lifecycle.md#187-asyncapi-deprecation-metadata) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | AsyncAPI deprecation metadata |
 | [19.3](part-e/19-localisation.md#193-declared-default-language) | MUST | Review or evidence assessment required. | Declared default language |
 | [19.4](part-e/19-localisation.md#194-declare-the-response-language) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Declare the response language |
 | [20.1](part-e/20-conformance-and-validation.md#201-every-file-passes-validation) | MUST | Partial linter check. Remaining clauses need separate verification. | Every file passes validation |
 | [20.2](part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset) | MUST | Review or evidence assessment required. | Passes the GovStack Spectral ruleset |
-| [20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) | MUST | Automated specification check. | Declared guide conformance version |
+| [20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) | MUST | Partial linter check. Remaining clauses need separate verification. | Declared guide conformance version |
 
 ## Deployment profile (runtime obligations)
 
