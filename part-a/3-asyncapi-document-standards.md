@@ -77,7 +77,7 @@ It **SHOULD** include `contact`; repository governance may supply the maintainer
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged.
+The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged. An unquoted number such as `1.0` is not flagged by this check.
 <!-- verification:end -->
 
 ## 3.6 Servers channels operations and messages <a href="#36-servers-channels-operations-and-messages" id="36-servers-channels-operations-and-messages"></a>
@@ -91,7 +91,7 @@ Reference specifications that are not tied to a live broker **SHOULD** use param
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-The linter flags an empty or missing `servers`, `channels`, `operations` or `components.messages`, and any server `host` naming localhost or a loopback address. A reviewer checks for personal machines, undocumented placeholders, fake brokers and unlabelled documentation domains.
+The linter flags an empty or missing `servers`, `channels`, `operations` or `components.messages`, and any server `host` naming `localhost`, `127.0.0.1`, `0.0.0.0` or `::1`. A reviewer checks for personal machines, undocumented placeholders, fake brokers and unlabelled documentation domains.
 <!-- verification:end -->
 
 ## 3.7 Complete AsyncAPI operation metadata <a href="#37-complete-asyncapi-operation-metadata" id="37-complete-asyncapi-operation-metadata"></a>
@@ -119,7 +119,7 @@ The shared `CloudEventEnvelope` **SHOULD** be reused when its event-type constra
 <!-- verification:start -->
 **Verification:** Additional context required for verification.
 
-The linter does not check this rule, because it needs the vendored common file and its pinned version. A reviewer checks the envelope, the shared error references and the vendored file. The channel rules in section 17 check CloudEvents payload shapes.
+The linter does not check this rule, because it needs the vendored common file and its pinned version. A reviewer checks the envelope, the shared error references and the vendored file. Rules 17.6 and 17.7 check CloudEvents payload shapes.
 <!-- verification:end -->
 
 ## 3.9 JSON Schema payload conventions <a href="#39-json-schema-payload-conventions" id="39-json-schema-payload-conventions"></a>

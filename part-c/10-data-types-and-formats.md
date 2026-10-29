@@ -153,5 +153,5 @@ Text in API payloads **MUST** be UTF-8. A media type declared anywhere in the sp
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-The linter flags any media type under request or response `content`, and any AsyncAPI `contentType`, that sets a `charset` other than UTF-8. A test against a running implementation checks the payload bytes.
+The linter flags a `charset` other than UTF-8 on request and response media types under `paths`, `webhooks`, `components.requestBodies` and `components.responses`, and on AsyncAPI `defaultContentType` and message `contentType` (under `components.messages` and inline channel messages). Callbacks, parameter and header `content` maps and `encoding` entries are not checked. A test against a running implementation checks the payload bytes.
 <!-- verification:end -->

@@ -71,7 +71,7 @@ Existing private `X-` headers **MAY** remain only on an unchanged legacy major v
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-The linter flags any header parameter or response header whose name starts with `X-`. It cannot tell a new header from an existing legacy one, so a reviewer decides whether the legacy exception applies.
+The linter flags header parameters and response headers under `paths`, `components.parameters` and `components.responses` whose names start with `X-`; webhooks, callbacks and `components.headers` are not scanned. It cannot tell a new header from an existing legacy one, so a reviewer decides whether the legacy exception applies.
 <!-- verification:end -->
 
 ## 8.6 No personal data in addressable locations <a href="#86-no-personal-data-in-addressable-locations" id="86-no-personal-data-in-addressable-locations"></a>

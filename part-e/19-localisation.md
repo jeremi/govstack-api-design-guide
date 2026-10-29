@@ -61,5 +61,5 @@ Responses or messages with localised content **MUST** include the response langu
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-The linter warns when an OpenAPI operation takes an `Accept-Language` header but no response declares `Content-Language`, and when an AsyncAPI channel has an `acceptLanguage` message but no `contentLanguage` message. A reviewer checks every other localised response.
+The linter warns when an OpenAPI operation declares an operation-level `Accept-Language` header parameter but no response declares `Content-Language`, and when an AsyncAPI channel has an `acceptLanguage` message but no `contentLanguage` message. Path-item-level parameters are not read. A reviewer checks every other localised response.
 <!-- verification:end -->

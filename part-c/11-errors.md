@@ -19,7 +19,7 @@ HTTP `4xx` and `5xx` responses, including fallback errors declared with `default
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-The linter checks that every 4xx, 5xx and `default` response in an OpenAPI document declares `application/problem+json` content with a schema, and that `HEAD` responses declare no content. The problem schema itself is checked separately.
+The linter checks that every 4xx, 5xx and `default` response under `paths` declares `application/problem+json` content with a schema, and that `HEAD` responses declare no content. The problem schema itself is checked separately.
 <!-- verification:end -->
 
 ## 11.2 Stable HTTP problem type URI <a href="#112-stable-http-problem-type-uri" id="112-stable-http-problem-type-uri"></a>
@@ -116,5 +116,5 @@ It **MAY** contain `detail` and `errors`. Each asynchronous field error contains
 <!-- verification:start -->
 **Verification:** Additional context required for verification. Semantic review is also required.
 
-The linter does not check this rule. Resolving the shared `GovStackAsyncError` schema and the transport-specific rejection binding needs the common AsyncAPI artefact, so a reviewer checks them.
+The linter does not check this rule. Resolving the shared `GovStackAsyncError` schema and the transport-specific rejection binding needs the common AsyncAPI artifact, so a reviewer checks them.
 <!-- verification:end -->

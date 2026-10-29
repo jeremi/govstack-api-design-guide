@@ -52,7 +52,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [7.16](part-b/7-http-status-codes.md#716-etag-and-if-none-match) | SHOULD | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | ETag and If-None-Match |
 | [7.18](part-b/7-http-status-codes.md#718-405-with-allow-header) | MUST | Automated specification check. | 405 with Allow header |
 | [7.20](part-b/7-http-status-codes.md#720-no-store-on-error-responses) | SHOULD | Partial linter check. Remaining clauses need separate verification. | No-store on error responses |
-| [7.21](part-b/7-http-status-codes.md#721-schemas-for-successful-response-bodies) | MUST | Automated specification check. | Schemas for successful response bodies |
+| [7.21](part-b/7-http-status-codes.md#721-schemas-for-successful-response-bodies) | MUST | Partial linter check. Remaining clauses need separate verification. | Schemas for successful response bodies |
 | [8.1](part-b/8-headers.md#81-credentials-in-authorization-header) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Credentials in Authorization header |
 | [8.2](part-b/8-headers.md#82-accept-language-and-content-language) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Accept-Language and Content-Language |
 | [8.4](part-b/8-headers.md#84-w3c-trace-context-correlation) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | W3C Trace Context correlation |
@@ -96,7 +96,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [12.8](part-c/12-pagination-filtering-sorting.md#128-simple-equality-filtering) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Simple equality filtering |
 | [12.9](part-c/12-pagination-filtering-sorting.md#129-complex-filtering-via-search) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Complex filtering via search |
 | [12.10](part-c/12-pagination-filtering-sorting.md#1210-sparse-fieldsets-out-of-scope) | MUST | Automated specification check. Semantic review is also required. | Response field selection |
-| [13.1](part-d/13-authentication-and-authorisation.md#131-default-security-on-every-operation) | MUST | Automated specification check. | Default security on every operation |
+| [13.1](part-d/13-authentication-and-authorisation.md#131-default-security-on-every-operation) | MUST | Partial linter check. Remaining clauses need separate verification. | Default security on every operation |
 | [13.2](part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | OAuth and OIDC for citizen operations |
 | [13.3](part-d/13-authentication-and-authorisation.md#133-distinct-scheme-for-bb-to-bb-calls) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Distinct scheme for BB-to-BB calls |
 | [13.4](part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes) | MUST | Partial linter check. Remaining clauses need separate verification. | Namespaced OAuth scopes |
@@ -173,7 +173,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [7.18](part-b/7-http-status-codes.md#718-405-with-allow-header) | MUST | Automated specification check. | 405 with Allow header |
 | [7.19](part-b/7-http-status-codes.md#719-415-for-unsupported-media-types) | MUST | Automated specification check. Semantic review is also required. | 415 for unsupported media types |
 | [7.20](part-b/7-http-status-codes.md#720-no-store-on-error-responses) | SHOULD | Partial linter check. Remaining clauses need separate verification. | No-store on error responses |
-| [7.21](part-b/7-http-status-codes.md#721-schemas-for-successful-response-bodies) | MUST | Automated specification check. | Schemas for successful response bodies |
+| [7.21](part-b/7-http-status-codes.md#721-schemas-for-successful-response-bodies) | MUST | Partial linter check. Remaining clauses need separate verification. | Schemas for successful response bodies |
 | [8.1](part-b/8-headers.md#81-credentials-in-authorization-header) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Credentials in Authorization header |
 | [8.2](part-b/8-headers.md#82-accept-language-and-content-language) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Accept-Language and Content-Language |
 | [8.3](part-b/8-headers.md#83-idempotency-key-header-accepted) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Idempotency-Key header accepted |
@@ -218,7 +218,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [12.8](part-c/12-pagination-filtering-sorting.md#128-simple-equality-filtering) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Simple equality filtering |
 | [12.9](part-c/12-pagination-filtering-sorting.md#129-complex-filtering-via-search) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Complex filtering via search |
 | [12.10](part-c/12-pagination-filtering-sorting.md#1210-sparse-fieldsets-out-of-scope) | MUST | Automated specification check. Semantic review is also required. | Response field selection |
-| [13.1](part-d/13-authentication-and-authorisation.md#131-default-security-on-every-operation) | MUST | Automated specification check. | Default security on every operation |
+| [13.1](part-d/13-authentication-and-authorisation.md#131-default-security-on-every-operation) | MUST | Partial linter check. Remaining clauses need separate verification. | Default security on every operation |
 | [13.2](part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | OAuth and OIDC for citizen operations |
 | [13.3](part-d/13-authentication-and-authorisation.md#133-distinct-scheme-for-bb-to-bb-calls) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Distinct scheme for BB-to-BB calls |
 | [13.4](part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes) | MUST | Partial linter check. Remaining clauses need separate verification. | Namespaced OAuth scopes |
@@ -294,7 +294,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [10.10](part-c/10-data-types-and-formats.md#1010-iso-4217-currency-codes) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | ISO 4217 currency codes |
 | [10.11](part-c/10-data-types-and-formats.md#1011-utf-8-text-encoding) | MUST | Automated specification check. | UTF-8 text encoding |
 | [11.6](part-c/11-errors.md#116-transport-neutral-asynchronous-errors) | MUST | Additional context required for verification. Semantic review is also required. | Transport-neutral asynchronous errors |
-| [13.1](part-d/13-authentication-and-authorisation.md#131-default-security-on-every-operation) | MUST | Automated specification check. | Default security on every operation |
+| [13.1](part-d/13-authentication-and-authorisation.md#131-default-security-on-every-operation) | MUST | Partial linter check. Remaining clauses need separate verification. | Default security on every operation |
 | [13.2](part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | OAuth and OIDC for citizen operations |
 | [13.3](part-d/13-authentication-and-authorisation.md#133-distinct-scheme-for-bb-to-bb-calls) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Distinct scheme for BB-to-BB calls |
 | [13.4](part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes) | MUST | Partial linter check. Remaining clauses need separate verification. | Namespaced OAuth scopes |

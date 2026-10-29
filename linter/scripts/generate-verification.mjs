@@ -97,9 +97,9 @@ function removeGeneratedVerificationBlocks(source, sourceName) {
 // one paragraph because tools/build_rules_index.py requires exactly one.
 const DETAIL_RULES = [
   [/\u2014/, 'must not contain an em dash'],
-  [/proxy/i, 'must not contain the word "proxy"'],
+  [/\bproxy:|partial-proxy/i, 'must not contain maintainer proxy shorthand ("proxy:" or "partial-proxy")'],
   [/\bgovstack-\d+\.\d+\b/, 'must not contain a Spectral rule name'],
-  [/\.m?js\b/, 'must not contain a JavaScript file name'],
+  [/(?<!\bNode)\.m?js\b/, 'must not contain a JavaScript file name'],
   [/functions\//, 'must not mention functions/'],
   [/\n[ \t]*\n/, 'must not contain a blank line (exactly one paragraph is allowed)'],
 ];

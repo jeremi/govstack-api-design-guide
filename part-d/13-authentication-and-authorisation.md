@@ -17,9 +17,9 @@ description: "Rules for how BB API specs declare security schemes, OAuth scopes,
 Each BB API spec **MUST** declare a security scheme block and apply it by default to every operation. On the OpenAPI surface this is a root-level `security` requirement referencing schemes under `components.securitySchemes`. AsyncAPI 3 has no root-level `security`: schemes are declared under `components.securitySchemes` and applied on the `servers` and `operations` objects, which together **MUST** cover every operation. Per-operation overrides **MUST** be explicit. The standard unversioned endpoints of [§5.10](../part-b/5-url-structure-and-versioning.md#510-standard-unversioned-endpoints) satisfy this rule with an explicit empty security requirement (`security: []`) where they are unauthenticated: they are exempt from carrying a scheme, not from declaring what they carry.
 
 <!-- verification:start -->
-**Verification:** Automated specification check.
+**Verification:** Partial linter check. Remaining clauses need separate verification.
 
-The linter checks that an OpenAPI document declares at least one scheme under `components.securitySchemes` and that every operation is covered by the root `security` requirement or its own `security` entry, including an explicit empty one. The AsyncAPI side is checked under 17.10.
+The linter checks that an OpenAPI document declares at least one scheme under `components.securitySchemes` and that every operation is covered by the root `security` requirement or its own `security` entry, including an explicit empty one. The AsyncAPI side is checked under 17.10. It does not require a root-level `security` requirement; a reviewer checks that the scheme applies by default rather than only per operation.
 <!-- verification:end -->
 
 ## 13.2 OAuth and OIDC for citizen operations <a href="#132-oauth-and-oidc-for-citizen-operations" id="132-oauth-and-oidc-for-citizen-operations"></a>
@@ -75,7 +75,7 @@ Credentials **MUST NOT** be declared in URL paths, query parameters, cookies, or
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-The linter flags an `apiKey` security scheme that places the credential in the query string or a cookie. A reviewer checks that HTTP tokens use the `Authorization` header, path or fragment credentials, and protocol-native credential behaviour.
+The linter flags an `apiKey` security scheme that places the credential in the query string or a cookie. A reviewer checks AsyncAPI schemes, credentials passed as ordinary path, query, cookie or fragment parameters, `Authorization` header use for HTTP tokens, and protocol-native credential behaviour.
 <!-- verification:end -->
 
 ## 13.6 API keys only for operational endpoints <a href="#136-api-keys-only-for-operational-endpoints" id="136-api-keys-only-for-operational-endpoints"></a>

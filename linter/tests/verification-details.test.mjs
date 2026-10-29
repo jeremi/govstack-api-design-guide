@@ -240,13 +240,14 @@ test('rejects a non-string detail', () => {
 
 const FORBIDDEN_DETAILS = [
   ['an em dash', 'checks the field — not the value', /em dash/i],
-  ['the word proxy', 'an automated Proxy of the rule', /proxy/i],
-  ['the word proxy in lower case', 'a proxy check', /proxy/i],
+  ['the maintainer shorthand "proxy:"', 'proxy: x', /proxy/i],
+  ['the status name partial-proxy', 'status is partial-proxy today', /proxy/i],
   ['a Spectral rule name', 'covered by govstack-3.4 today', /Spectral rule name/i],
   ['a JavaScript file name', 'implemented in check-thing.mjs', /JavaScript file name/i],
   ['a plain JavaScript file name', 'implemented in check-thing.js', /JavaScript file name/i],
   ['a functions path', 'see functions/check-thing for details', /functions\//i],
   ['a blank line', 'first paragraph\n\nsecond paragraph', /blank line|exactly one/i],
+  ['a whitespace-only blank line', 'a\n  \nb', /blank line|exactly one/i],
 ];
 
 for (const [label, detail, reason] of FORBIDDEN_DETAILS) {
@@ -259,9 +260,20 @@ for (const [label, detail, reason] of FORBIDDEN_DETAILS) {
 }
 
 test('accepts a multi-line detail without a blank line and a hyphenated rule reference', () => {
-  const coverage = parseCoverage(entryWith({ note: 'evidence', detail: 'first line\nsecond line, see rule 3.4 and the JSON Schema file.' }));
-  assert.equal(coverage.get('3.4').detail, 'first line\nsecond line, see rule 3.4 and the JSON Schema file.');
+  const detail = 'first line\nsecond line, see rule 3.4, govstack-cfr-data#req-1 and the JSON Schema file.';
+  const coverage = parseCoverage(entryWith({ note: 'evidence', detail }));
+  assert.equal(coverage.get('3.4').detail, detail);
 });
+
+for (const [label, detail] of [
+  ['a reverse proxy', 'The linter does not see a reverse proxy in front of the service.'],
+  ['a Proxy-Authenticate header', 'A `407` response lists a `Proxy-Authenticate` header.'],
+  ['Node.js', 'A test run under Node.js checks the payload.'],
+]) {
+  test(`accepts a detail mentioning ${label}`, () => {
+    assert.equal(parseCoverage(entryWith({ note: 'evidence', detail })).get('3.4').detail, detail);
+  });
+}
 
 test('the checked-in guide matches coverage-derived verification details', async () => {
   assert.deepEqual(await generateVerificationDetails({ guideDir: GUIDE_DIR, check: true }), []);

@@ -89,7 +89,7 @@ For an OAuth 2.0 bearer scheme ([§13.2](../part-d/13-authentication-and-authori
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-The linter checks that every declared `401` response lists a `WWW-Authenticate` header, and flags secured operations that declare no `401`. A reviewer checks the challenge value, such as the bearer `invalid_token` error.
+The linter checks that every `401` declared on a `GET`, `PUT`, `POST`, `DELETE` or `PATCH` operation under `paths` lists a `WWW-Authenticate` header, and flags secured operations that declare no `401` through the baseline check under 7.14. A reviewer checks the challenge value, such as the bearer `invalid_token` error.
 <!-- verification:end -->
 
 ## 7.7 403 when not authorised <a href="#77-403-when-not-authorised" id="77-403-when-not-authorised"></a>
@@ -243,7 +243,7 @@ The linter flags, as an information-level finding, a `PUT` or `PATCH` that decla
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-The linter checks that every declared `405` response lists an `Allow` header. It does not check the listed methods; a test against a running implementation checks that the header names the methods the resource supports.
+The linter checks that every `405` declared on a `GET`, `PUT`, `POST`, `DELETE` or `PATCH` operation under `paths` lists an `Allow` header. It does not check the listed methods; a test against a running implementation checks that the header names the methods the resource supports.
 <!-- verification:end -->
 
 ## 7.19 415 for unsupported media types <a href="#719-415-for-unsupported-media-types" id="719-415-for-unsupported-media-types"></a>
@@ -279,7 +279,7 @@ The linter checks that a response offering `application/problem+json` declares a
 Every declared `2xx` response that carries a body **MUST** declare at least one concrete media type and a response schema for each declared media type. An empty schema or description without a schema **MUST NOT** stand in for a response contract. Responses whose HTTP semantics prohibit a body, including `204`, **MUST NOT** declare response content.
 
 <!-- verification:start -->
-**Verification:** Automated specification check.
+**Verification:** Partial linter check. Remaining clauses need separate verification.
 
-The linter flags a `2xx` response whose media type has no schema or an empty one, and any `HEAD`, `204` or `205` response that declares content. Paths, webhooks and callbacks are covered; `202` bodies are checked under 15.1.
+The linter flags a `2xx` response whose media type has no schema or an empty one, and any `HEAD`, `204` or `205` response that declares content. Paths, webhooks and callbacks are covered; `202` bodies are checked under 15.1. A `2xx` with no `content` and wildcard media types such as `*/*` are not flagged; a reviewer checks that every response carrying a body declares a concrete media type.
 <!-- verification:end -->

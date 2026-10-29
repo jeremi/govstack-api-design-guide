@@ -50,7 +50,7 @@ rules:
     status: implemented
     spectral_rules: [govstack-2.5, govstack-2.5-semver]
     note: "info has title/version/description; version matches SemVer regex; contact is advisory"
-    detail: "The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged."
+    detail: "The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged. An unquoted number such as `1.0` is not a string, so only the base validators in conformance mode reject it."
   - id: "2.6"
     class: "M+R"
     status: partial-proxy
@@ -62,7 +62,7 @@ rules:
     status: implemented
     spectral_rules: [govstack-2.7]
     note: "each operation has stable non-empty operationId and description; casing, summary, and tags are advisory"
-    detail: "The linter flags any operation under `paths` without a non-empty `operationId` and `description`. A reviewer checks that the description is accurate and the identifier is stable and readable. Missing `summary` and `tags` are not flagged."
+    detail: "The linter flags any operation under `paths` without a non-empty `operationId` and `description`. A reviewer checks that the description is accurate and the identifier is stable and readable. A missing `summary` or `tags` is not flagged, but an empty `tags` array is."
   - id: "2.8"
     class: "M+R"
     status: needs-context
@@ -98,13 +98,13 @@ rules:
     status: implemented
     spectral_rules: [govstack-3.5, govstack-3.5-semver]
     note: "info has title/version(SemVer)/description; contact is advisory"
-    detail: "The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged."
+    detail: "The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged. An unquoted number such as `1.0` is not flagged by this check."
   - id: "3.6"
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-3.6, govstack-3.6-host]
     note: "servers/channels/operations/components.messages non-empty; server host not localhost"
-    detail: "The linter flags an empty or missing `servers`, `channels`, `operations` or `components.messages`, and any server `host` naming localhost or a loopback address. A reviewer checks for personal machines, undocumented placeholders, fake brokers and unlabelled documentation domains."
+    detail: "The linter flags an empty or missing `servers`, `channels`, `operations` or `components.messages`, and any server `host` naming `localhost`, `127.0.0.1`, `0.0.0.0` or `::1`. A reviewer checks for personal machines, undocumented placeholders, fake brokers and unlabelled documentation domains."
   - id: "3.7"
     class: "M+R"
     status: implemented
@@ -116,7 +116,7 @@ rules:
     status: needs-context
     spectral_rules: []
     note: "local CloudEvents envelopes allowed; common component reuse requires vendored file and explicit version - needs artifact context"
-    detail: "The linter does not check this rule, because it needs the vendored common file and its pinned version. A reviewer checks the envelope, the shared error references and the vendored file. The channel rules in section 17 check CloudEvents payload shapes."
+    detail: "The linter does not check this rule, because it needs the vendored common file and its pinned version. A reviewer checks the envelope, the shared error references and the vendored file. Rules 17.6 and 17.7 check CloudEvents payload shapes."
   - id: "3.9"
     class: "M"
     status: partial-proxy
@@ -163,8 +163,8 @@ rules:
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-4.7, govstack-4.7-pii-apikey]
-    note: "x-govstack-use-case is a non-empty string or non-empty array of non-empty strings and x-govstack-pii a boolean on OpenAPI and AsyncAPI operations and AsyncAPI messages; x-govstack-pii: true fails when any applicable security requirement references an apiKey scheme; identifier existence and the truth of the pii marker are review"
-    detail: "The linter flags an `x-govstack-use-case` that is not a non-empty string or array of non-empty strings, an `x-govstack-pii` that is not a boolean, and an OpenAPI operation marked personal data that uses an API key. A reviewer checks the identifiers and the pii marker."
+    note: "x-govstack-use-case is a non-empty string or non-empty array of non-empty strings and x-govstack-pii a boolean on OpenAPI operations (paths and webhooks), AsyncAPI operations and components.messages; x-govstack-pii: true fails when any applicable security requirement references an apiKey scheme, checked under doc.paths only; inline channels[*].messages[*] are not shape-checked; identifier existence and the truth of the pii marker are review"
+    detail: "The linter flags an `x-govstack-use-case` that is not a non-empty string or array of non-empty strings, an `x-govstack-pii` that is not a boolean, and an operation under `paths` marked personal data that uses an API key. A reviewer checks the identifiers, the pii marker, inline channel messages, and that webhooks and AsyncAPI operations marked personal data use no API key."
   - id: "5.1"
     class: "M"
     status: partial-proxy
@@ -302,7 +302,7 @@ rules:
     status: implemented
     spectral_rules: [govstack-7.6]
     note: "every 401 response declares WWW-Authenticate"
-    detail: "The linter checks that every declared `401` response lists a `WWW-Authenticate` header, and flags secured operations that declare no `401`. A reviewer checks the challenge value, such as the bearer `invalid_token` error."
+    detail: "The linter checks that every `401` declared on a `GET`, `PUT`, `POST`, `DELETE` or `PATCH` operation under `paths` lists a `WWW-Authenticate` header, and flags secured operations that declare no `401` through the baseline check under 7.14. A reviewer checks the challenge value, such as the bearer `invalid_token` error."
   - id: "7.7"
     class: "R"
     status: human
@@ -374,7 +374,7 @@ rules:
     status: implemented
     spectral_rules: [govstack-7.18]
     note: "every 405 response declares Allow header"
-    detail: "The linter checks that every declared `405` response lists an `Allow` header. It does not check the listed methods; a test against a running implementation checks that the header names the methods the resource supports."
+    detail: "The linter checks that every `405` declared on a `GET`, `PUT`, `POST`, `DELETE` or `PATCH` operation under `paths` lists an `Allow` header. It does not check the listed methods; a test against a running implementation checks that the header names the methods the resource supports."
   - id: "7.19"
     class: "M+R"
     status: implemented
@@ -389,10 +389,10 @@ rules:
     detail: "The linter checks that a response offering `application/problem+json` declares a `Cache-Control` header, but not its value. A reviewer checks for `no-store` and covers Operation-status responses, which the linter does not recognise."
   - id: "7.21"
     class: "M"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-7.21, govstack-15.1]
-    note: "declared 2xx response media types carry non-empty schemas across paths, webhooks and nested callbacks; HEAD, 204 and 205 responses have no content. The shared §15.1 check owns 202 content/schema findings, including HEAD's no-content exception, so each defect is reported once"
-    detail: "The linter flags a `2xx` response whose media type has no schema or an empty one, and any `HEAD`, `204` or `205` response that declares content. Paths, webhooks and callbacks are covered; `202` bodies are checked under 15.1."
+    note: "declared 2xx response media types carry non-empty schemas across paths, webhooks and nested callbacks; HEAD, 204 and 205 responses have no content. The shared §15.1 check owns 202 content/schema findings, including HEAD's no-content exception, so each defect is reported once. Not checked: a 2xx with no content is skipped (early continue when response.content is undefined) and any media-type key, including wildcards such as */*, is accepted"
+    detail: "The linter flags a `2xx` response whose media type has no schema or an empty one, and any `HEAD`, `204` or `205` response that declares content. Paths, webhooks and callbacks are covered; `202` bodies are checked under 15.1. A `2xx` with no `content` and wildcard media types such as `*/*` are not flagged; a reviewer checks that every response carrying a body declares a concrete media type."
   - id: "8.1"
     class: "M+R"
     status: partial-proxy
@@ -421,8 +421,8 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-8.5]
-    note: "no header parameter or response header uses the X- prefix"
-    detail: "The linter flags any header parameter or response header whose name starts with `X-`. It cannot tell a new header from an existing legacy one, so a reviewer decides whether the legacy exception applies."
+    note: "no header parameter or response header under paths, components.parameters or components.responses uses the X- prefix; webhooks, callbacks and components.headers are not scanned"
+    detail: "The linter flags header parameters and response headers under `paths`, `components.parameters` and `components.responses` whose names start with `X-`; webhooks, callbacks and `components.headers` are not scanned. It cannot tell a new header from an existing legacy one, so a reviewer decides whether the legacy exception applies."
   - id: "8.6"
     class: "R"
     status: strict-only
@@ -572,13 +572,13 @@ rules:
     status: implemented
     spectral_rules: [govstack-10.11-openapi, govstack-10.11-asyncapi]
     note: "no declared media type or contentType sets charset to an encoding other than UTF-8. Payload bytes themselves are outside a document linter's reach."
-    detail: "The linter flags any media type under request or response `content`, and any AsyncAPI `contentType`, that sets a `charset` other than UTF-8. A test against a running implementation checks the payload bytes."
+    detail: "The linter flags a `charset` other than UTF-8 on request and response media types under `paths`, `webhooks`, `components.requestBodies` and `components.responses`, and on AsyncAPI `defaultContentType` and message `contentType` (under `components.messages` and inline channel messages). Callbacks, parameter and header `content` maps and `encoding` entries are not checked. A test against a running implementation checks the payload bytes."
   - id: "11.1"
     class: "M"
     status: implemented
     spectral_rules: [govstack-11.1]
     note: "4xx/5xx and default error responses declare application/problem+json content; HEAD errors omit content. OpenAPI surface only (problem+json/status-code mechanism has no AsyncAPI equivalent)."
-    detail: "The linter checks that every 4xx, 5xx and `default` response in an OpenAPI document declares `application/problem+json` content with a schema, and that `HEAD` responses declare no content. The problem schema itself is checked separately."
+    detail: "The linter checks that every 4xx, 5xx and `default` response under `paths` declares `application/problem+json` content with a schema, and that `HEAD` responses declare no content. The problem schema itself is checked separately."
   - id: "11.2"
     class: "M+R"
     status: partial-proxy
@@ -608,7 +608,7 @@ rules:
     status: needs-context
     spectral_rules: []
     note: "shared GovStackAsyncError reference and transport-specific rejection binding require common-artifact resolution; §17.16 has a weaker in-document proxy"
-    detail: "The linter does not check this rule. Resolving the shared `GovStackAsyncError` schema and the transport-specific rejection binding needs the common AsyncAPI artefact, so a reviewer checks them."
+    detail: "The linter does not check this rule. Resolving the shared `GovStackAsyncError` schema and the transport-specific rejection binding needs the common AsyncAPI artifact, so a reviewer checks them."
   - id: "12.1"
     class: "M+R"
     status: partial-proxy
@@ -671,10 +671,10 @@ rules:
     detail: "When an operation declares a `fields` query parameter, the linter checks that it is optional, is a string without `enum` or a string array with `explode: false`, and that the operation declares `400` or `4XX`. A reviewer or test checks names, always-returned members and authorisation."
   - id: "13.1"
     class: "M"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-13.1]
-    note: "root security + securitySchemes present and every operation covered (or explicit override); the 5.10 standard unversioned endpoints satisfy it with an explicit `security: []`, which counts as that override"
-    detail: "The linter checks that an OpenAPI document declares at least one scheme under `components.securitySchemes` and that every operation is covered by the root `security` requirement or its own `security` entry, including an explicit empty one. The AsyncAPI side is checked under 17.10."
+    note: "every operation under paths is covered by a root security requirement or its own security entry (an explicit security: [] counts as the override) and securitySchemes is non-empty; the 5.10 standard unversioned endpoints satisfy it with an explicit `security: []`. Not checked: the rule body requires a root-level security requirement, but securityCoverage accepts per-operation security alone"
+    detail: "The linter checks that an OpenAPI document declares at least one scheme under `components.securitySchemes` and that every operation is covered by the root `security` requirement or its own `security` entry, including an explicit empty one. The AsyncAPI side is checked under 17.10. It does not require a root-level `security` requirement; a reviewer checks that the scheme applies by default rather than only per operation."
   - id: "13.2"
     class: "M+R"
     status: partial-proxy
@@ -698,7 +698,7 @@ rules:
     status: partial-proxy
     spectral_rules: [govstack-13.5]
     note: "proxy: apiKey schemes must not sit in query or cookie; path and fragment credentials, Authorization header use and protocol-native behaviour require review"
-    detail: "The linter flags an `apiKey` security scheme that places the credential in the query string or a cookie. A reviewer checks that HTTP tokens use the `Authorization` header, path or fragment credentials, and protocol-native credential behaviour."
+    detail: "The linter flags an `apiKey` security scheme that places the credential in the query string or a cookie. A reviewer checks AsyncAPI schemes, credentials passed as ordinary path, query, cookie or fragment parameters, `Authorization` header use for HTTP tokens, and protocol-native credential behaviour."
   - id: "13.6"
     class: "R"
     status: partial-proxy
@@ -770,13 +770,13 @@ rules:
     status: partial-proxy
     spectral_rules: [govstack-15.4]
     note: "proxy: GET /v{N}/operations/{operationId} present when an Operation schema or /operations/ path exists; that Location points at the polled URI is not checked"
-    detail: "The linter warns when an OpenAPI document has an `Operation` schema or an `/operations/` path but no `GET /v{N}/operations/{operationId}` path. A reviewer checks the polling response shape, the `Location` target and `Retry-After`."
+    detail: "The linter warns when an OpenAPI document has an `Operation` schema or an `/operations/` path but no `GET /v{N}/operations/{id}` path (any parameter name). A reviewer checks the polling response shape, the `Location` target and `Retry-After`."
   - id: "15.5"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-15.5]
     note: "advisory proxy: checks the conventional cancellation path; does not prove that cancellation support or non-support is documented and discoverable by another mechanism"
-    detail: "The linter warns about an `/operations/.../cancel` path that is not `/v{N}/operations/{operationId}/cancel`, or that has no `POST`. A reviewer checks that cancellation, or its absence, is documented and discoverable."
+    detail: "The linter warns about an `/operations/.../cancel` path that is not `/v{N}/operations/{id}/cancel` (any parameter name), or that has no `POST`. A reviewer checks that cancellation, or its absence, is documented and discoverable."
   - id: "15.6"
     class: "R"
     status: human
@@ -986,7 +986,7 @@ rules:
     status: partial-proxy
     spectral_rules: [govstack-18.1]
     note: "proxy: info.version matches SemVer; whether it identifies the contract rather than the implementation and agrees with a nonstandard version mechanism requires context"
-    detail: "The linter checks that `info.version` is a SemVer string, on both OpenAPI and AsyncAPI documents. A reviewer checks that it identifies the published contract rather than the implementation, and that any other version field agrees."
+    detail: "The linter checks that `info.version` is a SemVer string, on both OpenAPI and AsyncAPI documents. A reviewer checks that it identifies the published contract rather than the implementation, and that any other version field agrees. An unquoted number such as `1.0` is not a string, so this check does not flag it."
   - id: "18.2"
     class: "M"
     status: partial-proxy
@@ -1046,7 +1046,7 @@ rules:
     status: partial-proxy
     spectral_rules: [govstack-19.4-openapi, govstack-19.4-asyncapi]
     note: "proxy: localised responses declare Content-Language/contentLanguage header"
-    detail: "The linter warns when an OpenAPI operation takes an `Accept-Language` header but no response declares `Content-Language`, and when an AsyncAPI channel has an `acceptLanguage` message but no `contentLanguage` message. A reviewer checks every other localised response."
+    detail: "The linter warns when an OpenAPI operation declares an operation-level `Accept-Language` header parameter but no response declares `Content-Language`, and when an AsyncAPI channel has an `acceptLanguage` message but no `contentLanguage` message. Path-item-level parameters are not read. A reviewer checks every other localised response."
   - id: "20.1"
     class: "M"
     status: partial-proxy

@@ -176,5 +176,5 @@ paths:
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-The linter flags an `x-govstack-use-case` that is not a non-empty string or array of non-empty strings, an `x-govstack-pii` that is not a boolean, and an OpenAPI operation marked personal data that uses an API key. A reviewer checks the identifiers and the pii marker.
+The linter flags an `x-govstack-use-case` that is not a non-empty string or array of non-empty strings, an `x-govstack-pii` that is not a boolean, and an operation under `paths` marked personal data that uses an API key. A reviewer checks the identifiers, the pii marker, inline channel messages, and that webhooks and AsyncAPI operations marked personal data use no API key.
 <!-- verification:end -->

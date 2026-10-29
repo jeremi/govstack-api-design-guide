@@ -73,7 +73,7 @@ The conventional path **SHOULD** be `/v{major}/operations/{operationId}`. A non-
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-The linter warns when an OpenAPI document has an `Operation` schema or an `/operations/` path but no `GET /v{N}/operations/{operationId}` path. A reviewer checks the polling response shape, the `Location` target and `Retry-After`.
+The linter warns when an OpenAPI document has an `Operation` schema or an `/operations/` path but no `GET /v{N}/operations/{id}` path (any parameter name). A reviewer checks the polling response shape, the `Location` target and `Retry-After`.
 <!-- verification:end -->
 
 ## 15.5 Cancellation via cancel sub-resource <a href="#155-cancellation-via-cancel-sub-resource" id="155-cancellation-via-cancel-sub-resource"></a>
@@ -87,7 +87,7 @@ The conventional action **SHOULD** be `POST /v{major}/operations/{operationId}/c
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
 
-The linter warns about an `/operations/.../cancel` path that is not `/v{N}/operations/{operationId}/cancel`, or that has no `POST`. A reviewer checks that cancellation, or its absence, is documented and discoverable.
+The linter warns about an `/operations/.../cancel` path that is not `/v{N}/operations/{id}/cancel` (any parameter name), or that has no `POST`. A reviewer checks that cancellation, or its absence, is documented and discoverable.
 <!-- verification:end -->
 
 ## 15.6 Webhook completion notification <a href="#156-webhook-completion-notification" id="156-webhook-completion-notification"></a>

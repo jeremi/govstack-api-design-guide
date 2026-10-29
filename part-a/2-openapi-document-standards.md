@@ -77,7 +77,7 @@ The info block **SHOULD** include `contact`; repository governance may supply th
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged.
+The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged. An unquoted number such as `1.0` is not a string, so only the base validators in conformance mode reject it.
 <!-- verification:end -->
 
 ## 2.6 Meaningful servers block <a href="#26-meaningful-servers-block" id="26-meaningful-servers-block"></a>
@@ -105,7 +105,7 @@ An `operationId` **SHOULD** use a readable camelCase verb-noun form. A concise `
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
 
-The linter flags any operation under `paths` without a non-empty `operationId` and `description`. A reviewer checks that the description is accurate and the identifier is stable and readable. Missing `summary` and `tags` are not flagged.
+The linter flags any operation under `paths` without a non-empty `operationId` and `description`. A reviewer checks that the description is accurate and the identifier is stable and readable. A missing `summary` or `tags` is not flagged, but an empty `tags` array is.
 <!-- verification:end -->
 
 ## 2.8 Conditional vendored OpenAPI schemas <a href="#28-conditional-vendored-openapi-schemas" id="28-conditional-vendored-openapi-schemas"></a>

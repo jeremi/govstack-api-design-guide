@@ -96,7 +96,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [7.18](part-b/7-http-status-codes.md#718-405-with-allow-header) | Automated specification check. | MUST | read, write | OpenAPI | 405 with Allow header |
 | [7.19](part-b/7-http-status-codes.md#719-415-for-unsupported-media-types) | Automated specification check. Semantic review is also required. | MUST | write | OpenAPI | 415 for unsupported media types |
 | [7.20](part-b/7-http-status-codes.md#720-no-store-on-error-responses) | Partial linter check. Remaining clauses need separate verification. | SHOULD | read, write | OpenAPI | No-store on error responses |
-| [7.21](part-b/7-http-status-codes.md#721-schemas-for-successful-response-bodies) | Automated specification check. | MUST | read, write | OpenAPI | Schemas for successful response bodies |
+| [7.21](part-b/7-http-status-codes.md#721-schemas-for-successful-response-bodies) | Partial linter check. Remaining clauses need separate verification. | MUST | read, write | OpenAPI | Schemas for successful response bodies |
 
 ## 8. Headers
 
@@ -173,7 +173,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 
 | Rule | Verification | Level | Applies to | Surface | Title |
 | --- | --- | --- | --- | --- | --- |
-| [13.1](part-d/13-authentication-and-authorisation.md#131-default-security-on-every-operation) | Automated specification check. | MUST | read, write, events | Universal | Default security on every operation |
+| [13.1](part-d/13-authentication-and-authorisation.md#131-default-security-on-every-operation) | Partial linter check. Remaining clauses need separate verification. | MUST | read, write, events | Universal | Default security on every operation |
 | [13.2](part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | read, write, events | Universal | OAuth and OIDC for citizen operations |
 | [13.3](part-d/13-authentication-and-authorisation.md#133-distinct-scheme-for-bb-to-bb-calls) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | read, write, events | Universal | Distinct scheme for BB-to-BB calls |
 | [13.4](part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes) | Partial linter check. Remaining clauses need separate verification. | MUST | read, write, events | Universal | Namespaced OAuth scopes |
