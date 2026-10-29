@@ -48,14 +48,14 @@ runs:
   using: "composite"
   steps:
     - name: Set up Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v7
       with:
         node-version: ${{ inputs.node-version }}
 
     # openapi-spec-validator is a Python tool the driver shells out to.
     - name: Set up Python (for openapi-spec-validator)
       if: inputs.install-validators == 'true'
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: "3.x"
 
