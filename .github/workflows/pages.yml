@@ -1,0 +1,79 @@
+# Publishes the guide as an unofficial preview site on GitHub Pages.
+#
+# The site is rendered by the shared GovStack specification renderer
+# (jeremi/govstack-specification-site), pinned to a commit below. Every page
+# carries a banner saying it is not an official GovStack site, and a
+# noindex, nofollow robots meta tag. Update RENDERER_REF deliberately; do not
+# point it at a branch.
+name: Deploy preview site
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  RENDERER_REPOSITORY: jeremi/govstack-specification-site
+  RENDERER_REF: 98d4fde236c55ddb0dad3359139ffd6b3b373472
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the guide
+        uses: actions/checkout@v7
+        with:
+          path: guide
+          persist-credentials: false
+
+      - name: Check out the renderer
+        uses: actions/checkout@v7
+        with:
+          repository: ${{ env.RENDERER_REPOSITORY }}
+          ref: ${{ env.RENDERER_REF }}
+          path: renderer
+          persist-credentials: false
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: Install the renderer
+        run: npm ci
+        working-directory: renderer
+
+      - name: Render and check the site
+        working-directory: renderer
+        run: >-
+          npm run check --
+          --profile api-guide
+          --source "$GITHUB_WORKSPACE/guide"
+          --output "$RUNNER_TEMP/site"
+          --base "/${{ github.event.repository.name }}/"
+          --unofficial
+          --source-url "https://github.com/${{ github.repository }}/blob/main"
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: ${{ runner.temp }}/site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
