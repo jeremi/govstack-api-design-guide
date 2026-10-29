@@ -21,7 +21,7 @@ The GovStack Specification Framework (CFR §5.2.2) versions the specification do
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
 
-The linter checks that `info.version` is a SemVer string, on both OpenAPI and AsyncAPI documents. A reviewer checks that it identifies the published contract rather than the implementation, and that any other version field agrees. An unquoted number such as `1.0` is not a string, so this check does not flag it.
+The linter checks that `info.version` is a SemVer string, on both OpenAPI and AsyncAPI documents. A reviewer checks that it identifies the published contract rather than the implementation, and that any other version field agrees. An unquoted number such as `1.0` is not a string, so only the base validators in conformance mode reject it.
 <!-- verification:end -->
 
 ## 18.2 Major version in path or channel <a href="#182-major-version-in-path-or-channel" id="182-major-version-in-path-or-channel"></a>

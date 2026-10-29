@@ -77,7 +77,7 @@ It **SHOULD** include `contact`; repository governance may supply the maintainer
 <!-- verification:start -->
 **Verification:** Automated specification check.
 
-The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged. An unquoted number such as `1.0` is not flagged by this check.
+The linter flags a missing or empty `title`, `version` or `description` in `info`, and a `version` that is not a SemVer string. A reviewer judges whether the description is useful. A missing `contact` is not flagged. An unquoted number such as `1.0` is not a string, so only the base validators in conformance mode reject it.
 <!-- verification:end -->
 
 ## 3.6 Servers channels operations and messages <a href="#36-servers-channels-operations-and-messages" id="36-servers-channels-operations-and-messages"></a>
