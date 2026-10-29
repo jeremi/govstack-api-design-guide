@@ -12,7 +12,7 @@ published or ratified.
 **Author:** Jeremi Joslin
 
 **Specification:** `govstack-cfr-api`<br>
-**Version:** `0.2.0-draft`<br>
+**Version:** `0.3.0-draft`<br>
 **Proposed parent:** `govstack-cfr` (candidate relationship pending CFR issues
 [#7](https://github.com/GovStackWorkingGroup/cfr-architecture/issues/7) and
 [#8](https://github.com/GovStackWorkingGroup/cfr-architecture/issues/8))
@@ -44,7 +44,7 @@ The substantive rules establish:
 - Standard headers for authentication, idempotency, localisation, correlation, and rate limiting; no personal data in URLs, channel addresses, routing keys, or message headers ([§8](part-b/8-headers.md), [§17](part-d/17-asyncapi-channel-rules.md)).
 - Recommended `camelCase` for GovStack-owned JSON, plus normative RFC 3339 timestamps, decimal-string monetary amounts, E.164 phone numbers, and ISO code lists for country / currency / language ([§9](part-c/9-json-conventions-and-naming.md)–[§10](part-c/10-data-types-and-formats.md)).
 - One ecosystem-wide HTTP error format based on RFC 9457 Problem Details, with a stable `https://govstack.global/problems/...` type URI, trace IDs, and field-level validation ([§11](part-c/11-errors.md)).
-- Cursor-based pagination by default, with a single envelope shape for collection responses ([§12](part-c/12-pagination-filtering-sorting.md)).
+- Cursor-based pagination by default, offset pagination where the backing source supports stable offsets, and one fixed envelope shape for each ([§12](part-c/12-pagination-filtering-sorting.md)).
 - OAuth 2.0 + OIDC for citizen-facing operations, mutual TLS or OAuth client credentials for BB-to-BB calls ([§13](part-d/13-authentication-and-authorisation.md)).
 - An `Idempotency-Key` contract for retry-safe POSTs ([§14](part-d/14-idempotency.md)).
 - A common async discovery and polling pattern: `202 Accepted` plus a locally defined Operation resource ([§15](part-d/15-asynchronous-operations.md)).

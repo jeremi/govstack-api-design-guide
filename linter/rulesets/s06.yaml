@@ -65,8 +65,8 @@ rules:
         function: undefined
 
   # 6.6 [M+R] — PROXY (bucket B, MUST -> warn). Recognizes search and exact
-  # lookup, which return 200 rather than 201, through conventional /search
-  # and :search/:lookup suffixes. Other POST read
+  # lookup, which return 200 rather than 201, through the conventional
+  # /search and /lookup action sub-resources. Other POST read
   # operations require review of their declared semantics.
   govstack-6.6:
     description: "POST search and exact lookup must return 200, not 201 (guide 6.6, [M+R], proxy)."
@@ -74,7 +74,7 @@ rules:
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/6-http-methods.md#66-post-search-for-complex-queries
     severity: warn
     formats: [oas3_1]
-    given: '$.paths[?(@property.match(/([\/:]search|:lookup)$/))].post'
+    given: '$.paths[?(@property.match(/\/(search|lookup)$/))].post'
     then:
       function: operationResponses
       functionOptions:
@@ -93,6 +93,6 @@ rules:
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/6-http-methods.md#67-bulk-mutation-needs-explicit-selection
     severity: warn
     formats: [oas3_1]
-    given: "$.paths[?(!@property.includes('{') && !@property.includes(':'))]"
+    given: "$.paths[?(!@property.includes('{'))]"
     then:
       function: s06-bulkMutationSelection

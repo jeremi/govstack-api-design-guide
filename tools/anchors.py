@@ -7,8 +7,12 @@ Register those anchors here so both tools continue to reject accidental changes.
 import re
 
 PRESERVED_RULE_ANCHORS = {
+    "1.9": "19-rule-enforcement-classes",
     "3.1": "31-asyncapi-300-required",
     "5.8": "58-actions-as-sub-resources",
+    "5.9": "59-unversioned-health-endpoint",
+    "10.6": "106-rfc-5322-email-addresses",
+    "12.10": "1210-sparse-fieldsets-out-of-scope",
 }
 
 SLUG_KEEP = set("abcdefghijklmnopqrstuvwxyz0123456789-")

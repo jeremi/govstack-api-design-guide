@@ -12,7 +12,7 @@ servers:
       gatewayHost:
         default: gateway.example.org
 paths:
-  /v1/widgets:search:
+  /v1/widgets/search:
     post:
       operationId: searchWidgets
       summary: Search widgets
@@ -26,3 +26,17 @@ paths:
       responses:
         '200':
           description: Search results
+  /v1/widgets/lookup:
+    post:
+      operationId: lookupWidget
+      summary: Look up a widget
+      description: Resolves one widget from exact selectors in the request body.
+      tags: [widgets]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: The matching widget

@@ -13,24 +13,24 @@ functions:
   - s07-noStoreOnProblemJson
   - s07-creationResponses
   - s07-baselineResponses
+  - s07-responseLocation
   - s07-successResponseSchema
   - s07-etagValidator
 rules:
-  # 7.2 [M] — every 201 response MUST include a Location header pointing at
+  # 7.2 [M+R] — every 201 response MUST include a Location header pointing at
   # the created resource. Presence-only: does not verify the header's value
   # actually resolves to the created resource.
   govstack-7.2:
-    description: "every 201 response must declare a Location header (guide 7.2, [M])."
-    message: "[7.2][M] {{error}}"
+    description: "every 201 response must declare a Location header (guide 7.2, [M+R], partial coverage)."
+    message: "[7.2][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#72-201-created-with-location
     severity: error
     formats: [oas3_1]
-    given: "$.paths[*][get,put,post,delete,patch].responses"
+    given: $
     then:
-      function: responseHeaderRequired
+      function: s07-responseLocation
       functionOptions:
         status: "201"
-        headers: [Location]
 
   # 7.3 [M+R] — every 202 response MUST include Location pointing to an
   # Operation resource (§15). Presence-only: does not verify the URL actually
@@ -41,12 +41,11 @@ rules:
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#73-202-accepted-for-async-operations
     severity: error
     formats: [oas3_1]
-    given: "$.paths[*][get,put,post,delete,patch].responses"
+    given: $
     then:
-      function: responseHeaderRequired
+      function: s07-responseLocation
       functionOptions:
         status: "202"
-        headers: [Location]
 
   # 7.6 [M+R] — every 401 response MUST include WWW-Authenticate (RFC 9110).
   # Implements the MUST clause only; the SHOULD clause (RFC 6750 challenge
@@ -66,14 +65,15 @@ rules:
         headers: [WWW-Authenticate]
 
   # 7.13 [M] — specs MUST document a 500 response at minimum (502/503/504 are
-  # descriptive extras, not separately mandated).
+  # descriptive extras, not separately mandated). "Every operation" covers all
+  # eight OpenAPI operation methods, including HEAD, OPTIONS and TRACE.
   govstack-7.13:
     description: "every operation must declare a 500 response (guide 7.13, [M])."
     message: "[7.13][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#713-server-errors-documented
     severity: error
     formats: [oas3_1]
-    given: "$.paths[*][get,put,post,delete,patch]"
+    given: "$.paths[*][get,put,post,delete,patch,head,options,trace]"
     then:
       function: operationResponses
       functionOptions:
@@ -92,7 +92,7 @@ rules:
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/7-http-status-codes.md#714-all-status-codes-declared
     severity: warn
     formats: [oas3_1]
-    given: "$.paths[*][get,put,post,delete,patch]"
+    given: "$.paths[*][get,put,post,delete,patch,head,options,trace]"
     then:
       function: operationResponses
       functionOptions:
@@ -132,7 +132,7 @@ rules:
   # MAY omit ETag. Does not verify the ETag is actually derived from resource
   # state, and does not verify client If-None-Match support (client-side
   # behaviour, invisible to a server spec).
-  # The given excludes the guide 5.9 operational endpoints /health and /ready:
+  # The given excludes the guide 5.10 operational endpoints /health and /ready:
   # 7.16 applies to "endpoints that return resources", and caching a liveness
   # probe is an anti-pattern (no ETag/304 to advertise).
   govstack-7.16:
@@ -227,7 +227,7 @@ rules:
       function: s07-noStoreOnProblemJson
 
   # 7.21 [M] — every declared 2xx response media type has a concrete schema;
-  # 204 responses do not declare content.
+  # HEAD, 204, and 205 responses do not declare content. §15.1 owns 202 bodies.
   govstack-7.21:
     description: "successful response bodies must declare non-empty schemas (guide 7.21, [M])."
     message: "[7.21][M] {{error}}"

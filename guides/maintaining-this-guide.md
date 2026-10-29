@@ -16,9 +16,17 @@ When renaming a rule heading, register its original anchor in `PRESERVED_RULE_AN
 
 Run `python3 tools/test_anchors.py` when changing anchor handling.
 
+Keep the hidden `rule-class` comment as compatibility metadata. The visible Verification blocks are generated from `linter/coverage.yaml`; update that manifest when the available checks or their limits change, then regenerate the blocks. Do not edit the generated blocks by hand. They describe verification coverage, not requirement strength or test results.
+
 ## Regenerating the machine layer
 
-Two scripts derive machine-readable artifacts from the page content and must be re-run whenever a page changes:
+Regenerate verification details before building the indexes. The verification generator uses the linter's existing Node dependencies; install them once with `npm --prefix linter ci`.
+
+```bash
+node linter/scripts/generate-verification.mjs
+```
+
+This updates each rule's Verification block from the coverage manifest while preserving the requirement text, identifiers, anchors, and hidden compatibility class. The index builder excludes these generated notes from the normative text in `rules.yaml` and uses their summaries in the reader indexes.
 
 ```bash
 python3 tools/build_rules_index.py
@@ -27,10 +35,11 @@ python3 tools/build_rules_index.py
 Rewrites `rules.yaml`, `all-rules.md`, and `rules-by-kind.md` from the current state of the pages. Run this after editing, adding, or reordering any rule. The builder fails when a rule body breaks the level convention. It reads the API kinds of each rule from `tools/rule-kinds.json`, which holds a default kind set per section and per-rule overrides; a new rule inherits its section default, and an override naming a rule that no longer exists fails the build. Run `python3 tools/test_build_rules_index.py` after changing the builder.
 
 ```bash
+node linter/scripts/generate-verification.mjs --check
 python3 tools/build_rules_index.py --check
 ```
 
-Verifies that `rules.yaml`, `all-rules.md`, and `rules-by-kind.md` are still in sync with the pages, without rewriting them. Run this after any page edit; it is also the natural check to add to CI once this folder gets a CI hook (the template's CircleCI config does not run it today).
+Verifies that the source Verification blocks match the coverage manifest and that `rules.yaml`, `all-rules.md`, and `rules-by-kind.md` are still in sync with the pages, without rewriting them. Run these after any page or coverage edit; they are also natural checks to add to CI once this folder gets a CI hook (the template's CircleCI config does not run them today). The linter test suite also checks verification-block freshness.
 
 ```bash
 python3 tools/check_links.py
@@ -51,4 +60,4 @@ The second command fails if `rules.yaml` and `coverage.yaml` disagree about the 
 
 ## Versioning the guide itself
 
-This guide is versioned with SemVer, per [§1.10](../1-introduction.md#110-applicability-and-transition), and its current exact identifier is `0.2.0-draft`. A patch release may correct prose or tooling without changing conformance. A minor release may add optional guidance, deprecate a rule, or relax a requirement. Adding or strengthening a mandatory rule, removing a permitted behaviour, or otherwise making a previously conforming specification non-conforming requires a major release. A ruleset release is separately versioned and every canonical spec pins both exact versions under [§20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version). The [draft change record](../draft-changes.md) explains version changes before publication; release notes begin with the first published version. Shared schema artifacts retain their own version and provenance unless their content changes.
+This guide is versioned with SemVer, per [§1.10](../1-introduction.md#110-applicability-and-transition), and its current exact identifier is `0.3.0-draft`. A patch release may correct prose or tooling without changing conformance. A minor release may add optional guidance, deprecate a rule, or relax a requirement. During the `0.x` drafting series a minor release may also add or strengthen a mandatory rule, provided the [draft change record](../draft-changes.md) lists the change with its rationale and the affected rule ids. From `1.0.0` onward, adding or strengthening a mandatory rule, removing a permitted behaviour, or otherwise making a previously conforming specification non-conforming requires a major release. A ruleset release is separately versioned and every canonical spec pins both exact versions under [§20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version). The [draft change record](../draft-changes.md) explains version changes before publication; release notes begin with the first published version. Shared schema artifacts retain their own version and provenance unless their content changes.

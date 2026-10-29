@@ -100,6 +100,15 @@ function matchNode(schema, spec, path, results, depth) {
     }
   }
 
+  if (isObject(spec.optionalProperties)) {
+    for (const [name, childSpec] of Object.entries(spec.optionalProperties)) {
+      const child = eff.properties[name];
+      if (isObject(child) && isObject(childSpec)) {
+        matchNode(child, childSpec, [...path, 'properties', name], results, depth + 1);
+      }
+    }
+  }
+
   if (isObject(spec.items)) {
     if (!isObject(schema.items)) {
       results.push({ message: 'schema must declare items', path: [...path, 'items'] });

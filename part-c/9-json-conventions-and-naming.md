@@ -12,59 +12,149 @@ description: "Field naming, JSON representation, forward-compatibility, and spec
 
 ## 9.1 JSON as default media type <a href="#91-json-as-default-media-type" id="91-json-as-default-media-type"></a>
 
-**[M+R]** Default response media type **MUST** be `application/json` unless the resource is binary, a document export, or a document whose media type is fixed by the standard that defines it, such as `application/linkset+json` for an RFC 9727 API catalog or `application/ld+json` for a JSON-LD metadata document.
+<!-- rule-class: M+R -->
+
+Default response media type **MUST** be `application/json` unless the resource is binary, a document export, or a document whose media type is fixed by the standard that defines it, such as `application/linkset+json` for an RFC 9727 API catalog or `application/ld+json` for a JSON-LD metadata document.
+
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
+
+proxy: responses use application/json; binary/export exception unknowable
+<!-- verification:end -->
 
 ## 9.2 camelCase field names <a href="#92-camelcase-field-names" id="92-camelcase-field-names"></a>
 
-**[M]** GovStack-owned JSON field names **SHOULD** use `camelCase` consistently within a surface. Fields adopted from an external standard retain that standard's spelling. (See [note below](#note-on-92) on the choice of casing.)
+<!-- rule-class: M -->
+
+GovStack-owned JSON field names **SHOULD** use `camelCase` consistently within a surface. Fields adopted from an external standard retain that standard's spelling. (See [note below](#note-on-92) on the choice of casing.)
+
+<!-- verification:start -->
+**Verification:** Automated specification check.
+
+advisory: reusable and inline OpenAPI body fields plus AsyncAPI payload fields use camelCase
+<!-- verification:end -->
 
 ## 9.3 Real JSON booleans <a href="#93-real-json-booleans" id="93-real-json-booleans"></a>
 
-**[M]** Boolean fields **MUST** be JSON booleans (`true`/`false`), not strings.
+<!-- rule-class: M -->
+
+Boolean fields **MUST** be JSON booleans (`true`/`false`), not strings.
+
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification.
+
+proxy: flag boolean-looking props typed string / enum ["true","false"]
+<!-- verification:end -->
 
 ## 9.4 Explicit nullability <a href="#94-explicit-nullability" id="94-explicit-nullability"></a>
 
-**[M]** Nullability **MUST** be explicit (`type: [..., "null"]` per OpenAPI 3.1).
+<!-- rule-class: M -->
+
+Nullability **MUST** be explicit (`type: [..., "null"]` per OpenAPI 3.1).
+
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification.
+
+proxy: flag 3.0-style nullable:true (should be type:[...,"null"])
+<!-- verification:end -->
 
 ## 9.5 No spaces or non-ASCII names <a href="#95-no-spaces-or-non-ascii-names" id="95-no-spaces-or-non-ascii-names"></a>
 
-**[M]** GovStack-owned field names **SHOULD** use ASCII identifiers without spaces. Fields adopted from an external standard retain that standard's spelling.
+<!-- rule-class: M -->
+
+GovStack-owned field names **SHOULD** use ASCII identifiers without spaces. Fields adopted from an external standard retain that standard's spelling.
+
+<!-- verification:start -->
+**Verification:** Automated specification check.
+
+advisory: reusable and inline OpenAPI body fields plus AsyncAPI payload fields use ASCII without spaces
+<!-- verification:end -->
 
 ## 9.6 Avoid abbreviations <a href="#96-avoid-abbreviations" id="96-avoid-abbreviations"></a>
 
-**[R]** Abbreviations **SHOULD NOT** be used (prefer `quantity` over `qty`).
+<!-- rule-class: R -->
+
+Abbreviations **SHOULD NOT** be used (prefer `quantity` over `qty`).
+
+<!-- verification:start -->
+**Verification:** Heuristic check in the optional strict profile.
+
+proxy: property names vs abbreviation dictionary
+<!-- verification:end -->
 
 ## 9.7 Screaming snake case enum values <a href="#97-screaming-snake-case-enum-values" id="97-screaming-snake-case-enum-values"></a>
 
-**[M]** Values whose form is fixed elsewhere keep the casing their own definition gives them and **MUST NOT** be re-cased to satisfy this rule: identifiers built to a shape this guide defines (event types per [§16.3](../part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types), sort keys per [§12.7](../part-c/12-pagination-filtering-sorting.md#127-sort-parameter-convention)), codes drawn from an external standard (BCP 47 language tags per [§10.9](../part-c/10-data-types-and-formats.md#109-bcp-47-language-codes), ISO 4217 currency codes per [§10.10](../part-c/10-data-types-and-formats.md#1010-iso-4217-currency-codes)), and values registered in an IANA registry, including JOSE and COSE algorithm and curve names such as `ES256`, `EdDSA`, and `Ed25519`, and media types.
+<!-- rule-class: M -->
 
 Enum values that name a BB-defined state or category **SHOULD** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`).
 
+Values whose form is fixed elsewhere are outside this casing recommendation and retain the casing their own definition gives them: identifiers built to a shape this guide defines (event types per [§16.3](../part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types), sort keys per [§12.7](../part-c/12-pagination-filtering-sorting.md#127-sort-parameter-convention), field-selection names per [§12.10](../part-c/12-pagination-filtering-sorting.md#1210-sparse-fieldsets-out-of-scope)), codes drawn from an external standard (BCP 47 language tags per [§10.9](../part-c/10-data-types-and-formats.md#109-bcp-47-language-codes), ISO 4217 currency codes per [§10.10](../part-c/10-data-types-and-formats.md#1010-iso-4217-currency-codes)), and values registered in an IANA registry, including JOSE and COSE algorithm and curve names such as `ES256`, `EdDSA`, and `Ed25519`, and media types.
+
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification.
+
+SHOULD-level proxy at info: enum string values SCREAMING_SNAKE_CASE minus the rule's carve-outs (BCP 47 tags, reverse-DNS error codes and event types, media types, x-govstack-* vocabularies, and the JOSE/COSE names not already all-caps). IANA registry membership is not visible in a document, so a registered value outside the listed set is a miss. Actual sort/fields query parameters and request-body properties identify selector enums through resolved file references; selectors reached under other names remain a known false positive.
+<!-- verification:end -->
+
 ## 9.8 Forward-compatible schemas <a href="#98-forward-compatible-schemas" id="98-forward-compatible-schemas"></a>
 
-**[M]** Resource schemas delivered to consumers in responses or emitted events **MUST** be designed for forward-compatibility: unknown fields and unknown enum values **MUST** be safely ignorable by conforming clients. Conforming client behaviour (ignoring unknown response and event fields) is documented in [§18.6](../part-d/18-compatibility-and-lifecycle.md#186-clients-ignore-unknown-fields) as a non-normative reader expectation. These schemas **MUST NOT** rely on `additionalProperties: false` at the top level of resource bodies, since that prevents adding fields without a breaking change.
+<!-- rule-class: M -->
+
+Resource schemas delivered to consumers in responses or emitted events **MUST** be designed for forward-compatibility: unknown fields and unknown enum values **MUST** be safely ignorable by conforming clients. Conforming client behaviour (ignoring unknown response and event fields) is documented in [§18.6](../part-d/18-compatibility-and-lifecycle.md#186-clients-ignore-unknown-fields) as a non-normative reader expectation. These schemas **MUST NOT** rely on `additionalProperties: false` at the top level of resource bodies, since that prevents adding fields without a breaking change.
 
 Operation request schemas **MAY** reject unknown fields, including with `additionalProperties: false`, so misspelled selectors or unsupported operation inputs do not silently change request meaning. A separately governed nested payload **MAY** use a closed schema. The request and response contracts can therefore use different schemas even when some fields are shared.
 
 Nested objects and arrays follow the representation schema. The shallow URL hierarchy recommended by [§5.4](../part-b/5-url-structure-and-versioning.md#54-shallow-path-nesting) does not limit JSON nesting; the bounds and completeness of embedded arrays follow [§12.1](12-pagination-filtering-sorting.md#121-collections-must-paginate).
 
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification.
+
+HTTP response resource roots do not set additionalProperties:false; classifying emitted event resources requires review; closed operation request schemas and nested payloads are permitted
+<!-- verification:end -->
+
 ## 9.9 No closed enums for growing sets <a href="#99-no-closed-enums-for-growing-sets" id="99-no-closed-enums-for-growing-sets"></a>
 
-**[R]** Fields whose value set is expected to grow **MUST NOT** be declared as a closed OpenAPI `enum`, because client code generated from a closed enum typically rejects values added later, which would make the "adding enum values is non-breaking" guarantee of [§18.3](../part-d/18-compatibility-and-lifecycle.md#183-backward-compatible-minor-changes) false in practice. Such fields **MUST** either be declared as an open `type: string` annotated with `x-extensible-enum` (carrying the known values), or define an explicit fallback member (e.g., `UNKNOWN`) that conforming clients map unrecognised values to.
+<!-- rule-class: R -->
+
+Fields whose value set is expected to grow **MUST NOT** be declared as a closed OpenAPI `enum`, because client code generated from a closed enum typically rejects values added later, which would make the "adding enum values is non-breaking" guarantee of [§18.3](../part-d/18-compatibility-and-lifecycle.md#183-backward-compatible-minor-changes) false in practice. Such fields **MUST** either be declared as an open `type: string` annotated with `x-extensible-enum` (carrying the known values), or define an explicit fallback member (e.g., `UNKNOWN`) that conforming clients map unrecognised values to.
 
 Truly fixed value sets (e.g., ISO-defined codes) **MAY** remain closed enums.
 
+Request-only field-selection and sort-key vocabularies **MAY** use closed enums: adding an accepted input value does not require an existing client to send it. This exemption does not apply to a schema also emitted in a response or event, where consumers still need the forward-compatible handling above.
+
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification.
+
+proxy: flag closed enums lacking x-extensible-enum/UNKNOWN fallback; request-only field-selection and sort-key enums are exempt, while schemas also emitted in responses or events retain the check
+<!-- verification:end -->
+
 ## 9.10 GovStack extension prefix <a href="#910-govstack-extension-prefix" id="910-govstack-extension-prefix"></a>
 
-**[M+R]** GovStack-defined specification extensions on OpenAPI or AsyncAPI documents **MUST** be prefixed `x-govstack-` (for example, `x-govstack-deprecated` in [§18.7](../part-d/18-compatibility-and-lifecycle.md#187-asyncapi-deprecation-metadata), and `x-govstack-api-guide` in [§20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version)). A prefix rule does not create or standardise an extension; each GovStack extension still requires an explicit schema and governing rule.
+<!-- rule-class: M+R -->
+
+GovStack-defined specification extensions on OpenAPI or AsyncAPI documents **MUST** be prefixed `x-govstack-` (for example, `x-govstack-deprecated` in [§18.7](../part-d/18-compatibility-and-lifecycle.md#187-asyncapi-deprecation-metadata), `x-govstack-api-guide` in [§20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version), and `x-govstack-use-case` and `x-govstack-pii` in [§4.7](../part-a/4-documentation-requirements.md#47-operation-metadata-extensions)). A prefix rule does not create or standardise an extension; each GovStack extension still requires an explicit schema and governing rule.
 
 An extension owned by one BB **MAY** use the more specific prefix `x-govstack-{bb-code}`, where `{bb-code}` is the BB's registered code ([§9.11](#911-single-registered-bb-code)). The BB **MAY** express its value schema as a published JSON Schema and identify its governing rule through a citation to the BB requirement. These are optional conventions for satisfying the existing schema and governance requirement; other `x-govstack-` names remain permitted.
 
+<!-- verification:start -->
+**Verification:** Heuristic check in the optional strict profile. Semantic review is also required.
+
+proxy: GovStack-semantic extensions use x-govstack- prefix (weak)
+<!-- verification:end -->
+
 ## 9.11 Single registered BB code <a href="#911-single-registered-bb-code" id="911-single-registered-bb-code"></a>
 
-**[M+R]** Every namespace that embeds a BB code (HTTP problem-type URLs [§11.2](../part-c/11-errors.md#112-stable-http-problem-type-uri), OAuth scopes [§13.4](../part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes), event types [§16.3](../part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types), logical channel IDs [§17.2](../part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses), and any transport-neutral asynchronous error code that embeds one [§11.6](../part-c/11-errors.md#116-transport-neutral-asynchronous-errors)) **MUST** use the BB's single registered code, identically in all of them. BB codes **MUST** match `^[a-z][a-z0-9-]{1,30}$` and **MUST** be unique across the ecosystem.
+<!-- rule-class: M+R -->
+
+Every namespace that embeds a BB code (HTTP problem-type URLs [§11.2](../part-c/11-errors.md#112-stable-http-problem-type-uri), OAuth scopes [§13.4](../part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes), event types [§16.3](../part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types), logical channel IDs [§17.2](../part-d/17-asyncapi-channel-rules.md#172-stable-logical-channel-ids-and-native-addresses), and any transport-neutral asynchronous error code that embeds one [§11.6](../part-c/11-errors.md#116-transport-neutral-asynchronous-errors)) **MUST** use the BB's single registered code, identically in all of them. BB codes **MUST** match `^[a-z][a-z0-9-]{1,30}$` and **MUST** be unique across the ecosystem.
 
 Until GovStack publishes a canonical register, codes **SHOULD** be agreed through the API Working Group.
+
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
+
+in-doc: extract bb-code from canonical problem-type URIs, OAuth scopes, event types and logical channel IDs; verify identical + regex ^[a-z][a-z0-9-]{1,30}$; protocol-native address values are excluded; ecosystem uniqueness needs registry
+<!-- verification:end -->
 
 ## Note on 9.2 <a href="#note-on-92" id="note-on-92"></a>
 

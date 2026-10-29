@@ -1,5 +1,6 @@
 import { walkSchema } from './lib/schemaWalk.js';
 import { isObject, toRegExp } from './lib/util.js';
+import { isSelectorEnum } from './lib/requestOnlySelectors.js';
 
 /**
  * s09-enumCasing — PROXY for §9.7 (SCREAMING_SNAKE_CASE enum values). Flags
@@ -23,9 +24,14 @@ import { isObject, toRegExp } from './lib/util.js';
  * likely to declare beside them; a registered value outside it is a miss, and
  * the fix is to add it here rather than to re-case the value.
  *
- * Known false positive: §12.7 sort keys are field names in lowerCamelCase, which
- * is indistinguishable from a mis-cased state name, so a sort-key enum declared
- * under components.schemas is flagged. Inline sort parameters are not visited.
+ * §12.7 sort keys and §12.10 field-selection names are property names, so they
+ * keep property-name casing. The exemption is limited to enum nodes proven to
+ * sit in a `sort` or `fields` query parameter or request body. Child
+ * state/category fields are not masked merely because an enclosing property is
+ * named `fields`.
+ *
+ * An enum under `not` lists excluded values, not a vocabulary, so `not`
+ * subtrees are skipped.
  *
  * `given` should select a schema (e.g. `$.components.schemas[*]`). Cycle-safe.
  *
@@ -77,17 +83,18 @@ export default function s09EnumCasing(targetVal, options, context) {
 
   walkSchema(targetVal, (node, path) => {
     if (!Array.isArray(node.enum)) return;
+    if (isSelectorEnum(context, node)) return;
     node.enum.forEach((value, i) => {
       if (typeof value !== 'string' || value.length === 0) return;
       if (pattern.test(value)) return;
       if (allowValues.has(value)) return;
       if (allowRe && allowRe.test(value)) return;
       results.push({
-        message: `enum value "${value}" must be SCREAMING_SNAKE_CASE (e.g. ACTIVE, PENDING_REVIEW)`,
+        message: `enum value "${value}" should use SCREAMING_SNAKE_CASE (e.g. ACTIVE, PENDING_REVIEW)`,
         path: [...base, ...path, 'enum', i],
       });
     });
-  });
+  }, { skipKeys: ['not'] });
 
   return results.length ? results : undefined;
 }

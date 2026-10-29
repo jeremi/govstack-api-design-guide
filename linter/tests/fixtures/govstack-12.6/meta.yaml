@@ -1,0 +1,2 @@
+# fail.yaml: one envelope omits limit from required; one declares a non-integer total.
+expect_fail_count: 2

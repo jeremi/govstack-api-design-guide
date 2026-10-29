@@ -12,17 +12,37 @@ description: "The local Operation resource shape and polling pattern BBs use for
 
 ## 15.1 202 with Operation Location <a href="#151-202-with-operation-location" id="151-202-with-operation-location"></a>
 
-**[M+R]** Operations that cannot complete synchronously **MUST** return `202 Accepted` with a `Location` header pointing to an Operation resource and **MUST** return the current Operation representation in the response body.
+<!-- rule-class: M+R -->
+
+Operations that cannot complete synchronously **MUST** return `202 Accepted` with a `Location` header pointing to an Operation resource and, where HTTP permits response content, **MUST** return the current Operation representation in the response body. Such a response **MUST** declare content and a concrete, non-empty schema. A `HEAD` response **MUST NOT** declare content.
+
+Creating a job or Operation resource that is itself addressable when the response returns is a completed creation, and it uses `201` under [§7.2](../part-b/7-http-status-codes.md#72-201-created-with-location). `202` applies when nothing addressable exists yet beyond the Operation resource that [§15.2](#152-local-operation-resource-shape) describes.
+
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
+
+§15.1 checks concrete non-empty content schemas on declared non-HEAD 202 responses and forbids HEAD 202 content; §7.3 owns Location checks. Whether work is asynchronous and whether the representation denotes its local Operation resource require semantic review
+<!-- verification:end -->
 
 ## 15.2 Local Operation resource shape <a href="#152-local-operation-resource-shape" id="152-local-operation-resource-shape"></a>
 
-**[M+R]** The local Operation schema **SHOULD** document how the identifier, lifecycle state, result, error, and any progress metadata are represented, including when each state-dependent field is present. Its identifier **SHOULD** be an opaque string and clients **SHOULD NOT** infer a UUID or any other internal format. This guide does not fix those field names or shapes. A shared Operation schema is deferred until multiple BBs demonstrate a stable reusable contract.
+<!-- rule-class: M+R -->
+
+The local Operation schema **SHOULD** document how the identifier, lifecycle state, result, error, and any progress metadata are represented, including when each state-dependent field is present. Its identifier **SHOULD** be an opaque string and clients **SHOULD NOT** infer a UUID or any other internal format. This guide does not fix those field names or shapes. A shared Operation schema is deferred until multiple BBs demonstrate a stable reusable contract.
 
 The response schema is required by [§7.21](../part-b/7-http-status-codes.md#721-schemas-for-successful-response-bodies) and defined locally under [§2.8](../part-a/2-openapi-document-standards.md#28-conditional-vendored-openapi-schemas).
 
+<!-- verification:start -->
+**Verification:** Review or evidence assessment required. Semantic review is also required.
+
+local Operation identifier and state-dependent shape require semantic review; no ecosystem field names or formats are prescribed
+<!-- verification:end -->
+
 ## 15.3 Documented Operation lifecycle <a href="#153-documented-operation-lifecycle" id="153-documented-operation-lifecycle"></a>
 
-**[M+R]** The local Operation contract **SHOULD** distinguish terminal from non-terminal states and **SHOULD** document the result, error, polling, and cancellation semantics for each applicable state. This guide does not prescribe a status enum or lifecycle model.
+<!-- rule-class: M+R -->
+
+The local Operation contract **SHOULD** distinguish terminal from non-terminal states and **SHOULD** document the result, error, polling, and cancellation semantics for each applicable state. This guide does not prescribe a status enum or lifecycle model.
 
 **Example (informative).** An in-progress Operation resource:
 
@@ -36,22 +56,112 @@ The response schema is required by [§7.21](../part-b/7-http-status-codes.md#721
 }
 ```
 
+<!-- verification:start -->
+**Verification:** Review or evidence assessment required. Semantic review is also required.
+
+terminal/non-terminal lifecycle and result/error/cancellation semantics require review; no fixed enum is prescribed
+<!-- verification:end -->
+
 ## 15.4 Polling the Operation resource <a href="#154-polling-the-operation-resource" id="154-polling-the-operation-resource"></a>
 
-**[M+R]** A BB exposing an Operation resource **MUST** make it pollable with `GET` at the URI returned in `Location`.
+<!-- rule-class: M+R -->
+
+A BB exposing an Operation resource **MUST** make it pollable with `GET` at the URI returned in `Location`.
 
 The conventional path **SHOULD** be `/v{major}/operations/{operationId}`. A non-terminal polling response **SHOULD** include `Retry-After` when the server can advise a useful minimum polling interval.
 
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
+
+proxy: canonical GET /v1/operations/{operationId} present when Operations used. level MUST in rules.yaml (class M+R).
+<!-- verification:end -->
+
 ## 15.5 Cancellation via cancel sub-resource <a href="#155-cancellation-via-cancel-sub-resource" id="155-cancellation-via-cancel-sub-resource"></a>
 
-**[M+R]** Cancellation, when supported, **MUST** be documented and discoverable from the Operation contract.
+<!-- rule-class: M+R -->
+
+Cancellation, when supported, **MUST** be documented and discoverable from the Operation contract.
 
 The conventional action **SHOULD** be `POST /v{major}/operations/{operationId}/cancel`.
 
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
+
+advisory proxy: checks the conventional cancellation path; does not prove that cancellation support or non-support is documented and discoverable by another mechanism
+<!-- verification:end -->
+
 ## 15.6 Webhook completion notification <a href="#156-webhook-completion-notification" id="156-webhook-completion-notification"></a>
 
-**[R]** Long-running operations **SHOULD** support completion notification via webhook ([§16](../part-d/16-cloudevents-and-webhooks.md)) rather than requiring clients to poll indefinitely. The threshold at which notification becomes expected is operational and per-BB.
+<!-- rule-class: R -->
+
+Long-running operations **SHOULD** support completion notification via webhook ([§16](../part-d/16-cloudevents-and-webhooks.md)) rather than requiring clients to poll indefinitely. The threshold at which notification becomes expected is operational and per-BB.
+
+<!-- verification:start -->
+**Verification:** Review or evidence assessment required.
+
+SHOULD + "long-running" semantic - advisory
+<!-- verification:end -->
 
 ## 15.7 Documented result retention <a href="#157-documented-result-retention" id="157-documented-result-retention"></a>
 
-**[R]** Operation result availability **SHOULD** be documented as a consumer-visible contract. A reference specification **SHOULD** state the required minimum retention or the configuration parameter that controls it. Concrete retention values belong in implementation profiles.
+<!-- rule-class: R -->
+
+Operation result availability **SHOULD** be documented as a consumer-visible contract. A reference specification **SHOULD** state the required minimum retention or the configuration parameter that controls it. Concrete retention values belong in implementation profiles.
+
+<!-- verification:start -->
+**Verification:** Review or evidence assessment required.
+
+"document result retention" prose
+<!-- verification:end -->
+
+## 15.8 Per-request callback URL <a href="#158-per-request-callback-url" id="158-per-request-callback-url"></a>
+
+<!-- rule-class: M+R -->
+
+When an operation accepts a per-request callback URL (a URL the server calls when the work completes, as opposed to the subscription-managed webhooks of [§16](../part-d/16-cloudevents-and-webhooks.md)), the URL **MUST** be carried in the request body in a property named `callbackUrl`, **MUST** use `https` ([§13.7](../part-d/13-authentication-and-authorisation.md#137-protected-transport)), and **MUST NOT** be carried in a header or query parameter. The OpenAPI operation **MUST** describe the callback request with an OpenAPI `callbacks` object whose runtime expression references that property (`{$request.body#/callbackUrl}`). The callback request body **MUST** be the Operation representation of [§15.2](#152-local-operation-resource-shape) or a CloudEvent ([§16](../part-d/16-cloudevents-and-webhooks.md)) carrying it, and the callback request **MUST** be authenticated under [§13](../part-d/13-authentication-and-authorisation.md), with the mechanism documented in the specification.
+
+An operation **MAY** offer a per-request callback as an alternative to polling ([§15.4](#154-polling-the-operation-resource)) or to the subscription webhooks of [§15.6](#156-webhook-completion-notification). Retries and the delivery-failure contract follow [§16.10](../part-d/16-cloudevents-and-webhooks.md#1610-documented-delivery-failure-contract).
+
+**Example (informative).**
+
+```yaml
+paths:
+  /v1/exports:
+    post:
+      operationId: createExport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [format]
+              properties:
+                format:
+                  type: string
+                callbackUrl:
+                  type: string
+                  format: uri
+                  pattern: "^https://"
+      callbacks:
+        exportCompleted:
+          "{$request.body#/callbackUrl}":
+            post:
+              security:
+                - mutualTLS: []
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: "#/components/schemas/Operation"
+              responses:
+                "204":
+                  description: Callback received.
+```
+
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
+
+deterministic: request body callbackUrl requires a callbacks object (subscription paths exempt); proxies: no header/query parameter named like /callback/i, callbackUrl declares format: uri; the https requirement, the runtime expression referencing callbackUrl, the callback body shape and callback authentication are NOT checked
+<!-- verification:end -->

@@ -9,9 +9,8 @@
 // ruleset. The ruleset exempts the guide §5.10 standard unversioned endpoints
 // (/health, /ready, /.well-known/*, spec discovery) from the resource-oriented
 // rules that do not apply to them (§5.1 version prefix, §5.3 segment casing,
-// §12.x pagination, §7.16 ETag), scopes the §5.9 application/json media type to
-// the SUCCESS response so the §11.1 problem+json error response is satisfiable,
-// and counts only non-param path segments toward §5.4 max nesting depth so the
+// §12.x pagination, §7.16 ETag), and counts resource/action segments toward
+// §5.4 max nesting depth so the
 // §15.5/§16.11 mandated action sub-resource paths stay in bounds. Any finding is
 // therefore a genuine regression; the test prints the full finding list on
 // failure for debugging.

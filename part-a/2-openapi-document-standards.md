@@ -12,17 +12,35 @@ description: "Rules governing the canonical OpenAPI document: version, location,
 
 ## 2.1 OpenAPI 3.1 required <a href="#21-openapi-31-required" id="21-openapi-31-required"></a>
 
-**[M]** The spec **MUST** declare an explicit, published OpenAPI 3.1 patch version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.2.0-draft` qualify `openapi: 3.1.0`, `3.1.1`, and `3.1.2`; tooling **MUST** treat those patches as the same OAS 3.1 feature set. OpenAPI 3.0 and earlier **MUST NOT** be used. A later OpenAPI minor version, including 3.2, **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it.
+<!-- rule-class: M -->
+
+The spec **MUST** declare an explicit, published OpenAPI 3.1 patch version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.3.0-draft` qualify `openapi: 3.1.0`, `3.1.1`, and `3.1.2`; tooling **MUST** treat those patches as the same OAS 3.1 feature set. OpenAPI 3.0 and earlier **MUST NOT** be used. A later OpenAPI minor version, including 3.2, **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it.
+
+<!-- verification:start -->
+**Verification:** Automated specification check.
+
+assert openapi is one of the ruleset-qualified patches 3.1.0, 3.1.1, 3.1.2
+<!-- verification:end -->
 
 ## 2.2 One canonical OpenAPI entrypoint <a href="#22-one-canonical-openapi-entrypoint" id="22-one-canonical-openapi-entrypoint"></a>
 
-**[M+R]** In the absence of `api/index.yaml`, the canonical OpenAPI entrypoint **MUST** be located at `api/openapi.yaml`, in YAML. A BB with a custom canonical path or multiple independently versioned API surfaces **MUST** enumerate every surface in `api/index.yaml` using [§4.5](../part-a/4-documentation-requirements.md#45-api-surface-inventory). Either discovery form **MUST** identify exactly one canonical artifact per surface. The legacy `api/swagger.yaml` and `api/swagger.json` names still used by some BBs are not canonical under this guide.
+<!-- rule-class: M+R -->
+
+In the absence of `api/index.yaml`, the canonical OpenAPI entrypoint **MUST** be located at `api/openapi.yaml`, in YAML. A BB with a custom canonical path or multiple independently versioned API surfaces **MUST** enumerate every surface in `api/index.yaml` using [§4.5](../part-a/4-documentation-requirements.md#45-api-surface-inventory). Either discovery form **MUST** identify exactly one canonical artifact per surface. The legacy `api/swagger.yaml` and `api/swagger.json` names still used by some BBs are not canonical under this guide.
 
 The canonical entrypoint **MAY** `$ref`-compose other repository files provided every reference resolves.
 
+<!-- verification:start -->
+**Verification:** Automated repository or validator checks. Semantic review is also required.
+
+canonical file at api/openapi.yaml, single entrypoint, all $refs resolve - repo file tree
+<!-- verification:end -->
+
 ## 2.3 No divergent OpenAPI copies <a href="#23-no-divergent-openapi-copies" id="23-no-divergent-openapi-copies"></a>
 
-**[R]** Other locations (`spec/.gitbook/assets/`, alternative filenames, JSON copies) **MUST NOT** contain divergent copies. OpenAPI snippets in markdown documentation **MUST** load by reference from a canonical file, not duplicate it.
+<!-- rule-class: R -->
+
+Other locations (`spec/.gitbook/assets/`, alternative filenames, JSON copies) **MUST NOT** contain divergent copies. OpenAPI snippets in markdown documentation **MUST** load by reference from a canonical file, not duplicate it.
 
 An operation-free shared component library under `api/common/` is referenced support material, not a canonical API surface or a divergent copy.
 
@@ -30,34 +48,80 @@ An OpenAPI document under `api/examples/` that declares operations is an example
 
 A BB **MAY** retain historical contracts under `api/legacy/` when its documentation clearly identifies them as historical and separates them from the current API inventory. These archives are excluded from discovery of undeclared current surfaces; they do not describe the current contract. A file explicitly declared as a canonical surface or referenced by a canonical contract still participates in validation regardless of its directory.
 
+<!-- verification:start -->
+**Verification:** Automated repository or validator checks.
+
+no undeclared current copies; api/legacy archives excluded from discovery but explicit declarations and references still validate; historical documentation and canonical snippet use require review
+<!-- verification:end -->
+
 ## 2.4 Passes openapi-spec-validator <a href="#24-passes-openapi-spec-validator" id="24-passes-openapi-spec-validator"></a>
 
-**[M]** The canonical entrypoint **MUST** pass `openapi-spec-validator` for its declared OpenAPI 3.1 patch version, with every local reference resolved. Referenced JSON Schema fragments **MUST** validate against their declared dialect but are not required to be standalone OpenAPI documents.
+<!-- rule-class: M -->
+
+The canonical entrypoint **MUST** pass `openapi-spec-validator` for its declared OpenAPI 3.1 patch version, with every local reference resolved. Referenced JSON Schema fragments **MUST** validate against their declared dialect but are not required to be standalone OpenAPI documents.
+
+<!-- verification:start -->
+**Verification:** Automated repository or validator checks.
+
+run openapi-spec-validator against 3.1 schema
+<!-- verification:end -->
 
 ## 2.5 Complete info block <a href="#25-complete-info-block" id="25-complete-info-block"></a>
 
-**[M]** The `info` block of each canonical file **MUST** include `title`, `version` (SemVer), and a useful `description`. Where a BB ships per-surface canonical files ([2.2](#22-one-canonical-openapi-entrypoint)), each surface carries its own `info.version` and versions independently.
+<!-- rule-class: M -->
+
+The `info` block of each canonical file **MUST** include `title`, `version` (SemVer), and a useful `description`. Where a BB ships per-surface canonical files ([2.2](#22-one-canonical-openapi-entrypoint)), each surface carries its own `info.version` and versions independently.
 
 The info block **SHOULD** include `contact`; repository governance may supply the maintainer contact when it does not belong in the API contract.
 
+<!-- verification:start -->
+**Verification:** Automated specification check.
+
+info has title/version/description; version matches SemVer regex; contact is advisory
+<!-- verification:end -->
+
 ## 2.6 Meaningful servers block <a href="#26-meaningful-servers-block" id="26-meaningful-servers-block"></a>
 
-**[M+R]** The `servers` block **MUST** be non-empty and **MUST** describe the intended deployment base URL pattern for the API. Every non-local server URL **MUST** use `https`. When an OpenAPI path key includes `/v{N}` as recommended by [§5.1](../part-b/5-url-structure-and-versioning.md#51-major-version-in-the-path), a server URL **MUST NOT** repeat that version segment. Server URLs **MUST NOT** point to `localhost`, personal developer machines, undocumented placeholders, or fake production domains. Reserved documentation domains **MUST** be labelled as non-production.
+<!-- rule-class: M+R -->
+
+The `servers` block **MUST** be non-empty and **MUST** describe the intended deployment base URL pattern for the API. Every non-local server URL **MUST** use `https`. When an OpenAPI path key includes `/v{N}` as recommended by [§5.1](../part-b/5-url-structure-and-versioning.md#51-major-version-in-the-path), a server URL **MUST NOT** repeat that version segment. Server URLs **MUST NOT** point to `localhost`, personal developer machines, undocumented placeholders, or fake production domains. Reserved documentation domains **MUST** be labelled as non-production.
 
 Reference specifications that are not tied to a live implementation **SHOULD** use parameterised template URLs with documented variables (for example, `https://{gatewayHost}`). A stable deployment routing prefix **MAY** be included, such as `https://{gatewayHost}/registry`. The API's resource hierarchy belongs in its path keys: that server combined with `/v1/households/{householdId}` produces `/registry/v1/households/{householdId}`. Reserved documentation domains (for example, `example.org`) **MAY** be used only as variable defaults or examples.
 
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
+
+deterministic: non-empty HTTPS servers, no loopback, no /vN duplicated between server and path; only the duplication check is informational under legacy; meaningful/fake-domain judgment remains review
+<!-- verification:end -->
+
 ## 2.7 Complete operation metadata <a href="#27-complete-operation-metadata" id="27-complete-operation-metadata"></a>
 
-**[M+R]** Every operation **MUST** include a stable, non-empty `operationId` and an accurate `description`.
+<!-- rule-class: M+R -->
+
+Every operation **MUST** include a stable, non-empty `operationId` and an accurate `description`.
 
 An `operationId` **SHOULD** use a readable camelCase verb-noun form. A concise `summary` and at least one useful `tag` **SHOULD** be present when they improve navigation or generated documentation.
 
+<!-- verification:start -->
+**Verification:** Automated specification check. Semantic review is also required.
+
+each operation has stable non-empty operationId and description; casing, summary, and tags are advisory
+<!-- verification:end -->
+
 ## 2.8 Conditional vendored OpenAPI schemas <a href="#28-conditional-vendored-openapi-schemas" id="28-conditional-vendored-openapi-schemas"></a>
 
-**[M+R]** If a BB reuses the schema-only `govstack-openapi-common.yaml` artifact, the file **MUST** be vendored locally at `api/common/govstack-openapi-common.yaml`, its version **MUST** be pinned explicitly, and the BB **MUST** reference the named schemas rather than copy them. A BB that does not reuse the artifact **MUST** define equivalent schemas locally that satisfy [§11](../part-c/11-errors.md) and [§12](../part-c/12-pagination-filtering-sorting.md).
+<!-- rule-class: M+R -->
+
+If a BB reuses the schema-only `govstack-openapi-common.yaml` artifact, the file **MUST** be vendored locally at `api/common/govstack-openapi-common.yaml`, its version **MUST** be pinned explicitly, and the BB **MUST** reference the named schemas rather than copy them. A BB that does not reuse the artifact **MUST** define equivalent schemas locally that satisfy [§11](../part-c/11-errors.md) and [§12](../part-c/12-pagination-filtering-sorting.md).
 
 A BB **MAY** reuse the schema-only `govstack-openapi-common.yaml` artifact for `Problem`, `ValidationProblem`, `FieldError`, and `PageInfo`.
 
 Security schemes, parameters, headers, Response Objects, examples, and Operation resources **MUST** be defined locally because their values and semantics belong to the BB contract. They are not part of the shared OpenAPI artifact.
 
 Vendoring is required when reuse is chosen because GovStack BBs are deployed in air-gapped or limited-connectivity environments where remote `$ref` resolution is unreliable.
+
+<!-- verification:start -->
+**Verification:** Additional context required for verification. Semantic review is also required.
+
+conditional Problem/ValidationProblem/FieldError/PageInfo references require the vendored schema-only common file and semantic recognition of where each schema applies
+<!-- verification:end -->

@@ -1,0 +1,3 @@
+# fail.yaml: /v1/foos/search declares neither pagination contract in its
+# body (1); /v1/bars/search declares offset without limit (1).
+expect_fail_count: 2

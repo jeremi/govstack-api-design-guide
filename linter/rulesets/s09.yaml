@@ -102,17 +102,17 @@ rules:
       functionOptions:
         forbidPattern: '\s|[^\x00-\x7F]'
 
-  # 9.7 [M] — PROXY (bucket B), MUST -> warn. Flags string enum members that are
+  # 9.7 [M] — PROXY (bucket B), SHOULD -> info. Flags string enum members that are
   # not SCREAMING_SNAKE_CASE, minus the carve-outs the rule lists (BCP 47 tags,
   # reverse-DNS error codes and event types, x-govstack-* vocabularies, health
-  # status). A few genuine violations that happen to look ISO-like are missed,
-  # and §12.7 sort keys are lowerCamelCase field names indistinguishable from a
-  # mis-cased state name, so a sort-key schema is a known false positive.
+  # status, §12.7 sort keys and §12.10 field-selection names). Selector enums
+  # are recognised only when reached from an actual request query parameter or
+  # body. A few genuine violations that happen to look ISO-like are missed.
   govstack-9.7:
     description: "BB-defined enum values should be SCREAMING_SNAKE_CASE (guide 9.7, [M], proxy)."
     message: "[9.7][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/9-json-conventions-and-naming.md#97-screaming-snake-case-enum-values
-    severity: warn
+    severity: info
     formats: [oas3_1]
     given: $.components.schemas[*]
     then:
@@ -141,9 +141,12 @@ rules:
                 const: false
 
   # 9.9 [R] — PROXY (bucket B), SHOULD -> info. Flags closed string enums with
-  # no x-extensible-enum annotation and no UNKNOWN/OTHER fallback member. CANNOT
-  # tell whether a set is "expected to grow", so truly-fixed enums that §9.9
-  # permits are also flagged; reviewer judgement required (hence info).
+  # no x-extensible-enum annotation and no UNKNOWN/OTHER fallback member.
+  # Request-only `sort` and `fields` selectors are exempt because accepting a
+  # new input is compatible; schemas emitted in responses, callbacks, webhooks,
+  # or messages are not exempt.
+  # CANNOT tell whether other sets are "expected to grow", so truly-fixed enums
+  # that §9.9 permits are also flagged; reviewer judgement required (hence info).
   govstack-9.9:
     description: "Growing-set fields should not be closed enums without an escape hatch (guide 9.9, [R], proxy)."
     message: "[9.9][R] {{error}}"

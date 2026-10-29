@@ -22,7 +22,7 @@ function checkContent(content, path, label, results) {
   const mediaTypes = Object.keys(content);
   if (mediaTypes.length === 0) return;
   if (!mediaTypes.some((mt) => hasExample(content[mt]))) {
-    results.push({ message: `${label} must have at least one example`, path });
+    results.push({ message: `${label} should have at least one example`, path });
   }
 }
 
@@ -30,6 +30,8 @@ function checkContent(content, path, label, results) {
  * Push a finding for every `enum` schema node lacking a `description`. PROXY:
  * "has a description" substitutes for "documents what the values mean" - a
  * description that doesn't actually explain the enum values still passes.
+ * An enum under `not` lists excluded values, not a vocabulary, so `not`
+ * subtrees are skipped.
  */
 function checkEnums(schema, path, results) {
   if (!isObject(schema)) return;
@@ -40,12 +42,12 @@ function checkEnums(schema, path, results) {
         path: [...path, ...subPath],
       });
     }
-  });
+  }, { skipKeys: ['not'] });
 }
 
 /**
  * bodyExamplesAndEnums — guide 4.2 (proxy): every request/response body (and
- * AsyncAPI message) MUST have at least one example; every `enum` MUST
+ * AsyncAPI message) SHOULD have at least one example; every `enum` MUST
  * document what its values mean.
  *
  * PROXY: the enum check substitutes "has a non-empty description" for
@@ -107,7 +109,7 @@ export default function bodyExamplesAndEnums(targetVal, options, context) {
       const msgPath = [...base, 'components', 'messages', name];
       const examples = message.examples;
       if (!Array.isArray(examples) || examples.length === 0) {
-        results.push({ message: `message "${name}" must have at least one example`, path: msgPath });
+        results.push({ message: `message "${name}" should have at least one example`, path: msgPath });
       }
       checkEnums(message.payload, [...msgPath, 'payload'], results);
     }

@@ -1,14 +1,14 @@
 /**
  * The guide §5.10 closed set of standard unversioned endpoints: paths whose
  * location or spelling is fixed by something other than this guide, and which
- * are therefore exempt from §5.1 (version prefix), §5.3 (kebab-case segments),
- * and the §12 collection rules.
+ * are therefore exempt from §5.1 (version prefix), §5.2 (plural nouns), §5.3
+ * (kebab-case segments), and the §12 collection rules.
  *
  * Kept in one place because four rulesets need the same answer; changing the
  * set means changing guide §5.10 first.
  */
 
-// Exact path keys: the §5.9 operational endpoints and the conventional runtime
+// Exact path keys: optional operational endpoints and the conventional runtime
 // specification-discovery endpoints.
 const EXACT = new Set(['/health', '/ready', '/openapi.json', '/asyncapi.json']);
 

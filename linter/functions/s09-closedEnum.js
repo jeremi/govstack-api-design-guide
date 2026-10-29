@@ -1,5 +1,6 @@
 import { walkSchema } from './lib/schemaWalk.js';
 import { isObject } from './lib/util.js';
+import { isRequestOnlySelectorEnum } from './lib/requestOnlySelectors.js';
 
 /**
  * s09-closedEnum — PROXY for §9.9 (no closed enums for growing sets). Flags
@@ -10,6 +11,13 @@ import { isObject } from './lib/util.js';
  * It CANNOT tell whether a value set is "expected to grow", so it also flags
  * truly-fixed enums (ISO codes, etc.) that §9.9 explicitly permits — hence this
  * is an info-level proxy the reviewer must judge, not a hard error.
+ *
+ * Closed `sort` and `fields` enums proven to be request-only are permitted:
+ * accepting another selector later is a compatible input expansion. A schema
+ * also emitted in a response, callback, webhook, or message is not exempted.
+ *
+ * An enum under `not` lists excluded values, not a vocabulary, so `not`
+ * subtrees are skipped.
  *
  * `given` should select a schema (e.g. `$.components.schemas[*]`). Cycle-safe.
  *
@@ -40,6 +48,7 @@ export default function s09ClosedEnum(targetVal, options, context) {
 
   walkSchema(targetVal, (node, path) => {
     if (!Array.isArray(node.enum) || node.enum.length === 0) return;
+    if (isRequestOnlySelectorEnum(context, node)) return;
     if (!node.enum.every((v) => typeof v === 'string')) return; // only string enums grow
     if (node[extKey] !== undefined) return; // annotated open enum
     if (node.enum.some((v) => fallbacks.has(v.toLowerCase()))) return; // has a fallback member
@@ -49,7 +58,7 @@ export default function s09ClosedEnum(targetVal, options, context) {
         `UNKNOWN/OTHER fallback member; if this value set may grow, open it (§9.9). Truly-fixed sets may ignore.`,
       path: [...base, ...path, 'enum'],
     });
-  });
+  }, { skipKeys: ['not'] });
 
   return results.length ? results : undefined;
 }

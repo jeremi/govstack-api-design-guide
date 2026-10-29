@@ -1,0 +1,3 @@
+# fail.yaml: two mis-cased state values, plus a state enum nested in an
+# object property named `fields` (not a field-selection list).
+expect_fail_count: 3

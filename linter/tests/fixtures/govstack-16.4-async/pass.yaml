@@ -1,0 +1,37 @@
+asyncapi: 3.0.0
+info:
+  title: Social Protection Events
+  version: 1.0.0
+channels:
+  paymentCompleted:
+    address: payments/completed
+    messages:
+      event:
+        $ref: '#/components/messages/PaymentCompleted'
+operations:
+  receivePaymentCompleted:
+    action: receive
+    channel:
+      $ref: '#/channels/paymentCompleted'
+    messages:
+      - $ref: '#/channels/paymentCompleted/messages/event'
+components:
+  messages:
+    PaymentCompleted:
+      contentType: application/cloudevents+json
+      payload:
+        type: object
+        required: [specversion, id, source, type, data]
+        properties:
+          specversion:
+            const: "1.0"
+          id:
+            type: string
+          source:
+            type: string
+            const: "urn:govstack:country:ke:agency:social-protection:tenant:42:environment:prod"
+          type:
+            type: string
+            const: "global.govstack.payments.payment.completed"
+          data:
+            type: object

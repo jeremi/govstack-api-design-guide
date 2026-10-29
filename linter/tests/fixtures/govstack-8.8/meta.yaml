@@ -1,0 +1,3 @@
+# fail.yaml: Tenant-Id, Organisation-Id and Callback-Url request headers and a
+# Customer-ID response header.
+expect_fail_count: 4

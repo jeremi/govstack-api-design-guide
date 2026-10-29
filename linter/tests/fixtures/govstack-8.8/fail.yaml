@@ -1,0 +1,29 @@
+openapi: 3.1.0
+info:
+  title: Fixture API
+  version: 1.0.0
+  description: Fixture for govstack-8.8.
+  contact: {}
+paths:
+  /v1/people:
+    get:
+      operationId: listPeople
+      summary: List people
+      description: Lists people for a tenant.
+      tags: [people]
+      parameters:
+        - name: Tenant-Id
+          in: header
+          schema: { type: string }
+        - name: Organisation-Id
+          in: header
+          schema: { type: string }
+        - name: Callback-Url
+          in: header
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          headers:
+            Customer-ID:
+              schema: { type: string }

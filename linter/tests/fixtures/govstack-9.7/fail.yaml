@@ -10,3 +10,14 @@ components:
       enum:
         - active
         - pendingReview
+    # The selector carve-out covers the selectable names themselves, not
+    # state enums nested in an object that happens to be named `fields`.
+    Filter:
+      type: object
+      properties:
+        fields:
+          type: object
+          properties:
+            state:
+              type: string
+              enum: [active]

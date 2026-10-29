@@ -113,7 +113,8 @@ Recursively assert schema nodes carry a non-empty `description`.
 - **Given:** a JSON Schema.
 - **Options:** `mode` — `"properties"` (default: every declared property needs a
   description) or `"all"` (every subschema node except pure combinator wrappers
-  and required-only assertions below `not`);
+  and branch properties narrowing a described property). Neither mode descends
+  into `not`: a prohibition is explained by the enclosing schema;
   `includeRoot` (properties mode only: also require a description on the root).
 - **Example (4.1):**
   ```yaml
@@ -156,9 +157,10 @@ Structural checks over the `paths` object. One `check` per rule instance.
 - **Given:** `$.paths`.
 - **Options:** `check` *(required)* one of `versionPrefix` (keys start with
   `/v{N}/`, 5.1), `segmentCasing` (non-version, non-`{param}` segments obey
-  `casing`, default kebab, with camelCase colon method suffixes, 5.3),
-  `maxDepthAfterVersion` (≤ `max` resource/action levels after the version,
-  default 2, 5.4); parameters and colon suffixes add no hierarchy level.
+  `casing`, default kebab, 5.3; a colon custom method is reported with a
+  pointer to action sub-resources, 5.8), `maxDepthAfterVersion` (≤ `max`
+  resource/action levels after the version, default 2, 5.4); parameters add
+  no hierarchy level, action sub-resources do.
   Additional options are `casing` / `max` for those checks.
 - **Example (5.4):**
   ```yaml
@@ -176,7 +178,8 @@ validate a data instance. One level of top-level `allOf` is merged.
 - **Options (a recursive spec node):** `requiredProperties` (names that must be
   in `required`), `forbiddenProperties` (names that must not be declared),
   `properties` (`name -> child spec`; each named property must
-  be declared and is validated by its child), `type`, `const`, `enum` (schema's
+  be declared and is validated by its child), `optionalProperties`
+  (`name -> child spec`; validated only when the property is declared), `type`, `const`, `enum` (schema's
   `enum` must equal this as a set), `items` (child spec for array `items`).
 - **Example (12.3 page envelope):**
   ```yaml
@@ -201,7 +204,7 @@ Check operations are authenticated (or explicitly opted out).
     counts as an allowed explicit opt-out). Option `requireSchemes: true` also
     requires `components.securitySchemes` to be non-empty. (13.1)
   - `mode: "none"` — **Given:** a single operation. It MUST declare
-    `security: []` (unauthenticated), e.g. the /health GET. (5.9/13.x)
+    `security: []` (unauthenticated), when the caller requires an unauthenticated operation.
 - **Example:**
   ```yaml
   given: $
@@ -213,7 +216,7 @@ For every property whose **name** matches a pattern, require its schema to
 declare type/format/pattern/contentEncoding constraints. Drives the §10 proxies.
 - **Given:** a JSON Schema.
 - **Options:** `namePattern` *(required)* (regex on the property name),
-  `nameFlags`, and `require`: `type`, `forbidType` (string or array), `format`,
+  `nameFlags`, `excludeNamePattern` (matching names are skipped), and `require`: `type`, `forbidType` (string or array), `format`,
   `formatOneOf`, `contentEncoding`, `pattern` (exact match), `mustDeclare`
   (array of keywords that must simply be present, e.g. `["maxLength"]`).
 - **Example (10.2 timestamps; 10.4 money not a number):**
@@ -260,8 +263,10 @@ Assert a `content` map declares / forbids media types.
   (Draft 2020-12 keywords: properties/patternProperties/additional·unevaluated,
   items/prefixItems, allOf/anyOf/oneOf/not/if/then/else, $defs, contains,
   propertyNames, dependentSchemas). Cycle-safe (WeakSet on node identity — each
-  distinct schema object is visited once). `forEachProperty(root, cb)` yields
-  every declared property with its path.
+  distinct schema object is visited once). `opts.skipKeys` names keywords not to
+  descend into (4.1, 4.2, 9.7 and 9.9 pass `['not']`, since a negated enum lists
+  excluded values rather than a vocabulary). `forEachProperty(root, cb, opts)`
+  yields every declared property with its path.
 - **`casing.js`** — `matchesCasing(name, type)` and `CASING_TYPES`.
 - **`util.js`** — `isObject`, `isNonEmptyString`, `asArray`, `toRegExp`
   (returns `undefined` on invalid patterns), `statusMatcher` (expands

@@ -1,0 +1,3 @@
+# fail.yaml: a GET and a HEAD operation, each missing the required
+# responses; HEAD is an operation like any other.
+expect_fail_count: 2

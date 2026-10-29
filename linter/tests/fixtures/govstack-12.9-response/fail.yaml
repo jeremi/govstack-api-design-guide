@@ -5,7 +5,7 @@ info:
   description: Fixture for govstack-12.9-response.
   contact: {}
 paths:
-  /v1/foos:search:
+  /v1/foos/search:
     post:
       operationId: searchFoos
       summary: Search foos
@@ -31,3 +31,39 @@ paths:
               schema:
                 type: array
                 items: { type: object }
+  # Contract mismatch: an offset/limit body answered with the cursor envelope.
+  /v1/bars/search:
+    post:
+      operationId: searchBars
+      summary: Search bars
+      description: Complex filtering over bars with offset pagination.
+      tags: [bars]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filters:
+                  type: object
+                offset:
+                  type: integer
+                limit:
+                  type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, pageInfo]
+                properties:
+                  items:
+                    type: array
+                    items: { type: object }
+                  pageInfo:
+                    type: object
+                    required: [nextCursor]
+                    properties:
+                      nextCursor: { type: [string, 'null'], minLength: 1 }

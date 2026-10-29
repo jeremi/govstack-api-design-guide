@@ -10,7 +10,10 @@ rules:
   # 5.2 [M+R] SHOULD — resource paths use plural nouns. Lexical "last word ends
   # in s" heuristic; see functions/s05-pluralNoun.js for known false
   # positives (e.g. "status") and false negatives (irregular plurals not
-  # listed).
+  # listed). The guide 5.10 standard unversioned endpoints are skipped. The
+  # search and lookup action sub-resources of 5.8 and 6.6 are accepted as the
+  # final segment; other action leaves (for example `cancel`) are a known
+  # false positive.
   govstack-5.2:
     description: "Resource path segments should look like plural nouns (guide 5.2, [M+R], strict heuristic)."
     message: "[5.2][M+R] {{error}}"
@@ -22,10 +25,11 @@ rules:
       function: s05-pluralNoun
       functionOptions:
         exceptions: [health, ready]
+        actionLeaves: [search, lookup]
 
   # 5.7 [M+R] SHOULD NOT — verbs in CRUD paths. Lexical dictionary heuristic;
-  # see functions/s05-actionVerbs.js. Domain actions may use either action
-  # sub-resources or colon custom methods under 5.8; their semantics require review.
+  # see functions/s05-actionVerbs.js. Domain actions use action sub-resources
+  # under 5.8; their semantics require review.
   govstack-5.7:
     description: "Verbs should not appear in paths for CRUD operations (guide 5.7, [M+R], strict heuristic)."
     message: "[5.7][M+R] {{error}}"

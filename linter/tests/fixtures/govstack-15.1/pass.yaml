@@ -1,4 +1,4 @@
-# 15.1 pass: the 202 Accepted response declares a Location header.
+# 15.1 pass: the 202 Accepted response declares Location and a concrete body.
 openapi: 3.1.0
 info:
   title: Registry API
@@ -13,3 +13,7 @@ paths:
             Location:
               schema:
                 type: string
+          content:
+            application/json:
+              schema:
+                type: object

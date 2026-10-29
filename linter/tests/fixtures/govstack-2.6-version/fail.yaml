@@ -1,0 +1,9 @@
+openapi: 3.1.0
+info:
+  title: Versioned server fixture
+  version: 1.0.0
+  description: Repeats the path version in the server URL.
+servers:
+  - url: https://api.example.org/v1
+paths:
+  /v1/things: {}

@@ -1,5 +1,5 @@
 import { isObject } from './lib/util.js';
-import { resourcePath, isPathParameter } from './lib/resourcePaths.js';
+import { pathSegmentsOf, isPathParameter } from './lib/resourcePaths.js';
 
 const VERSION_SEG = /^v\d+$/;
 const CRUD_VERBS = [
@@ -8,8 +8,8 @@ const CRUD_VERBS = [
 ];
 
 /** Strict-only lexical proxy for §5.7: CRUD verbs belong in HTTP methods.
- * Check both ordinary path leaves and colon custom-method suffixes. Domain
- * actions, including collection search, may use either shape under §5.8.
+ * Checks the final path segment. Domain actions, including collection
+ * search, use action sub-resources under §5.8.
  * This cannot decide whether a verb describes CRUD or domain-specific work;
  * the fixed dictionary can over- or under-report and requires review.
  * Given: $.paths. Options: verbs {string[]} additional CRUD-like verbs.
@@ -25,8 +25,7 @@ export default function actionVerbSegment(targetVal, options, context) {
   const results = [];
   for (const key of Object.keys(targetVal)) {
     if (!key.startsWith('/')) continue;
-    const { segments, customMethod } = resourcePath(key);
-    const leaf = customMethod ?? segments.at(-1);
+    const leaf = pathSegmentsOf(key).at(-1);
     if (!leaf || isPathParameter(leaf) || VERSION_SEG.test(leaf)) continue;
     const words = leaf.replace(/([a-z0-9])([A-Z])/g, '$1-$2').split('-');
     if (!words.some((word) => verbs.has(word.toLowerCase()))) continue;

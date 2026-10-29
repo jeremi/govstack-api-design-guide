@@ -11,12 +11,17 @@ This script is part of the guide's machine layer. It scans every rule page under
   * `rules-by-kind.md` - the same rules grouped by the kind of API they apply
                          to (read, write, events) plus the deployment profile.
 
-Rule bodies follow one convention: the badge and the first paragraph carry the
-requirement, and that paragraph uses keywords of exactly one level family
-(MUST/MUST NOT, SHOULD/SHOULD NOT, or MAY). Later paragraphs may only use
-weaker keywords. The level of the first paragraph is the rule's `level`.
-API kinds come from `tools/rule-kinds.json` (section defaults plus per-rule
-overrides).
+Rule bodies follow one convention: hidden rule-class metadata and the first
+paragraph carry the requirement, and that paragraph uses keywords of exactly
+one level family (MUST/MUST NOT, SHOULD/SHOULD NOT, or MAY). Later paragraphs
+may only use weaker keywords. The level of the first paragraph is the rule's
+`level`. API kinds come from `tools/rule-kinds.json` (section defaults plus
+per-rule overrides).
+
+Each rule's generated verification block is presentation metadata sourced from
+`linter/coverage.yaml`. It is retained for the human indexes but excluded from
+the normative rule text and level calculation. Historical visible class badges
+remain readable so older fixtures and branches can still be checked.
 
 Both artifacts are GENERATED. Do not hand-edit them; edit the section pages and
 re-run this script instead. Output is byte-reproducible: no timestamps, no
@@ -44,7 +49,7 @@ from pathlib import Path
 from anchors import expected_anchor
 
 GUIDE_NAME = "GovStack Cross-BB API Design Guide"
-GUIDE_VERSION = "0.2.0-draft"
+GUIDE_VERSION = "0.3.0-draft"
 
 # Regex for a heading line carrying an explicit anchor tag, e.g.
 #   ## 2.1 OpenAPI 3.1.0 required <a href="#21-openapi-310-required" id="21-openapi-310-required"></a>
@@ -58,6 +63,11 @@ RULE_TEXT_RE = re.compile(r"^(?P<id>\d+\.\d+) (?P<title>.+)$")
 LOOKS_LIKE_RULE_RE = re.compile(r"^## \d+\.\d+(\s|$)")
 # Enforcement-class badge at the very start of a rule body.
 BADGE_RE = re.compile(r"^\*\*\[(?P<cls>M\+R|M|R)\]\*\* ")
+# Hidden enforcement-class metadata used by badge-free source pages.
+RULE_CLASS_RE = re.compile(r"^<!-- rule-class: (?P<cls>M\+R|M|R) -->$")
+VERIFICATION_START = "<!-- verification:start -->"
+VERIFICATION_END = "<!-- verification:end -->"
+VERIFICATION_SUMMARY_RE = re.compile(r"^\*\*Verification:\*\* (?P<summary>\S.*)$")
 # RFC 2119 strength keywords, in output order. Longer forms are listed before
 # their prefixes so "MUST NOT" is considered before "MUST".
 STRENGTH_TOKENS = [
@@ -213,18 +223,143 @@ def rule_level(paragraphs):
     return level
 
 
-def parse_body(body_lines):
-    """Return (class, level, text) for one rule body."""
-    kept = strip_example_blocks(body_lines)
+def strip_verification_block(body_lines):
+    """Remove and return one well-formed, trailing verification block."""
+    lines = list(body_lines)
+    starts = []
+    ends = []
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        marker = stripped.lower()
+        if (
+            stripped.startswith("<!--")
+            and "verification:start" in marker
+            and stripped != VERIFICATION_START
+        ):
+            raise BuildError(f"malformed verification marker: {stripped!r}")
+        if (
+            stripped.startswith("<!--")
+            and "verification:end" in marker
+            and stripped != VERIFICATION_END
+        ):
+            raise BuildError(f"malformed verification marker: {stripped!r}")
+        if stripped == VERIFICATION_START:
+            starts.append(index)
+        if stripped == VERIFICATION_END:
+            ends.append(index)
+
+    if not starts and not ends:
+        return lines, None, None
+    if len(starts) != 1 or len(ends) != 1 or starts[0] >= ends[0]:
+        raise BuildError(
+            "verification block must have exactly one ordered start and end marker"
+        )
+
+    start = starts[0]
+    end = ends[0]
+    if any(line.strip() for line in lines[end + 1 :]):
+        raise BuildError("verification block must be the final content in the rule body")
+
+    block = lines[start + 1 : end]
+    if len(block) < 3:
+        raise BuildError("verification block is missing its summary, blank line, or detail")
+    summary_match = VERIFICATION_SUMMARY_RE.fullmatch(block[0].strip())
+    if not summary_match:
+        raise BuildError(
+            "verification block summary must start with '**Verification:** '"
+        )
+    if block[1].strip():
+        raise BuildError("verification block requires a blank line after its summary")
+    detail_paragraphs = group_paragraphs(block[2:])
+    if len(detail_paragraphs) != 1:
+        raise BuildError("verification block must contain exactly one coverage-note paragraph")
+
+    return (
+        lines[:start],
+        summary_match.group("summary"),
+        detail_paragraphs[0],
+    )
+
+
+def strip_rule_class_metadata(body_lines):
+    """Remove hidden rule-class metadata and return its class, when present."""
+    lines = list(body_lines)
+    matches = []
+    for index, line in enumerate(lines):
+        stripped = line.strip()
+        match = RULE_CLASS_RE.fullmatch(stripped)
+        if match:
+            matches.append((index, match.group("cls")))
+        elif stripped.startswith("<!--") and "rule-class" in stripped.lower():
+            raise BuildError(f"malformed rule-class metadata: {stripped!r}")
+
+    if not matches:
+        return lines, None
+    if len(matches) != 1:
+        classes = sorted({rule_class for _index, rule_class in matches})
+        if len(classes) > 1:
+            raise BuildError(f"conflicting rule-class metadata: {classes}")
+        raise BuildError("rule body contains duplicate rule-class metadata")
+
+    metadata_index, rule_class = matches[0]
+    first_content = next(
+        (index for index, line in enumerate(lines) if line.strip()),
+        None,
+    )
+    if metadata_index != first_content:
+        raise BuildError(
+            "rule-class metadata must directly precede the requirement paragraph"
+        )
+    if not any(line.strip() for line in lines[metadata_index + 1 :]):
+        raise BuildError(
+            "rule-class metadata must directly precede the requirement paragraph"
+        )
+
+    return lines[:metadata_index] + lines[metadata_index + 1 :], rule_class
+
+
+def parse_body_details(body_lines):
+    """Return class, level, text, and generated verification presentation data."""
+    without_verification, verification_summary, verification_detail = (
+        strip_verification_block(body_lines)
+    )
+    without_metadata, hidden_class = strip_rule_class_metadata(without_verification)
+    kept = strip_example_blocks(without_metadata)
     paragraphs = [unwrap_links(p) for p in group_paragraphs(kept)]
-    rule_class = "informative"
+    visible_class = None
     if paragraphs:
         match = BADGE_RE.match(paragraphs[0])
         if match:
-            rule_class = match.group("cls")
+            visible_class = match.group("cls")
             paragraphs[0] = paragraphs[0][match.end() :]
+    if hidden_class and visible_class and hidden_class != visible_class:
+        raise BuildError(
+            f"conflicting rule classes: hidden {hidden_class}, visible {visible_class}"
+        )
+    if hidden_class and verification_summary is None:
+        raise BuildError(
+            "hidden rule-class metadata requires a generated verification block"
+        )
+    rule_class = hidden_class or visible_class or "informative"
     text = "\n".join(paragraphs)
-    return rule_class, rule_level(paragraphs), text
+    return (
+        rule_class,
+        rule_level(paragraphs),
+        text,
+        verification_summary,
+        verification_detail,
+    )
+
+
+def parse_body(body_lines):
+    """Return (class, level, text) for one rule body.
+
+    The three-value interface is retained for callers that only need the
+    machine-index fields. `collect_page` also keeps generated verification
+    presentation data for the human indexes.
+    """
+    rule_class, level, text, _summary, _detail = parse_body_details(body_lines)
+    return rule_class, level, text
 
 
 def load_rule_kinds(book_root):
@@ -361,7 +496,9 @@ def collect_page(book_root, page, seen_ids, kinds_table, errors=None):
         end = next_heads[0] if next_heads else len(lines)
         body_lines = lines[idx + 1 : end]
         try:
-            rule_class, level, text = parse_body(body_lines)
+            rule_class, level, text, verification_summary, verification_detail = (
+                parse_body_details(body_lines)
+            )
         except BuildError as exc:
             if errors is None:
                 raise
@@ -379,6 +516,8 @@ def collect_page(book_root, page, seen_ids, kinds_table, errors=None):
                 "page": page_rel,
                 "anchor": anchor_id,
                 "text": text,
+                "verification_summary": verification_summary,
+                "verification_detail": verification_detail,
             }
         )
     return {"page": page_rel, "h1_title": h1_title, "rules": rules}
@@ -441,14 +580,18 @@ def escape_cell(text):
 def render_all_rules_md(page_infos):
     lines = [
         "---",
-        'description: "Every rule in the guide: enforcement class, level, API kinds, surface, and a link."',
+        'description: "Every rule in the guide: verification approach, level, '
+        'API kinds, surface, and a link."',
         "---",
         "",
         "# Rules at a glance",
         "",
         "This page is generated from the section pages by `tools/build_rules_index.py`; "
-        "do not edit it by hand. Class legend: `[M]` machine-checkable, `[R]` review, "
-        "`[M+R]` both; see [§1.9](1-introduction.md#19-rule-enforcement-classes).",
+        "do not edit it by hand. Verification summaries come from "
+        "[`linter/coverage.yaml`](linter/coverage.yaml). The coverage check, "
+        "`node linter/scripts/generate-verification.mjs --check`, keeps the source "
+        "details aligned with that manifest; see "
+        "[§1.9](1-introduction.md#19-rule-enforcement-classes).",
         "",
     ]
     for info in page_infos:
@@ -456,17 +599,18 @@ def render_all_rules_md(page_infos):
             continue
         lines.append(f"## {info['h1_title']}")
         lines.append("")
-        lines.append("| Rule | Class | Level | Applies to | Surface | Title |")
+        lines.append("| Rule | Verification | Level | Applies to | Surface | Title |")
         lines.append("| --- | --- | --- | --- | --- | --- |")
         for rule in info["rules"]:
             rule_cell = f"[{rule['id']}]({rule['page']}#{rule['anchor']})"
-            class_cell = "—" if rule["class"] == "informative" else rule["class"]
+            verification_cell = escape_cell(rule.get("verification_summary") or "—")
             level_cell = rule["level"] or "—"
             kinds_cell = ", ".join(rule["kinds"])
             surface_cell = rule["surface"]
             title_cell = escape_cell(rule["title"])
             lines.append(
-                f"| {rule_cell} | {class_cell} | {level_cell} | {kinds_cell} | {surface_cell} | {title_cell} |"
+                f"| {rule_cell} | {verification_cell} | {level_cell} | "
+                f"{kinds_cell} | {surface_cell} | {title_cell} |"
             )
         lines.append("")
     return "\n".join(lines).rstrip("\n") + "\n"
@@ -485,7 +629,9 @@ def render_rules_by_kind_md(rules):
         "follows the read-only list plus the mutations list. Rules apply where their "
         "stated conditions hold. A rule listed for both an API kind and deployment "
         "has specification declarations and runtime obligations assessed separately. "
-        "Level is the requirement "
+        "Verification summaries come from [`linter/coverage.yaml`](linter/coverage.yaml); "
+        "the coverage check, `node linter/scripts/generate-verification.mjs --check`, "
+        "keeps the generated source details aligned with that manifest. Level is the requirement "
         "level of the rule's first paragraph; see "
         "[§1.11](1-introduction.md#111-which-rules-apply-to-your-api).",
         "",
@@ -496,13 +642,14 @@ def render_rules_by_kind_md(rules):
         lines.append("")
         lines.append(f"{len(selected)} rule{'s' if len(selected) != 1 else ''}.")
         lines.append("")
-        lines.append("| Rule | Level | Class | Title |")
+        lines.append("| Rule | Level | Verification | Title |")
         lines.append("| --- | --- | --- | --- |")
         for rule in selected:
             rule_cell = f"[{rule['id']}]({rule['page']}#{rule['anchor']})"
-            class_cell = "—" if rule["class"] == "informative" else rule["class"]
+            verification_cell = escape_cell(rule.get("verification_summary") or "—")
             lines.append(
-                f"| {rule_cell} | {rule['level'] or '—'} | {class_cell} | {escape_cell(rule['title'])} |"
+                f"| {rule_cell} | {rule['level'] or '—'} | {verification_cell} | "
+                f"{escape_cell(rule['title'])} |"
             )
         lines.append("")
     return "\n".join(lines).rstrip("\n") + "\n"

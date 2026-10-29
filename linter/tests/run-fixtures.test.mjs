@@ -3,11 +3,12 @@
 // Every directory under tests/fixtures/ is named after a Spectral rule and
 // contains fail.yaml (a minimal doc where that rule MUST fire) and pass.yaml
 // (the corrected doc where that rule MUST be silent). Optional meta.yaml with
-// `expect_fail_count: N` pins the number of findings in fail.yaml.
+// `expect_fail_count: N` pins the number of findings in fail.yaml; `rule` names
+// the owning rule when a fixture directory covers a shared check.
 //
 // The full strict bundle (ruleset.yaml + strict.yaml) is loaded once; findings
-// are filtered by `code === <dir name>` so unrelated rules firing on a fixture
-// are ignored (expected and fine).
+// are filtered by the directory name or meta.yaml's owning rule, so unrelated
+// rules firing on a fixture are ignored (expected and fine).
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -41,25 +42,27 @@ for (const name of dirs) {
     assert.ok(existsSync(passPath), `${name}: missing pass.yaml`);
 
     let expectExact = null;
+    let rule = name;
     const metaPath = join(dir, 'meta.yaml');
     if (existsSync(metaPath)) {
       const meta = YAML.parse(readFileSync(metaPath, 'utf8')) || {};
       if (Number.isInteger(meta.expect_fail_count)) expectExact = meta.expect_fail_count;
+      if (typeof meta.rule === 'string' && meta.rule.length > 0) rule = meta.rule;
     }
 
-    const fail = (await lintFile(spectral, failPath)).filter((f) => f.code === name);
-    const pass = (await lintFile(spectral, passPath)).filter((f) => f.code === name);
+    const fail = (await lintFile(spectral, failPath)).filter((f) => f.code === rule);
+    const pass = (await lintFile(spectral, passPath)).filter((f) => f.code === rule);
 
     if (expectExact === null) {
       assert.ok(
         fail.length >= 1,
-        `${name}/fail.yaml: expected >=1 finding of "${name}", got ${fail.length}.`,
+        `${name}/fail.yaml: expected >=1 finding of "${rule}", got ${fail.length}.`,
       );
     } else {
       assert.equal(
         fail.length,
         expectExact,
-        `${name}/fail.yaml: expected exactly ${expectExact} findings of "${name}" ` +
+        `${name}/fail.yaml: expected exactly ${expectExact} findings of "${rule}" ` +
           `(meta.yaml), got ${fail.length}:\n${fmt(fail)}`,
       );
     }
@@ -67,7 +70,7 @@ for (const name of dirs) {
     assert.equal(
       pass.length,
       0,
-      `${name}/pass.yaml: expected 0 findings of "${name}", got ${pass.length}:\n${fmt(pass)}`,
+      `${name}/pass.yaml: expected 0 findings of "${rule}", got ${pass.length}:\n${fmt(pass)}`,
     );
   });
 }

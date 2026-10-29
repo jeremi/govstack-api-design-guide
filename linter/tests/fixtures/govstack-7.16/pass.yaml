@@ -62,7 +62,7 @@ paths:
     get:
       operationId: getHealth
       summary: Liveness check
-      description: Unversioned operational liveness probe (guide 5.9).
+      description: Optional operational endpoint, exempt under guide 5.10.
       tags: [health]
       security: []
       responses:

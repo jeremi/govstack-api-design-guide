@@ -28,8 +28,15 @@ import bbCode from '../functions/s09-bbCode.js';
 import fieldErrors from '../functions/s11-fieldErrors.js';
 import problemType from '../functions/s11-problemType.js';
 import collectionPagination from '../functions/s12-collectionPagination.js';
+import fieldsParam from '../functions/s12-fieldsParam.js';
+import callbackUrl from '../functions/s15-callbackUrl.js';
+import operationMetadata from '../functions/s04-operationMetadata.js';
+import customHeaderPlacement from '../functions/s08-customHeaderPlacement.js';
 import schemeExists from '../functions/s13-schemeExists.js';
 import cloudEventsPayload from '../functions/s17-cloudEventsPayload.js';
+import bodyExamplesAndEnums from '../functions/s04-bodyExamplesEnums.js';
+import s09EnumCasing from '../functions/s09-enumCasing.js';
+import s09ClosedEnum from '../functions/s09-closedEnum.js';
 import { walkSchema } from '../functions/lib/schemaWalk.js';
 import { isStandardUnversionedPath } from '../functions/lib/standardEndpoints.js';
 
@@ -60,6 +67,10 @@ const ALL = {
   fieldErrors,
   problemType,
   collectionPagination,
+  fieldsParam,
+  callbackUrl,
+  operationMetadata,
+  customHeaderPlacement,
   schemeExists,
   cloudEventsPayload,
 };
@@ -236,7 +247,7 @@ test('pathSegments: version prefix / casing / depth', () => {
     '/v1/accounts/{id}/transactions/{txId}/lines': {},
   };
   assert.equal(count(pathSegments(paths, { check: 'versionPrefix' })), 1); // /accounts
-  assert.equal(count(pathSegments(paths, { check: 'versionPrefix', exemptPaths: ['/accounts'] })), 0); // 5.9 exemption
+  assert.equal(count(pathSegments(paths, { check: 'versionPrefix', exemptPaths: ['/accounts'] })), 0); // explicit path override
   assert.equal(count(pathSegments(paths, { check: 'segmentCasing', casing: 'kebab' })), 1); // Bad_Segment
   assert.equal(count(pathSegments(paths, { check: 'maxDepthAfterVersion', max: 2 })), 1); // only the 3-non-param-level path
 });
@@ -458,6 +469,153 @@ test('envelopeShape: required / nested / const / enum / allOf', () => {
   assert.equal(count(envelopeShape(composed, { requiredProperties: ['a', 'b'] })), 0);
 });
 
+test('envelopeShape: optionalProperties are validated only when declared', () => {
+  const spec = { optionalProperties: { total: { type: 'integer' } } };
+  assert.equal(count(envelopeShape({ type: 'object', properties: {} }, spec)), 0);
+  assert.equal(count(envelopeShape({ type: 'object', properties: { total: { type: 'integer' } } }, spec)), 0);
+  assert.equal(count(envelopeShape({ type: 'object', properties: { total: { type: 'string' } } }, spec)), 1);
+  const composed = { allOf: [{ properties: { total: { type: 'number' } } }] };
+  assert.equal(count(envelopeShape(composed, spec)), 1);
+});
+
+test('collectionPagination offsetEnvelope: total optional, integer when declared', () => {
+  const op = (schema) => ({
+    parameters: [{ name: 'offset', in: 'query' }],
+    responses: { 200: { content: { 'application/json': { schema } } } },
+  });
+  const ctx = { path: ['paths', '/v1/foos', 'get'] };
+  const envelope = (extra = {}, required = ['items', 'offset', 'limit']) => ({
+    type: 'object',
+    required,
+    properties: { items: { type: 'array' }, offset: { type: 'integer' }, limit: { type: 'integer' }, ...extra },
+  });
+  assert.equal(count(collectionPagination(op(envelope()), { mode: 'offsetEnvelope' }, ctx)), 0);
+  assert.equal(count(collectionPagination(op(envelope({ total: { type: 'integer' } })), { mode: 'offsetEnvelope' }, ctx)), 0);
+  assert.equal(count(collectionPagination(op(envelope({ total: { type: 'string' } })), { mode: 'offsetEnvelope' }, ctx)), 1);
+  assert.equal(count(collectionPagination(op(envelope({}, ['items', 'offset'])), { mode: 'offsetEnvelope' }, ctx)), 1);
+});
+
+test('fieldsParam: reserved fields query parameter shape and 400 response', () => {
+  const op = (param, responses = { 200: {}, 400: {} }) => ({ parameters: param ? [param] : [], responses });
+  const good = { name: 'fields', in: 'query', schema: { type: 'string' } };
+  const paths = (operation, pathParams) => ({ '/v1/foos': { ...(pathParams ? { parameters: pathParams } : {}), get: operation } });
+  const run = (p) => count(fieldsParam(p, {}, { path: ['paths'] }));
+  assert.equal(run(paths(op(null, { 200: {} }))), 0); // no-op without fields
+  assert.equal(run(paths(op(good))), 0);
+  assert.equal(run(paths(op({ name: 'fields', in: 'header', schema: { type: 'integer' } }))), 0); // only query
+  assert.equal(run(paths(op({ ...good, schema: { type: 'array', items: { type: 'string' } } }))), 1);
+  assert.equal(run(paths(op({ ...good, schema: { type: 'string', enum: ['summary', 'full'] } }))), 1);
+  assert.equal(run(paths(op({ ...good, required: true }))), 1);
+  assert.equal(run(paths(op(good, { 200: {} }))), 1);
+  assert.equal(run(paths(op(good, { 200: {}, '4XX': {} }))), 0);
+  assert.equal(run(paths(op(null, { 200: {} }), [good])), 1); // path-level parameter applies
+});
+
+test('fieldsParam: array form serialised as a single comma-separated value', () => {
+  const op = (param) => ({ parameters: [param], responses: { 200: {}, 400: {} } });
+  const run = (param) => count(fieldsParam({ '/v1/foos': { get: op(param) } }, {}, { path: ['paths'] }));
+  const arr = (items, extra = {}) => ({ name: 'fields', in: 'query', explode: false, schema: { type: 'array', items }, ...extra });
+  assert.equal(run(arr({ type: 'string' })), 0);
+  assert.equal(run(arr({ type: 'string', enum: ['name', 'status'] }, { style: 'form' })), 0); // enum on items allowed
+  assert.equal(run(arr({ type: 'string' }, { explode: true })), 1);
+  assert.equal(run(arr({ type: 'string' }, { explode: undefined })), 1); // form style explodes by default
+  assert.equal(run(arr({ type: 'string' }, { style: 'pipeDelimited' })), 1);
+  assert.equal(run(arr({ type: 'integer' })), 1);
+  assert.equal(run(arr(undefined)), 1); // items must be declared strings
+  assert.equal(run(arr({ type: 'string' }, { required: true })), 1);
+  // allOf composition (a shared selection schema narrowed per deployment)
+  const composed = {
+    name: 'fields',
+    in: 'query',
+    explode: false,
+    schema: {
+      allOf: [
+        { type: 'array', minItems: 1, items: { type: 'string' } },
+        { type: 'array', items: { type: 'string', enum: ['legalName'] } },
+      ],
+    },
+  };
+  assert.equal(run(composed), 0);
+  assert.equal(run({ ...composed, schema: { allOf: [...composed.schema.allOf, { type: 'string' }] } }), 1);
+  // explode does not affect the string form
+  assert.equal(run({ name: 'fields', in: 'query', explode: true, schema: { type: 'string' } }), 0);
+});
+
+test('callbackUrl: placement, callbacks, and format modes', () => {
+  const body = (props) => ({
+    requestBody: { content: { 'application/json': { schema: { type: 'object', properties: props } } } },
+  });
+  const doc = (route, operation) => ({ paths: { [route]: { post: operation } } });
+  const run = (d, mode) => count(callbackUrl(d, { mode }, { path: [] }));
+
+  const inQuery = doc('/v1/exports', { parameters: [{ name: 'callbackUrl', in: 'query' }, { name: 'Callback-URL', in: 'header' }] });
+  assert.equal(run(inQuery, 'placement'), 2);
+  assert.equal(run(doc('/v1/exports', { parameters: [{ name: 'callback', in: 'path' }] }), 'placement'), 0);
+  assert.equal(run({ components: { parameters: { Cb: { name: 'replyCallback', in: 'header' } } } }, 'placement'), 1);
+
+  const uri = { callbackUrl: { type: 'string', format: 'uri' } };
+  assert.equal(run(doc('/v1/exports', body(uri)), 'callbacks'), 1);
+  assert.equal(run(doc('/v1/exports', { ...body(uri), callbacks: { done: {} } }), 'callbacks'), 0);
+  assert.equal(run(doc('/v1/subscriptions', body(uri)), 'callbacks'), 0); // §16 subscriptions exempt
+  assert.equal(run(doc('/v1/exports', body({ format: { type: 'string' } })), 'callbacks'), 0);
+
+  assert.equal(run(doc('/v1/exports', body(uri)), 'format'), 0);
+  assert.equal(run(doc('/v1/exports', body({ callbackUrl: { type: 'string' } })), 'format'), 1);
+  assert.equal(run(doc('/v1/subscriptions', body({ callbackUrl: { type: 'string' } })), 'format'), 0);
+});
+
+test('operationMetadata: shape mode', () => {
+  const run = (op) => count(operationMetadata(op, { mode: 'shape' }, { path: [] }));
+  assert.equal(run({}), 0);
+  assert.equal(run({ 'x-govstack-use-case': 'UC-C-PIC-A-001', 'x-govstack-pii': true }), 0);
+  assert.equal(run({ 'x-govstack-use-case': ['UC-1', 'govstack-bb-x-fr#req-2'], 'x-govstack-pii': false }), 0);
+  assert.equal(run({ 'x-govstack-use-case': '' }), 1);
+  assert.equal(run({ 'x-govstack-use-case': [] }), 1);
+  assert.equal(run({ 'x-govstack-use-case': ['ok', ''] }), 1);
+  assert.equal(run({ 'x-govstack-use-case': 42 }), 1);
+  assert.equal(run({ 'x-govstack-pii': 'yes' }), 1);
+});
+
+test('operationMetadata: piiApiKey mode', () => {
+  const schemes = { key: { type: 'apiKey', in: 'header', name: 'Api-Key' }, oauth: { type: 'oauth2', flows: {} } };
+  const doc = (op, security) => ({
+    ...(security ? { security } : {}),
+    components: { securitySchemes: schemes },
+    paths: { '/v1/people': { get: op } },
+  });
+  const run = (d) => count(operationMetadata(d, { mode: 'piiApiKey' }, { path: [] }));
+  assert.equal(run(doc({ 'x-govstack-pii': true }, [{ key: [] }])), 1);
+  assert.equal(run(doc({ 'x-govstack-pii': true, security: [{ key: [] }] }, [{ oauth: [] }])), 1);
+  assert.equal(run(doc({ 'x-govstack-pii': true, security: [{ oauth: [] }, { key: [] }] })), 1);
+  assert.equal(run(doc({ 'x-govstack-pii': true, security: [{ oauth: [], key: [] }] })), 1);
+  assert.equal(run(doc({ 'x-govstack-pii': true, security: [{ oauth: [] }] }, [{ key: [] }])), 0);
+  assert.equal(run(doc({ 'x-govstack-pii': false }, [{ key: [] }])), 0);
+  assert.equal(run(doc({}, [{ key: [] }])), 0);
+});
+
+test('customHeaderPlacement: flags business identifiers and callbacks in headers', () => {
+  const doc = {
+    paths: {
+      '/v1/x': {
+        parameters: [{ name: 'Tenant-Id', in: 'header' }],
+        get: {
+          parameters: [
+            { name: 'GovStack-Client', in: 'header' },
+            { name: 'OrgId', in: 'header' },
+            { name: 'tenantId', in: 'query' },
+          ],
+          responses: { 200: { headers: { 'Customer-ID': {}, ETag: {} } } },
+        },
+      },
+    },
+    components: {
+      parameters: { Cb: { name: 'Callback-Url', in: 'header' }, Nat: { name: 'National-Id', in: 'header' } },
+      responses: { Ok: { headers: { 'Citizen_Id': {}, 'Retry-After': {} } } },
+    },
+  };
+  assert.equal(count(customHeaderPlacement(doc, {}, { path: [] })), 6);
+});
+
 test('securityCoverage: covered vs none mode', () => {
   const doc = {
     security: [{ oauth: [] }],
@@ -565,6 +723,69 @@ test('walkSchema: visits combinators and is cycle-safe', () => {
   assert.equal(visits, 1); // visited once, no infinite loop
 });
 
+test('walkSchema: skipKeys leaves those subtrees unvisited', () => {
+  const shared = { type: 'string', enum: ['lookup'] };
+  // Walk order reaches root.not before root.items, so a skipped subtree must
+  // not claim a node that is also reachable elsewhere.
+  const schema = { type: 'array', not: shared, items: { type: 'object', properties: { x: shared } } };
+  const seen = [];
+  walkSchema(schema, (_node, path) => seen.push(path.join('/')), { skipKeys: ['not'] });
+  assert.ok(seen.includes('items/properties/x'));
+  assert.ok(!seen.some((p) => p.split('/').includes('not')));
+
+  const all = [];
+  walkSchema(schema, (_node, path) => all.push(path.join('/')));
+  assert.ok(all.includes('not')); // default walk still visits `not`
+});
+
+// A reserved-value exclusion such as `not: { enum: [lookup, search] }` is a
+// prohibition explained by the enclosing schema, not a vocabulary.
+const reservedId = {
+  type: 'string',
+  description: 'Opaque identifier. The values lookup and search are reserved for collection actions.',
+  not: { enum: ['lookup', 'search'] },
+};
+
+test('schemaDescriptions: `not` subtrees are prohibitions, not described schemas', () => {
+  assert.equal(count(schemaDescriptions(reservedId, { mode: 'all' })), 0);
+  const constBranches = { ...reservedId, not: { anyOf: [{ const: 'lookup' }, { const: 'search' }] } };
+  assert.equal(count(schemaDescriptions(constBranches, { mode: 'all' })), 0);
+  const { description: _omit, ...undescribed } = reservedId;
+  assert.equal(count(schemaDescriptions(undescribed, { mode: 'all' })), 1); // the root itself
+});
+
+test('s04-bodyExamplesEnums: an enum under `not` is not a vocabulary to document', () => {
+  const doc = (idSchema) => ({
+    paths: {
+      '/v1/records/{recordId}': {
+        get: {
+          responses: {
+            200: {
+              content: {
+                'application/json': {
+                  schema: { type: 'object', description: 'A record.', properties: { id: idSchema } },
+                  example: { id: 'r_42' },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  assert.equal(count(bodyExamplesAndEnums(doc(reservedId))), 0);
+  assert.equal(count(bodyExamplesAndEnums(doc({ type: 'string', enum: ['A', 'B'] }))), 1);
+});
+
+test('s09-enumCasing and s09-closedEnum: an enum under `not` is not a vocabulary', () => {
+  const schema = { type: 'object', description: 'A record.', properties: { id: reservedId } };
+  assert.equal(count(s09EnumCasing(schema, {}, { path: [] })), 0);
+  assert.equal(count(s09ClosedEnum(schema, {}, { path: [] })), 0);
+  const open = { type: 'object', properties: { kind: { type: 'string', enum: ['lookup'] } } };
+  assert.equal(count(s09EnumCasing(open, {}, { path: [] })), 1);
+  assert.equal(count(s09ClosedEnum(open, {}, { path: [] })), 1);
+});
+
 test('s17-cloudEventsPayload: scopes non-CloudEvents and requires a local vendored ref', () => {
   const localJson = {
     contentType: 'application/json',
@@ -595,64 +816,67 @@ test('s17-cloudEventsPayload: scopes non-CloudEvents and requires a local vendor
 });
 
 
-test('custom methods: resource casing, method casing and depth are independent', () => {
+test('action sub-resources: casing, depth and verb checks treat them as path segments', () => {
   const valid = {
-    '/v1/households:lookup': {},
-    '/v1/birth-registrations:search': {},
-    '/v1/households/{recordId}:rotateSecret': {},
-    '/v1/households/{recordId}/memberships/{membershipId}:endMembership': {},
+    '/v1/households/lookup': {},
+    '/v1/birth-registrations/search': {},
+    '/v1/households/{recordId}/rotate-secret': {},
+    '/v1/events/{eventId}/cancel': {},
   };
   assert.equal(count(pathSegments(valid, { check: 'segmentCasing' })), 0);
   assert.equal(count(pathSegments(valid, { check: 'maxDepthAfterVersion', max: 2 })), 0);
-  assert.equal(count(pluralSegment(valid, {})), 0);
   assert.equal(count(actionVerbSegment(valid, {})), 0);
-  for (const route of [
-    '/v1/birthRegistrations:search',
-    '/v1/households/{recordId}:rotate-secret',
-    '/v1/households:Search',
-    '/v1/households:search:again',
-    '/v1/households:search/results',
-    '/v1/households:',
-    '/v1/:search',
-    '/v1/households/{record:Id}',
-  ]) {
-    assert.ok(count(pathSegments({ [route]: {} }, { check: 'segmentCasing' })) > 0, route);
-  }
-  assert.equal(count(pluralSegment({ '/v1/household:search': {} }, {})), 1);
+  // An action sub-resource is a level of nesting like any other segment.
   assert.equal(count(pathSegments({
-    '/v1/households/{id}/memberships/{memberId}/events:search': {},
+    '/v1/households/{id}/memberships/{memberId}/search': {},
   }, { check: 'maxDepthAfterVersion', max: 2 })), 1);
-});
-
-test('custom methods: standard CRUD stays discouraged and action sub-resources remain valid', () => {
-  assert.equal(count(actionVerbSegment({
-    '/v1/households:lookup': {},
-    '/v1/households:search': {},
-    '/v1/households/search': {},
-    '/v1/events/{eventId}/cancel': {},
-    '/v1/events/{eventId}:cancel': {},
-  }, {})), 0);
   const bad = actionVerbSegment({
-    '/v1/households:create': {},
-    '/v1/households/{recordId}:delete': {},
-    '/v1/households:createHousehold': {},
     '/v1/households/new': {},
+    '/v1/households/{recordId}/delete': {},
+    '/v1/households/create-household': {},
   }, {});
-  assert.equal(count(bad), 4);
+  assert.equal(count(bad), 3);
 });
 
-test('custom methods: collection targets do not imply bulk mutation or paged results', () => {
-  assert.equal(count(bulkMutationSelection({ patch: {} }, {}, { path: ['paths', '/v1/households'] })), 1);
-  assert.equal(count(bulkMutationSelection({ patch: {} }, {}, { path: ['paths', '/v1/households:refresh'] })), 0);
-  const operation = (schema) => ({ responses: { 200: { content: { 'application/json': { schema } } } } });
-  const ctx = (pathKey, method = 'get') => ({ path: ['paths', pathKey, method] });
-  const record = operation({ type: 'object', properties: { recordId: { type: 'string' } } });
-  for (const mode of ['pageParam', 'cursorParams', 'cursorEnvelope', 'pageSizeBounds', 'offsetEnvelope']) {
-    assert.equal(count(collectionPagination(record, { mode }, ctx('/v1/households:lookup'))), 0);
+test('colon custom methods are rejected by segment casing with a pointer to §5.8', () => {
+  for (const route of [
+    '/v1/households:search',
+    '/v1/households/{recordId}:rotateSecret',
+    '/v1/households:search/results',
+    '/v1/:search',
+  ]) {
+    const findings = pathSegments({ [route]: {} }, { check: 'segmentCasing' });
+    assert.equal(count(findings), 1, route);
+    assert.match(findings[0].message, /colon custom method/, route);
+    assert.match(findings[0].message, /action sub-resource/, route);
+    assert.match(findings[0].message, /5\.8/, route);
   }
-  const records = operation({ type: 'array', items: { type: 'object' } });
-  assert.equal(count(collectionPagination(records, { mode: 'pageParam' }, ctx('/v1/households/{id}:members'))), 1);
-  assert.ok(count(collectionPagination(record, { mode: 'cursorEnvelope' }, ctx('/v1/households:search', 'post'))) > 0);
+  assert.ok(count(pathSegments({ '/v1/households/{record:Id}': {} }, { check: 'segmentCasing' })) > 0);
+});
+
+test('pluralSegment accepts configured action leaves only as the terminal segment', () => {
+  const opts = { actionLeaves: ['search', 'lookup'] };
+  assert.equal(count(pluralSegment({
+    '/v1/events/search': {},
+    '/v1/events/lookup': {},
+    '/v1/households/{recordId}/search': {},
+  }, opts)), 0);
+  assert.equal(count(pluralSegment({ '/v1/search/events': {} }, opts)), 1);
+  assert.equal(count(pluralSegment({ '/v1/events/search': {} }, {})), 1);
+  assert.equal(count(pluralSegment({ '/v1/events/{eventId}/cancel': {} }, opts)), 1);
+});
+
+test('collection targets: bulk mutation and POST search pagination', () => {
+  assert.equal(count(bulkMutationSelection({ patch: {} }, {}, { path: ['paths', '/v1/households'] })), 1);
+  const operation = (schema) => ({ responses: { 200: { content: { 'application/json': { schema } } } } });
+  const record = operation({ type: 'object', properties: { recordId: { type: 'string' } } });
+  const ctx = { path: ['paths', '/v1/households/search', 'post'] };
+  assert.ok(count(collectionPagination(record, { mode: 'cursorEnvelope' }, ctx)) > 0);
+  const offsetSearch = { ...record, requestBody: { content: { 'application/json': { schema: { properties: { offset: {}, limit: {} } } } } } };
+  assert.equal(count(collectionPagination(offsetSearch, { mode: 'cursorEnvelope' }, ctx)), 0);
+  assert.ok(count(collectionPagination(offsetSearch, { mode: 'offsetEnvelope' }, ctx)) > 0);
+  assert.equal(count(collectionPagination(offsetSearch, { mode: 'searchBody' }, ctx)), 0);
+  assert.equal(count(collectionPagination(record, { mode: 'searchBody' }, ctx)), 0);
 });
 
 test('custom GET pagination follows recursive allOf declarations without looping', () => {
@@ -661,7 +885,7 @@ test('custom GET pagination follows recursive allOf declarations without looping
   const items = schema.allOf[0].properties.items;
   items.allOf = [items];
   const operation = { responses: { 200: { content: { 'application/json': { schema } } } } };
-  const context = { path: ['paths', '/v1/households:members', 'get'] };
+  const context = { path: ['paths', '/v1/households/{recordId}/members', 'get'] };
   assert.equal(count(collectionPagination(operation, { mode: 'pageParam' }, context)), 1);
   items.allOf.push({ maxItems: 0 });
   assert.equal(count(collectionPagination(operation, { mode: 'pageParam' }, context)), 0);

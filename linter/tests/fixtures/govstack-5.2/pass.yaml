@@ -16,3 +16,14 @@ paths:
       responses:
         "200":
           description: A page of policies.
+  # Guide 5.10 standard unversioned endpoints keep the spelling their own
+  # definition gives them.
+  /.well-known/api-catalog:
+    get:
+      operationId: getApiCatalog
+      summary: Get the API catalog
+      description: Returns the RFC 9727 API catalog.
+      tags: [Discovery]
+      responses:
+        "200":
+          description: The API catalog.

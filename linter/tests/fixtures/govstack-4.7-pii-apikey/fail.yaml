@@ -1,0 +1,45 @@
+openapi: 3.1.0
+info:
+  title: Fixture API
+  version: 1.0.0
+  description: Fixture for govstack-4.7-pii-apikey.
+  contact: {}
+security:
+  - healthKey: []
+paths:
+  /v1/people/{id}:
+    get:
+      operationId: getPerson
+      summary: Read a record
+      description: Reads a record.
+      tags: [people]
+      x-govstack-pii: true
+      responses:
+        '200':
+          description: OK
+  /v1/places/{id}:
+    get:
+      operationId: getPlace
+      summary: Read a record
+      description: Reads a record.
+      tags: [people]
+      x-govstack-pii: true
+      security:
+        - oauth: [bb:registry:person:read]
+        - healthKey: []
+      responses:
+        '200':
+          description: OK
+components:
+  securitySchemes:
+    oauth:
+      type: oauth2
+      flows:
+        clientCredentials:
+          tokenUrl: https://auth.example.org/token
+          scopes:
+            bb:registry:person:read: Read people.
+    healthKey:
+      type: apiKey
+      in: header
+      name: Api-Key

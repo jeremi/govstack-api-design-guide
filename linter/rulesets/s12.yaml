@@ -1,10 +1,9 @@
 # Rules for §12 pagination, filtering and sorting — generated from the guide;
 # see coverage.yaml.
 #
-# Implements 12.3, 12.4, 12.6, 12.7 (implemented) and 12.1, 12.2, 12.8, 12.9
-# (partial-proxy). 12.5 ("total MAY be omitted") is a permissive MAY and 12.10
-# is an informative out-of-scope statement; neither is in this fragment, per
-# coverage.yaml.
+# Implements 12.3, 12.4, 12.6, 12.7, 12.10 (implemented) and 12.1, 12.2, 12.8,
+# 12.9 (partial-proxy). 12.5 ("total MAY be omitted") is a permissive MAY and
+# is not in this fragment, per coverage.yaml.
 #
 # Shared heuristic used throughout: a "collection" (list) GET operation is one
 # whose path does NOT end in a `{param}` segment, e.g. `/v1/foos` (collection)
@@ -14,16 +13,18 @@
 # 12.7), it is used only to scope an otherwise-exact shape check to the
 # endpoints the shape applies to.
 #
-# Shared carve-outs are applied to every collection-GET rule and therefore live in
-# one place, inside `s12-collectionPagination`: GET custom methods need a
-# declared array/items response to be classified as collections; the guide 5.10 standard
-# unversioned endpoints are not collections, and a collection whose 200
-# response declares its own `maxItems` bound may go unpaginated (guide 12.1).
+# Shared carve-outs are applied to every collection-GET rule and therefore live
+# in one place, inside `s12-collectionPagination`: the guide 5.10 standard
+# unversioned endpoints are not collections; an explicit single-object response
+# without pagination controls is not a collection, even when it embeds arrays;
+# and a collection whose 200 response declares its own `maxItems` bound may go
+# unpaginated (guide 12.1).
 functionsDir: "../functions"
 functions:
   - s12-collectionPagination
   - s12-sortParam
   - envelopeShape
+  - s12-fieldsParam
 rules:
   # 12.1 [M+R] — PROXY (bucket B, MUST -> warn). "Collections must paginate."
   # Identifies list endpoints via the path heuristic above and only checks
@@ -49,7 +50,7 @@ rules:
   # an `offset` parameter, since those opted into the §12.6 alternative. Does
   # NOT verify the cursor is opaque/server-encoded (a runtime property) or
   # that clients don't parse it. The /health and /ready operational endpoints
-  # (guide 5.9) are exempted inside `s12-collectionPagination` (exact path-key).
+  # (guide 5.10) are exempted inside `s12-collectionPagination` (exact path-key).
   govstack-12.2:
     description: "collection GET endpoints must declare pageSize + cursor query parameters by default (guide 12.2, [M+R], proxy)."
     message: "[12.2][M+R] {{error}}"
@@ -68,7 +69,7 @@ rules:
   # 12.5 and its BB-specific semantics remain a review concern.
   # No-op on operations that declared an `offset` parameter: those use the
   # distinct §12.6 flat envelope instead. The /health and /ready operational
-  # endpoints (guide 5.9) are exempted inside `s12-collectionPagination`.
+  # endpoints (guide 5.10) are exempted inside `s12-collectionPagination`.
   govstack-12.3:
     description: "collection GET 200 response must use {items, pageInfo{nextCursor}}, with nullable non-empty nextCursor and no hasMore (guide 12.3, [M])."
     message: "[12.3][M] {{error}}"
@@ -97,11 +98,13 @@ rules:
         mode: pageSizeBounds
 
   # 12.6 [M+R] — offset pagination, when opted into (an `offset` parameter is
-  # declared), MUST use the flat envelope { items, offset, limit, total },
-  # with `total` required (unlike the optional `total` in 12.3). No-op on
-  # operations without an `offset` parameter.
+  # declared), MUST use the flat envelope { items, offset, limit, total? }:
+  # items/offset/limit are required, `total` is optional (as in 12.3, per
+  # 12.5) and, when declared, MUST be an integer. No-op on operations without
+  # an `offset` parameter. Does NOT verify that a specification omitting
+  # `total` states so, nor the short-page end-of-traversal semantics.
   govstack-12.6:
-    description: "collection GET 200 response must use the flat envelope {items, offset, limit, total} when offset pagination is used (guide 12.6, [M+R])."
+    description: "collection GET 200 response must use the flat envelope {items, offset, limit, total?} when offset pagination is used (guide 12.6, [M+R])."
     message: "[12.6][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#126-offset-pagination-envelope
     severity: error
@@ -177,35 +180,59 @@ rules:
                     not:
                       pattern: '(\[(gte|lte|gt|lt|ne|neq|in|nin|like|contains|regex)\]$)|(^(filter|filters)$)'
 
-  # 12.9 [M+R] — PROXY (bucket B, MUST -> warn). Complex filtering MUST use
-  # POST search, carrying pageSize/cursor in the request
-  # body and responding with the §12.3 envelope. Identifies the search
-  # endpoint via a `/search` or `:search` suffix heuristic (proxy for "this is the
+  # 12.9 [M+R] — PROXY (bucket B, MUST -> warn). A body-based search MUST
+  # carry its pagination controls in the request body (`pageSize`/`cursor`
+  # for cursor pagination, `offset`/`limit` for offset pagination) and
+  # respond with the matching envelope (§12.3 or §12.6). A body that declares
+  # `offset` selects the offset contract, so the two envelope checks below
+  # also flag a body/envelope mismatch. Identifies the search endpoint via a
+  # `/search` action sub-resource heuristic (proxy for "this is the
   # §6.6/§12.9 complex-filtering endpoint") and does NOT verify that the path
   # actually sits under a collection resource, nor the filtering semantics of
-  # the request body itself.
+  # the request body itself, nor that follow-up requests repeat the criteria.
   govstack-12.9-body:
-    description: "POST search request body must carry pageSize and cursor (guide 12.9, [M+R], proxy)."
+    description: "POST search request body must carry pageSize and cursor, or offset and limit (guide 12.9, [M+R], proxy)."
     message: "[12.9][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#129-complex-filtering-via-search
     severity: warn
     formats: [oas3_1]
-    given: '$.paths[?(@property.match(/[\/:]search$/))].post.requestBody.content["application/json"].schema'
-    then:
-      function: envelopeShape
-      functionOptions:
-        properties:
-          pageSize: {}
-          cursor: {}
-
-  govstack-12.9-response:
-    description: "POST search response must use the §12.3 cursor envelope (guide 12.9, [M+R], proxy)."
-    message: "[12.9][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#129-complex-filtering-via-search
-    severity: warn
-    formats: [oas3_1]
-    given: '$.paths[?(@property.match(/[\/:]search$/))].post'
+    given: '$.paths[?(@property.match(/\/search$/))].post'
     then:
       function: s12-collectionPagination
       functionOptions:
-        mode: cursorEnvelope
+        mode: searchBody
+
+  govstack-12.9-response:
+    description: "POST search response must use the §12.3 cursor envelope, or the §12.6 offset envelope for an offset/limit body (guide 12.9, [M+R], proxy)."
+    message: "[12.9][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#129-complex-filtering-via-search
+    severity: warn
+    formats: [oas3_1]
+    given: '$.paths[?(@property.match(/\/search$/))].post'
+    then:
+      - function: s12-collectionPagination
+        functionOptions:
+          mode: cursorEnvelope
+      - function: s12-collectionPagination
+        functionOptions:
+          mode: offsetEnvelope
+
+  # 12.10 [M+R]: the query parameter name `fields` is reserved for top-level
+  # response field selection. When declared it MUST be an optional query
+  # parameter serialised as one comma-separated list of top-level property
+  # names: a string without an enum (not a view switch), or an array of
+  # strings with style form and explode false (items may carry an enum of the
+  # selectable names). The operation MUST declare a 400 response for unknown
+  # names (a 4XX range response is accepted as documenting 400). No-op when no
+  # `fields` query parameter exists. Does NOT verify: that the names are
+  # top-level properties, the always-returned members, the Problem `type` for
+  # an unknown name, or that selection never widens authorisation (runtime).
+  govstack-12.10:
+    description: "a fields query parameter must be an optional comma-separated list (string, or string array with explode false) with a 400 response declared (guide 12.10, [M+R])."
+    message: "[12.10][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/12-pagination-filtering-sorting.md#1210-sparse-fieldsets-out-of-scope
+    severity: error
+    formats: [oas3_1]
+    given: $.paths
+    then:
+      function: s12-fieldsParam

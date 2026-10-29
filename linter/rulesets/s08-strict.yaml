@@ -1,10 +1,11 @@
-# STRICT-only rules for §8 — implements guide rule 8.6.
+# STRICT-only rules for §8: implements guide rules 8.6 and 8.8.
 #
 # Ships only via ../strict.yaml (opt-in). See ../coverage.yaml and
 # ../README.md#rule-naming-and-severities.
 functionsDir: "../functions"
 functions:
   - s08-personalDataInUrl
+  - s08-customHeaderPlacement
 rules:
   # 8.6 [R] — STRICT-ONLY heuristic, severity warn (per convention, always
   # warn regardless of the guide's own MUST/MUST NOT strength).
@@ -24,3 +25,22 @@ rules:
     given: $
     then:
       function: s08-personalDataInUrl
+
+  # 8.8 [M+R]: STRICT-ONLY heuristic, severity warn (a SHOULD, checked by a
+  # noisy name dictionary). Verifies: request header parameters (operation,
+  # path item, components.parameters) and response headers (operations and
+  # components.responses) whose NAME looks like a tenant/organisation id,
+  # customer id, callback URL, or national/citizen id.
+  # Does NOT verify: the GovStack- prefix on cross-BB headers or plain names on
+  # BB-local headers (which headers are cross-BB is not visible in one
+  # document), BB codes or version numbers in header names, synonyms outside
+  # the dictionary, or header values.
+  govstack-8.8:
+    description: "custom headers should not carry business identifiers, tenant ids, callback URLs or personal data (guide 8.8, [M+R], strict heuristic)."
+    message: "[8.8][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#88-custom-header-naming-and-placement
+    severity: warn
+    formats: [oas3_1]
+    given: $
+    then:
+      function: s08-customHeaderPlacement

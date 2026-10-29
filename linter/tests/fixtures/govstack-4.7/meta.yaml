@@ -1,0 +1,3 @@
+# fail.yaml: empty string, empty array, array with an empty entry, a number,
+# and a non-boolean x-govstack-pii.
+expect_fail_count: 5

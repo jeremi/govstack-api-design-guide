@@ -141,7 +141,7 @@ rules:
   # 13.6 [R] — PROXY (bucket B), MUST NOT notched to warn.
   # Verifies: no apiKey scheme is applied (via root or operation `security`) to a
   # non-operational (non-health-like) operation.
-  # Does NOT verify: which operations "read or write personal data" (uses a §5.9
+  # Does NOT verify: which operations "read or write personal data" (uses an
   # operational-path heuristic instead), nor credentials applied outside declared
   # security requirements.
   govstack-13.6:

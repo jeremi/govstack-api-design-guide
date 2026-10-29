@@ -6,7 +6,7 @@ const OPS = ['get', 'put', 'post', 'delete', 'patch', 'options', 'head', 'trace'
 // (STRICT-ONLY): flags plausible personal-data parameter names, not a
 // definitive determination.
 const PERSONAL_DATA_TERMS =
-  /national[-_]?id|\bssn\b|social[-_]?security|passport|phone|mobile|e[-_]?mail|full[-_]?name|first[-_]?name|last[-_]?name|surname|date[-_]?of[-_]?birth|\bdob\b|birth[-_]?date|home[-_]?address|street[-_]?address/i;
+  /national[-_]?id|\bssn\b|social[-_]?security|passport|phone|mobile|e[-_]?mail|full[-_]?name|first[-_]?name|last[-_]?name|surname|date[-_]?of[-_]?birth|\bdob\b|birth[-_]?date|home[-_]?address|street[-_]?address|payee[-_]?identity/i;
 
 /**
  * s08 personalDataInUrl — STRICT-ONLY heuristic for guide 8.6: personal data

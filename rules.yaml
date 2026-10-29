@@ -4,8 +4,8 @@
 # Invariant: for each rule, `page` + `anchor` locate it in the book.
 # The same `#anchor` fragment resolves on both GitHub and GitBook.
 guide: GovStack Cross-BB API Design Guide
-version: 0.2.0-draft
-rule_count: 171
+version: 0.3.0-draft
+rule_count: 174
 rules:
 - id: "2.1"
   title: "OpenAPI 3.1 required"
@@ -15,7 +15,7 @@ rules:
   surface: OpenAPI
   page: part-a/2-openapi-document-standards.md
   anchor: 21-openapi-31-required
-  text: "The spec **MUST** declare an explicit, published OpenAPI 3.1 patch version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.2.0-draft` qualify `openapi: 3.1.0`, `3.1.1`, and `3.1.2`; tooling **MUST** treat those patches as the same OAS 3.1 feature set. OpenAPI 3.0 and earlier **MUST NOT** be used. A later OpenAPI minor version, including 3.2, **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it."
+  text: "The spec **MUST** declare an explicit, published OpenAPI 3.1 patch version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.3.0-draft` qualify `openapi: 3.1.0`, `3.1.1`, and `3.1.2`; tooling **MUST** treat those patches as the same OAS 3.1 feature set. OpenAPI 3.0 and earlier **MUST NOT** be used. A later OpenAPI minor version, including 3.2, **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it."
 - id: "2.2"
   title: "One canonical OpenAPI entrypoint"
   class: M+R
@@ -87,7 +87,7 @@ rules:
   surface: AsyncAPI
   page: part-a/3-asyncapi-document-standards.md
   anchor: 31-asyncapi-300-required
-  text: "An event-driven BB surface other than HTTP push webhooks **MUST** be documented in AsyncAPI 3 and **MUST** declare an explicit, published AsyncAPI 3 version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.2.0-draft` qualify `asyncapi: 3.0.0` and `asyncapi: 3.1.0`; every rule in this guide applies identically to both. AsyncAPI 2.x and earlier **MUST NOT** be used for new GovStack event-driven surfaces. A later AsyncAPI version **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it."
+  text: "An event-driven BB surface other than HTTP push webhooks **MUST** be documented in AsyncAPI 3 and **MUST** declare an explicit, published AsyncAPI 3 version qualified by the pinned GovStack ruleset. Guide and ruleset version `0.3.0-draft` qualify `asyncapi: 3.0.0` and `asyncapi: 3.1.0`; every rule in this guide applies identically to both. AsyncAPI 2.x and earlier **MUST NOT** be used for new GovStack event-driven surfaces. A later AsyncAPI version **MUST NOT** be used until a GovStack guide and ruleset version explicitly qualifies it."
 - id: "3.2"
   title: "One canonical AsyncAPI entrypoint"
   class: M+R
@@ -214,6 +214,15 @@ rules:
   page: part-a/4-documentation-requirements.md
   anchor: 46-functional-requirement-traceability
   text: "Every GovStack requirement in `spec/**/*.md` **MUST** follow the GovStack Requirements Model. Its heading **MUST** use `### #<number> <title> (<level> <mutability> <verification>)`, where level is `REQUIRED`, `RECOMMENDED`, `DRAFT`, or `DEPRECATED`; mutability is `IMMUTABLE`, `EXTENSIBLE`, `REPLACEABLE`, or `INAPPLICABLE`; and verification is `OBSERVABLE` or `AUDITABLE`. The next non-empty line **MUST** contain its canonical `govstack-...#req-<number>` identifier, the two numbers **MUST** match, and body text **MUST** follow any optional `KF:` metadata lines. A child requirement that changes a parent **MUST** identify the parent with `extends` or `replaces` as defined by the GovStack Specification Framework.\nEvery BB that declares at least one API **MUST** provide `api/coverage.yaml` with `version: 1`. Its `requirements` array **MUST** match the active REQUIRED and RECOMMENDED requirement IDs exactly: no missing or extra IDs. This array is empty when there are no active requirements; validating an API contract does not require promoting DRAFT requirements. DRAFT is a level, not a strength, so a DRAFT requirement's body states the level it is intended to take when promoted and readers treat its RFC 2119 keywords as that intended obligation. DRAFT and DEPRECATED requirements, and requirements classified INAPPLICABLE, are not active coverage obligations. A repository that uses `noApi: true` under §4.5 **MUST NOT** contain `api/coverage.yaml`.\nA BB **MAY** include a separate `draftRequirements` array for design traceability. Its entries use the same disposition and reference rules below, with IDs drawn only from applicable DRAFT requirements. This draft list can cover a subset of the draft requirements and does not satisfy an active coverage obligation. Validation reports that these are draft mappings; a successful artifact check does not establish requirement maturity, deployed implementation conformance, or Building Block certification.\nEach coverage entry **MUST** select exactly one disposition and only its compatible companion field: `operation` with a non-empty `operations` list; `message` with a non-empty `messages` list; `external` with an HTTP(S) `reference`; `non-api` with a non-empty `rationale`; or `planned` with an HTTP(S) `issue`. `non-api` means the requirement is verified outside the service-interface contract; it is not the Requirements Model's formal `INAPPLICABLE` classifier. A disposition-incompatible companion field **MUST NOT** be present. Values in `operations` and `messages` **MUST** be bare operation or message IDs, and those IDs **MUST** be unique across all canonical surfaces declared by the BB. A `planned` disposition records an API gap and **MUST NOT** be interpreted as coverage; the presence of any `planned` entry in the active `requirements` array **MUST** make full conformance fail until the requirement is implemented and its disposition is updated. Planned work in `draftRequirements` is reported as a draft gap and does not block validation of the current API artifacts.\nA REQUIRED requirement **MAY** use `non-api` when it remains applicable but its evidence lives outside the service-interface contract, for example in an audit procedure or policy artifact. The rationale **MUST** identify that verification boundary. `non-api` is traceability, not a waiver and not an `INAPPLICABLE` classification."
+- id: "4.7"
+  title: "Operation metadata extensions"
+  class: M+R
+  level: MUST
+  kinds: ["read", "write", "events"]
+  surface: Universal
+  page: part-a/4-documentation-requirements.md
+  anchor: 47-operation-metadata-extensions
+  text: "When present on an OpenAPI operation or an AsyncAPI operation or message, `x-govstack-use-case` **MUST** be a string or a non-empty array of strings, each a GovStack use-case or requirement identifier (for example `UC-C-PIC-A-001`, or a `govstack-...#req-<number>` identifier as used in §4.6), and `x-govstack-pii` **MUST** be a boolean whose value `true` states that the operation's request or response carries personal data as defined in §8.6. An operation marked `x-govstack-pii: true` **MUST NOT** declare an API key security scheme (§13.6).\nAn operation **MAY** declare either extension. For new surfaces, these names replace the ad hoc extensions seen in existing BB specifications (`x-specification-usecase`, `x-specification-scenario`, `x-specification-pii-or-sensitive`). The linter uses `x-govstack-pii` to sharpen its §13.6 check. The `x-govstack-` prefix is governed by §9.10."
 - id: "5.1"
   title: "Major version in the path"
   class: M
@@ -240,7 +249,7 @@ rules:
   surface: OpenAPI
   page: part-b/5-url-structure-and-versioning.md
   anchor: 53-kebab-case-path-segments
-  text: "Multi-word literal path segments **SHOULD** use kebab-case (`/event-subscriptions`). A colon custom-method suffix under §5.8 **SHOULD** use camelCase, for example `/event-subscriptions/{subscriptionId}:rotateSecret`. A surface governed by an external standard keeps that standard's spelling, including the `.well-known` prefix that RFC 8615 fixes."
+  text: "Multi-word literal path segments **SHOULD** use kebab-case (`/event-subscriptions`). A surface governed by an external standard keeps that standard's spelling, including the `.well-known` prefix that RFC 8615 fixes."
 - id: "5.4"
   title: "Shallow path nesting"
   class: M
@@ -249,7 +258,7 @@ rules:
   surface: OpenAPI
   page: part-b/5-url-structure-and-versioning.md
   anchor: 54-shallow-path-nesting
-  text: "Path hierarchy **SHOULD** be shallow, with at most two levels of nesting after `/v{N}/`. Deep nesting makes paths hard to read and discourages addressable sub-resources.\nA colon custom-method suffix names an operation on the preceding resource or collection and adds no hierarchy level."
+  text: "Path hierarchy **SHOULD** be shallow, with at most two levels of nesting after `/v{N}/`. Deep nesting makes paths hard to read and discourages addressable sub-resources."
 - id: "5.5"
   title: "Identifiers as path parameters"
   class: M+R
@@ -280,21 +289,21 @@ rules:
 - id: "5.8"
   title: "Custom operations"
   class: R
-  level: SHOULD
-  kinds: ["read", "write"]
-  surface: OpenAPI
-  page: part-b/5-url-structure-and-versioning.md
-  anchor: 58-actions-as-sub-resources
-  text: "A BB specification **SHOULD** choose a consistent convention and keep custom-operation routes distinct from valid resource paths.\nOperations that do not fit standard CRUD methods **MAY** use an action sub-resource, such as `POST /v1/events/{eventId}/cancel`, or a colon custom method, such as `POST /v1/events/{eventId}:cancel` or `POST /v1/events:search`. The colon convention follows Google AIP-136; it separates the custom method name from the resource name. For example, `/v1/events:search` can coexist with `/v1/events/{eventId}` when an event's identifier is `search`.\nEach operation retains the HTTP semantics of §6. A body-based lookup or search follows §6.6; using a custom method does not imply a mutation."
-- id: "5.9"
-  title: "Unversioned health endpoint"
-  class: M+R
   level: MUST
   kinds: ["read", "write"]
   surface: OpenAPI
   page: part-b/5-url-structure-and-versioning.md
+  anchor: 58-actions-as-sub-resources
+  text: "An operation that does not fit a standard CRUD method **MUST** be expressed as an action sub-resource and **MUST NOT** use a colon custom method (a `:verb` suffix on a path segment): `POST /v1/events/{eventId}/cancel` acts on one resource, and `POST /v1/events/search` or `POST /v1/events/lookup` acts on a collection. An action name used on a collection, such as `search` or `lookup`, **MUST NOT** be a valid identifier in that collection: the identifier's documented format excludes it (for example a UUID format, or a schema pattern that rejects the reserved names), or the specification states that the name is reserved.\nOpenAPI path templating matches a concrete path before a templated one, so `/v1/events/search` always routes to the action, never to an event whose identifier is `search`. Reserving the action name keeps every event addressable.\nEach operation retains the HTTP semantics of §6. A body-based lookup or search follows §6.6; an action sub-resource does not imply a mutation."
+- id: "5.9"
+  title: "Health requirements (CFR reference)"
+  class: informative
+  level: null
+  kinds: ["read", "write"]
+  surface: OpenAPI
+  page: part-b/5-url-structure-and-versioning.md
   anchor: 59-unversioned-health-endpoint
-  text: "Each BB **MUST** expose an unversioned operational liveness endpoint at `/health`. Health is carried by the HTTP status: `200` when the service is healthy and able to accept work, `503` when it is temporarily unable to. A consumer **MUST** determine health from the status code; response body fields are informational and **MUST NOT** be required for that determination. The `200` response **MUST** use media type `application/json`; the `503` is an error response and carries the problem envelope of §11.1 like any other. The endpoint **MUST** be cheap and bounded, **MUST NOT** carry citizen authentication, and **MUST NOT** expose system-internal detail such as hostnames, versions, stack traces, or dependency topology. It **MUST NOT** probe an external dependency unless that dependency genuinely determines whether the service can accept work.\nThe `200` response **SHOULD** be minimal. A separate `/ready` endpoint **MAY** be exposed where readiness and liveness semantics differ, under the same rules."
+  text: "For health check requirements, see the Cross-Functional Requirements, Architecture requirement 15, Observability and monitoring, identified as `govstack-cfr-architecture#req-15`. This section is an informative reference."
 - id: "5.10"
   title: "Standard unversioned endpoints"
   class: M
@@ -303,7 +312,7 @@ rules:
   surface: OpenAPI
   page: part-b/5-url-structure-and-versioning.md
   anchor: 510-standard-unversioned-endpoints
-  text: "A closed set of endpoints sits outside the versioned business surface, because their location or spelling is fixed by something other than this guide. That set is: well-known URIs under `/.well-known/`, whose location RFC 8615 roots at that exact prefix (for example the RFC 9727 API catalog at `/.well-known/api-catalog`); the operational endpoints of §5.9; and a runtime specification-discovery endpoint where a BB serves one, conventionally `/openapi.json` or `/asyncapi.json`. These endpoints are exempt from §5.1, §5.3, and the collection rules of §12, and they satisfy §13.1 with an explicit empty security requirement (`security: []`) where they are unauthenticated. A BB **MUST NOT** place a business resource under one of these paths in order to escape the rules above: they are read-only and **MUST NOT** declare `POST`, `PUT`, `PATCH`, or `DELETE`.\nNo other endpoint **MAY** claim this exemption. A static document that a well-known URI links to, such as a metadata document or a linkset, is published content rather than an operation of the business surface; it **MAY** be served from any stable HTTPS location and does not need to appear in the OpenAPI document."
+  text: "A closed set of endpoints sits outside the versioned business surface, because their location or spelling is fixed by something other than this guide. That set is: well-known URIs under `/.well-known/`, whose location RFC 8615 roots at that exact prefix (for example the RFC 9727 API catalog at `/.well-known/api-catalog`); the operational endpoints `/health` and `/ready` where a BB exposes them (health requirements belong to CFR, see §5.9); and a runtime specification-discovery endpoint where a BB serves one, conventionally `/openapi.json` or `/asyncapi.json`. These endpoints are exempt from §5.1, §5.2, §5.3, and the collection rules of §12, and they satisfy §13.1 with an explicit empty security requirement (`security: []`) where they are unauthenticated. A BB **MUST NOT** place a business resource under one of these paths in order to escape the rules above: they are read-only and **MUST NOT** declare `POST`, `PUT`, `PATCH`, or `DELETE`.\nNo other endpoint **MAY** claim this exemption. A static document that a well-known URI links to, such as a metadata document or a linkset, is published content rather than an operation of the business surface; it **MAY** be served from any stable HTTPS location and does not need to appear in the OpenAPI document."
 - id: "6.1"
   title: "GET is safe and idempotent"
   class: M+R
@@ -357,7 +366,7 @@ rules:
   surface: OpenAPI
   page: part-b/6-http-methods.md
   anchor: 66-post-search-for-complex-queries
-  text: "A successful read returning a representation **MUST** return `200`, not `201`, consistently with §7.1.\nA read operation **MAY** use `POST` with a request body when inputs are sensitive, structured, too large for a URL, or governed by a documented body-based contract. This includes exact lookup or resolution returning a single resource, as well as collection search. The path follows the convention chosen under §5.8, for example `POST /v1/policies:lookup`, `POST /v1/policies:search`, or `POST /v1/policies/search`.\nExact lookup is a single-resource operation: it does not acquire pagination merely because it uses POST. Collection search follows §12.9. The operation description states its selection and result semantics; its request schema can define named selectors without requiring a generic query language. Read-only POSTs do not require an `Idempotency-Key` under §14.1. Read-only describes the operation's effects; it does not change the HTTP method semantics or make POST automatically cacheable."
+  text: "A successful read returning a representation **MUST** return `200`, not `201`, consistently with §7.1.\nA read operation **MAY** use `POST` with a request body when inputs are sensitive, structured, too large for a URL, or governed by a documented body-based contract. This includes exact lookup or resolution returning a single resource, as well as collection search. The path is an action sub-resource under §5.8, for example `POST /v1/policies/lookup` or `POST /v1/policies/search`.\nExact lookup is a single-resource operation: it does not acquire pagination merely because it uses POST. Collection search follows §12.9. The operation description states its selection and result semantics; its request schema can define named selectors without requiring a generic query language. Read-only POSTs do not require an `Idempotency-Key` under §14.1. Read-only describes the operation's effects; it does not change the HTTP method semantics or make POST automatically cacheable."
 - id: "6.7"
   title: "Bulk mutation needs explicit selection"
   class: M+R
@@ -378,13 +387,13 @@ rules:
   text: "A successful read or completed non-creation action that returns a representation **SHOULD** use `200 OK`."
 - id: "7.2"
   title: "201 Created with Location"
-  class: M
+  class: M+R
   level: MUST
   kinds: ["write"]
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 72-201-created-with-location
-  text: "A resource creation that completes during the request **MUST** use `201 Created`. The response **MUST** include a `Location` header pointing to the created resource. An operation that has only been accepted for later processing **MUST NOT** return `201`; it **MUST** use `202` under §7.3."
+  text: "A resource creation that completes during the request **MUST** use `201 Created`. The response **MUST** include a `Location` header pointing to the created resource. An operation that has only been accepted for later processing **MUST NOT** return `201`; it **MUST** use `202` under §7.3.\nWhether an operation creates a resource or merely accepts work requires semantic review. The linter checks declared response structure; an operation's name alone does not establish its creation semantics.\nWhen the requested operation is the creation of a job or Operation resource and that resource is addressable when the response returns, the creation is complete: `201 Created` with `Location` applies even though the work the job represents is still running. `202` under §7.3 is for the case where the request has only been accepted and the requested resource is not yet addressable. In both cases the running state of the job does not imply that the business work succeeded (RFC 9110 §15.3.2 and §15.3.3)."
 - id: "7.3"
   title: "202 Accepted for async operations"
   class: M+R
@@ -393,7 +402,7 @@ rules:
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 73-202-accepted-for-async-operations
-  text: "Work accepted but not completed during the request **MUST** use `202 Accepted`. The response **MUST** include a `Location` header pointing to an Operation resource and **MUST** return that Operation representation using the local schema defined under §15. `202` **MUST NOT** claim that the requested work succeeded."
+  text: "Work accepted but not completed during the request **MUST** use `202 Accepted`. The response **MUST** include a `Location` header pointing to an Operation resource and, where HTTP permits response content, **MUST** return that Operation representation using the local schema defined under §15. `202` **MUST NOT** claim that the requested work succeeded.\nA request whose requested operation is the creation of a job or Operation resource that is addressable when the response returns is a completed creation under §7.2, not work accepted under this rule."
 - id: "7.4"
   title: "204 for void responses"
   class: R
@@ -492,7 +501,7 @@ rules:
   surface: OpenAPI
   page: part-b/7-http-status-codes.md
   anchor: 714-all-status-codes-declared
-  text: "Every operation **MUST** declare the status codes it can return. Declaring only `200` is forbidden."
+  text: "Every operation **MUST** declare the status codes it can return. Declaring only `200` is forbidden.\nA `default` response **MUST NOT** replace an explicitly required status code. Non-error responses **MUST** be declared explicitly; `default`, when used, **MUST** describe only otherwise unspecified errors and follow §11.1."
 - id: "7.15"
   title: "412 for failed preconditions"
   class: R
@@ -619,6 +628,15 @@ rules:
   page: part-b/8-headers.md
   anchor: 87-rate-limit-headers-declared
   text: "An endpoint rate-limited by the BB itself **SHOULD** document the quota scope. Where an API gateway or interoperability mediator owns rate limiting, the BB specification **SHOULD** state that fact instead of claiming to emit headers it does not control. A `429` response **SHOULD** declare `Retry-After`; when `Retry-After` and `RateLimit` are both present, clients **SHOULD** treat `Retry-After` as authoritative. A BB that advertises quota-policy details **SHOULD** use `RateLimit-Policy`. The legacy `RateLimit-Limit`, `RateLimit-Remaining`, and `RateLimit-Reset` fields **SHOULD NOT** be described as conforming to `draft-ietf-httpapi-ratelimit-headers-11`.\nAn endpoint rate-limited by the BB itself **MAY** declare the advisory `RateLimit` response header using the Structured Field syntax pinned from `draft-ietf-httpapi-ratelimit-headers-11`. The server **MAY** omit the advisory `RateLimit` and `RateLimit-Policy` headers on individual responses as allowed by the draft."
+- id: "8.8"
+  title: "Custom header naming and placement"
+  class: M+R
+  level: SHOULD
+  kinds: ["read", "write"]
+  surface: OpenAPI
+  page: part-b/8-headers.md
+  anchor: 88-custom-header-naming-and-placement
+  text: "A custom header defined for use across BBs, whether by this guide, by a shared GovStack component, or by an interoperability mediator, **SHOULD** carry the `GovStack-` prefix, for example `GovStack-Client`. A custom header local to one BB **SHOULD** use a plain descriptive name without a vendor prefix (§8.5 already forbids `X-`). A header name **SHOULD NOT** embed a BB code or a version number. Business identifiers (record identifiers, case numbers, tenant or organisation identifiers), callback URLs, and personal data **SHOULD NOT** be carried in custom request headers; they belong in the path (§5), the request body, or claims of the presented token. Headers carry transport and cross-cutting concerns such as tracing, idempotency, conditional requests, rate limits, and content negotiation. §8.6 separately forbids personal data in header values, and §15.8 governs per-request callback URLs.\nA header required by an interoperability mediator, for example the client-identification header defined by the Information Mediator BB, is defined by that mediator's contract; a BB specification references it and does not redefine it."
 - id: "9.1"
   title: "JSON as default media type"
   class: M+R
@@ -676,12 +694,12 @@ rules:
 - id: "9.7"
   title: "Screaming snake case enum values"
   class: M
-  level: MUST
+  level: SHOULD
   kinds: ["read", "write", "events"]
   surface: Universal
   page: part-c/9-json-conventions-and-naming.md
   anchor: 97-screaming-snake-case-enum-values
-  text: "Values whose form is fixed elsewhere keep the casing their own definition gives them and **MUST NOT** be re-cased to satisfy this rule: identifiers built to a shape this guide defines (event types per §16.3, sort keys per §12.7), codes drawn from an external standard (BCP 47 language tags per §10.9, ISO 4217 currency codes per §10.10), and values registered in an IANA registry, including JOSE and COSE algorithm and curve names such as `ES256`, `EdDSA`, and `Ed25519`, and media types.\nEnum values that name a BB-defined state or category **SHOULD** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`)."
+  text: "Enum values that name a BB-defined state or category **SHOULD** use SCREAMING_SNAKE_CASE (`ACTIVE`, `PENDING_REVIEW`).\nValues whose form is fixed elsewhere are outside this casing recommendation and retain the casing their own definition gives them: identifiers built to a shape this guide defines (event types per §16.3, sort keys per §12.7, field-selection names per §12.10), codes drawn from an external standard (BCP 47 language tags per §10.9, ISO 4217 currency codes per §10.10), and values registered in an IANA registry, including JOSE and COSE algorithm and curve names such as `ES256`, `EdDSA`, and `Ed25519`, and media types."
 - id: "9.8"
   title: "Forward-compatible schemas"
   class: M
@@ -699,7 +717,7 @@ rules:
   surface: Universal
   page: part-c/9-json-conventions-and-naming.md
   anchor: 99-no-closed-enums-for-growing-sets
-  text: "Fields whose value set is expected to grow **MUST NOT** be declared as a closed OpenAPI `enum`, because client code generated from a closed enum typically rejects values added later, which would make the \"adding enum values is non-breaking\" guarantee of §18.3 false in practice. Such fields **MUST** either be declared as an open `type: string` annotated with `x-extensible-enum` (carrying the known values), or define an explicit fallback member (e.g., `UNKNOWN`) that conforming clients map unrecognised values to.\nTruly fixed value sets (e.g., ISO-defined codes) **MAY** remain closed enums."
+  text: "Fields whose value set is expected to grow **MUST NOT** be declared as a closed OpenAPI `enum`, because client code generated from a closed enum typically rejects values added later, which would make the \"adding enum values is non-breaking\" guarantee of §18.3 false in practice. Such fields **MUST** either be declared as an open `type: string` annotated with `x-extensible-enum` (carrying the known values), or define an explicit fallback member (e.g., `UNKNOWN`) that conforming clients map unrecognised values to.\nTruly fixed value sets (e.g., ISO-defined codes) **MAY** remain closed enums.\nRequest-only field-selection and sort-key vocabularies **MAY** use closed enums: adding an accepted input value does not require an existing client to send it. This exemption does not apply to a schema also emitted in a response or event, where consumers still need the forward-compatible handling above."
 - id: "9.10"
   title: "GovStack extension prefix"
   class: M+R
@@ -708,7 +726,7 @@ rules:
   surface: Universal
   page: part-c/9-json-conventions-and-naming.md
   anchor: 910-govstack-extension-prefix
-  text: "GovStack-defined specification extensions on OpenAPI or AsyncAPI documents **MUST** be prefixed `x-govstack-` (for example, `x-govstack-deprecated` in §18.7, and `x-govstack-api-guide` in §20.3). A prefix rule does not create or standardise an extension; each GovStack extension still requires an explicit schema and governing rule.\nAn extension owned by one BB **MAY** use the more specific prefix `x-govstack-{bb-code}`, where `{bb-code}` is the BB's registered code (§9.11). The BB **MAY** express its value schema as a published JSON Schema and identify its governing rule through a citation to the BB requirement. These are optional conventions for satisfying the existing schema and governance requirement; other `x-govstack-` names remain permitted."
+  text: "GovStack-defined specification extensions on OpenAPI or AsyncAPI documents **MUST** be prefixed `x-govstack-` (for example, `x-govstack-deprecated` in §18.7, `x-govstack-api-guide` in §20.3, and `x-govstack-use-case` and `x-govstack-pii` in §4.7). A prefix rule does not create or standardise an extension; each GovStack extension still requires an explicit schema and governing rule.\nAn extension owned by one BB **MAY** use the more specific prefix `x-govstack-{bb-code}`, where `{bb-code}` is the BB's registered code (§9.11). The BB **MAY** express its value schema as a published JSON Schema and identify its governing rule through a citation to the BB requirement. These are optional conventions for satisfying the existing schema and governance requirement; other `x-govstack-` names remain permitted."
 - id: "9.11"
   title: "Single registered BB code"
   class: M+R
@@ -764,14 +782,14 @@ rules:
   anchor: 105-e164-phone-numbers
   text: "Phone numbers **MUST** be E.164 strings."
 - id: "10.6"
-  title: "RFC 5322 email addresses"
+  title: "Email addresses"
   class: M+R
   level: MUST
   kinds: ["read", "write", "events"]
   surface: Universal
   page: part-c/10-data-types-and-formats.md
   anchor: 106-rfc-5322-email-addresses
-  text: "Email addresses **MUST** be RFC 5322 strings, declared as `format: email`."
+  text: "Email addresses **MUST** be strings declared as `format: email`, using the RFC 5321 `Mailbox` syntax defined by the JSON Schema 2020-12 `email` format.\nDisplay names belong in separate fields, not in the email address value."
 - id: "10.7"
   title: "Binary uploads and base64 payloads"
   class: M+R
@@ -825,7 +843,7 @@ rules:
   surface: Universal
   page: part-c/11-errors.md
   anchor: 111-rfc-9457-problem-details
-  text: "HTTP `4xx` and `5xx` responses **MUST** use media type `application/problem+json` and the RFC 9457 Problem Details model (RFC 9457 obsoletes RFC 7807 and retains this media type). This rule **MUST NOT** be represented as an RFC 9457 requirement on a non-HTTP message; §11.6 defines the separate asynchronous model."
+  text: "HTTP `4xx` and `5xx` responses, including fallback errors declared with `default` under §7.14, **MUST** declare response content using media type `application/problem+json` and the RFC 9457 Problem Details model (RFC 9457 obsoletes RFC 7807 and retains this media type), except where HTTP prohibits response content. A `HEAD` response **MUST NOT** declare content; its applicable error statuses are still declared under §7.13 and §7.14. This rule **MUST NOT** be represented as an RFC 9457 requirement on a non-HTTP message; §11.6 defines the separate asynchronous model."
 - id: "11.2"
   title: "Stable HTTP problem type URI"
   class: M+R
@@ -834,7 +852,7 @@ rules:
   surface: Universal
   page: part-c/11-errors.md
   anchor: 112-stable-http-problem-type-uri
-  text: "Standard RFC 9457 fields `type`, `title`, and `status` **MUST** be present in every GovStack HTTP problem. `type` **MUST** be the sole machine identifier for the problem and **MUST** use `https://govstack.global/problems/{bb-code}/{problem-slug}`. `{bb-code}` is the registered code from §9.11; `{problem-slug}` **MUST** be stable kebab-case, for example `bad-request`, `invalid-field`, or `internal-error`. A GovStack HTTP Problem **MUST NOT** add a duplicate machine identifier such as `code`. `status` **MUST** equal the actual HTTP response status. The spec **MUST** declare that these fields carry no personal data and no system-internal details such as stack traces, hostnames, or query fragments. HTTP problems **MUST NOT** add a `timestamp`; use response metadata and trace correlation for occurrence diagnostics.\nThe URI **SHOULD** dereference to human-readable documentation. `detail` and `instance` **SHOULD** be present when they add diagnostic value."
+  text: "Standard RFC 9457 fields `type`, `title`, and `status` **MUST** be present in every GovStack HTTP problem. `type` **MUST** be the identifier of the problem and **MUST** use `https://govstack.global/problems/{bb-code}/{problem-slug}`. `{bb-code}` is the registered code from §9.11; `{problem-slug}` **MUST** be stable kebab-case, for example `bad-request`, `invalid-field`, or `internal-error`. A GovStack HTTP Problem **MUST NOT** add a machine identifier other than `type`, except an optional string member named exactly `code` that mirrors a machine code already defined by a documented BB domain model or an adopted external standard. `code` **MUST NOT** be the only way to distinguish two problems that share the same `type`, and a specification **MUST NOT** require clients to read `code` to interpret the problem. `status` **MUST** equal the actual HTTP response status. The spec **MUST** declare that these fields carry no personal data and no system-internal details such as stack traces, hostnames, or query fragments. HTTP problems **MUST NOT** add a `timestamp`; use response metadata and trace correlation for occurrence diagnostics.\nThe URI **SHOULD** dereference to human-readable documentation. `detail` and `instance` **SHOULD** be present when they add diagnostic value.\nHTTP status describes the outcome of the current request; domain status describes the underlying business process. A successful status lookup can return `200` with a failed payment or job state, and a callback reporting that state can be acknowledged successfully. Domain codes in those representations remain business data. Failure of the current request uses an appropriate HTTP error status and the Problem Details contract in §11.1."
 - id: "11.3"
   title: "Trace identifier"
   class: M
@@ -843,7 +861,7 @@ rules:
   surface: Universal
   page: part-c/11-errors.md
   anchor: 113-trace-identifier
-  text: "Every GovStack HTTP problem **MUST** include `traceId`, containing the W3C trace-id defined by §8.4."
+  text: "Every GovStack HTTP problem **MUST** include `traceId`, containing the W3C trace-id defined by §8.4.\nA surface that already publishes a legacy `requestId` or `correlationId` member **MAY** keep it in addition to `traceId`. That member does not replace `traceId`, and a new surface does not introduce it."
 - id: "11.4"
   title: "Field-level errors array"
   class: M+R
@@ -888,7 +906,7 @@ rules:
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 122-cursor-pagination-by-default
-  text: "Default pagination **MUST** be cursor-based, modelled on Google AIP-158, with optional query parameters `pageSize` and `cursor`. The `cursor` name is used in place of AIP-158's `pageToken`. A cursor **MUST** be URL-safe, opaque, and integrity-protected; base64 encoding of a transparent internal value is not sufficient. It **MUST NOT** contain personal data, grant authority, or bypass authorization on a later request. Clients **MUST NOT** parse or construct cursor values, and servers **MUST** re-authorize every page request. Filter and sort arguments on a follow-up request **MUST** equal those that produced the cursor; a mismatch, malformed cursor, or expired cursor **MUST** return `400` with a stable Problem `type`. The specification **MUST** document cursor expiry and a deterministic default order with a unique tie-breaker so concurrent records do not create ambiguous page boundaries.\nA specification **MAY** bind the effective `pageSize` to the traversal and document how omitted or changed values are handled; otherwise the client can change `pageSize` between requests.\nCursor pagination defines continuation, not an implementation technique or a snapshot guarantee. A cursor can wrap an upstream continuation token or refer to adapter-managed state. The operation description can state whether traversal observes a live collection or a snapshot and how concurrent changes affect results. Supporting a deterministic default order does not require caller-selectable sorting."
+  text: "Default pagination **MUST** be cursor-based, modelled on Google AIP-158, with optional query parameters `pageSize` and `cursor`. The `cursor` name is used in place of AIP-158's `pageToken`. A cursor **MUST** be URL-safe, opaque, and integrity-protected; base64 encoding of a transparent internal value is not sufficient. It **MUST NOT** contain personal data, grant authority, or bypass authorization on a later request. Clients **MUST NOT** parse or construct cursor values, and servers **MUST** re-authorize every page request. Filter and sort arguments on a follow-up request **MUST** equal those that produced the cursor; a mismatch, malformed cursor, or expired cursor **MUST** return `400` with a stable Problem `type`. The specification **MUST** document cursor expiry and a deterministic default order with a unique tie-breaker so concurrent records do not create ambiguous page boundaries.\nA specification **MAY** bind the effective `pageSize` to the traversal and document how omitted or changed values are handled; otherwise the client can change `pageSize` between requests.\n§12.6 describes offset pagination, the alternative an operation can use instead when its backing source supports stable offsets.\nCursor pagination defines continuation, not an implementation technique or a snapshot guarantee. A cursor can wrap an upstream continuation token or refer to adapter-managed state. The operation description can state whether traversal observes a live collection or a snapshot and how concurrent changes affect results. Supporting a deterministic default order does not require caller-selectable sorting."
 - id: "12.3"
   title: "Cursor pagination envelope"
   class: M
@@ -915,7 +933,7 @@ rules:
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 125-optional-total-count
-  text: "`total` **MAY** be omitted when computing it is expensive."
+  text: "`total` **MAY** be omitted when computing it is expensive. This applies to both the cursor envelope of §12.3 and the offset envelope of §12.6."
 - id: "12.6"
   title: "Offset pagination envelope"
   class: M+R
@@ -924,7 +942,7 @@ rules:
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 126-offset-pagination-envelope
-  text: "Where offset pagination is used, the envelope **MUST** be the flat shape `{ items, offset, limit, total }`, distinct from the cursor `pageInfo` envelope in §12.3; `total` is required here (unlike §12.3, where it is optional).\nOffset pagination **MAY** be used for admin or fixed-size lists."
+  text: "Where offset pagination is used, the envelope **MUST** be the flat shape `{ items, offset, limit, total? }`, distinct from the cursor `pageInfo` envelope in §12.3. `total` is optional under §12.5; when it is omitted, the specification **MUST** state so, and a page holding fewer than `limit` items, including an empty page, ends traversal.\nAn operation **MAY** use offset pagination instead of cursor pagination when its backing source supports stable offsets and the specification documents the choice. An operation supports exactly one pagination contract; clients do not negotiate between the two envelopes."
 - id: "12.7"
   title: "Sort parameter convention"
   class: M
@@ -942,7 +960,7 @@ rules:
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 128-simple-equality-filtering
-  text: "A filter containing personal data or another value prohibited from URLs by §8.6 **MUST NOT** use a query parameter and **MUST** use a documented body-based search contract such as §12.9.\nSimple equality filtering on non-personal, non-secret fields **SHOULD** use one query parameter per field. Filter parameters do not reuse `pageSize`, `cursor`, or `sort`, which keep their pagination and sorting meaning; a field with one of those names uses another documented parameter name."
+  text: "A filter containing personal data or another value prohibited from URLs by §8.6 **MUST NOT** use a query parameter and **MUST** use a documented body-based search contract such as §12.9.\nSimple equality filtering on non-personal, non-secret fields **SHOULD** use one query parameter per field. Filter parameters do not reuse `pageSize`, `cursor`, `offset`, `limit`, `sort`, or `fields`, which keep their pagination, sorting, and field-selection meaning; a field with one of those names uses another documented parameter name."
 - id: "12.9"
   title: "Complex filtering via search"
   class: M+R
@@ -951,16 +969,16 @@ rules:
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 129-complex-filtering-via-search
-  text: "When a body-based search is used, pagination parameters (`pageSize`, `cursor`) **MUST** be carried in the request body, and the response **MUST** use the §12.3 envelope. A follow-up request **MUST** retain the same search criteria and sort values as the request that produced its cursor.\nComplex filtering and any filtering that contains personal data **SHOULD** use a request body, for example at `POST /v1/policies:search` or `POST /v1/policies/search` per §6.6."
+  text: "When a body-based search is used, its pagination controls **MUST** be carried in the request body: `pageSize` and `cursor` for cursor pagination, or `offset` and `limit` where the operation uses offset pagination under §12.6. The response **MUST** use the matching envelope: §12.3 for cursor pagination, §12.6 for offset pagination. A follow-up request **MUST** retain the same search criteria and sort values as the request that produced its cursor; under offset pagination, each subsequent page request repeats the search criteria and sort values of the first page request.\nComplex filtering and any filtering that contains personal data **SHOULD** use a request body, for example at `POST /v1/policies/search` per §6.6."
 - id: "12.10"
-  title: "Sparse fieldsets out of scope"
-  class: informative
-  level: null
+  title: "Response field selection"
+  class: M+R
+  level: MUST
   kinds: ["read", "write"]
   surface: OpenAPI
   page: part-c/12-pagination-filtering-sorting.md
   anchor: 1210-sparse-fieldsets-out-of-scope
-  text: "Sparse fieldsets (response field selection) are out of scope for v1.0."
+  text: "The query parameter name `fields` is reserved for top-level response field selection and **MUST NOT** be used for any other purpose. An API that supports field selection **MUST** accept `fields` as a comma-separated list of top-level property names of the response representation (for a collection, of each item), **MUST** return the selected properties plus any properties the representation always carries (identifiers and pagination envelope members), and **MUST** return `400` with a stable Problem `type` for an unknown name. Where a representation separates its identifiers and source metadata from a single payload member (for example `{ \"recordId\": ..., \"data\": { ... } }`), the selectable names are the top-level property names of that member, the API **MUST** document which member is selectable, and the identifiers and other envelope members are always returned. Field selection **MUST NOT** widen what the caller is authorised to see (§13), and it does not by itself satisfy data-minimisation obligations.\nAn API **MAY** support `fields`; support is optional in GovStack, and where it is offered it matches the TM Forum first-level `fields` convention. Nested projection and query languages such as JSONPath are out of scope."
 - id: "13.1"
   title: "Default security on every operation"
   class: M
@@ -987,7 +1005,7 @@ rules:
   surface: Universal
   page: part-d/13-authentication-and-authorisation.md
   anchor: 133-distinct-scheme-for-bb-to-bb-calls
-  text: "BB-to-BB operations crossing a service-to-service trust boundary, whether routed directly or through an interoperability mediator, **MUST** declare a distinct security scheme appropriate for service-to-service authentication. On OpenAPI this **MUST** be `type: mutualTLS` or an OAuth client-credentials scheme using confidential-client authentication; on AsyncAPI it **MUST** be `type: X509`, OAuth client credentials, or a documented protocol-specific scheme such as SASL. OAuth access tokens **MUST** be audience-restricted to the intended BB and scope-restricted to the operation. The spec **MUST** distinguish citizen-facing from inter-BB operations.\nSender-constrained access tokens under RFC 8705 or RFC 9449 **SHOULD** be used across an inter-BB trust boundary."
+  text: "BB-to-BB operations crossing a service-to-service trust boundary, whether routed directly or through an interoperability mediator, **MUST** declare a distinct security scheme appropriate for service-to-service authentication. On OpenAPI this **MUST** be `type: mutualTLS` or an OAuth client-credentials scheme using confidential-client authentication; on AsyncAPI it **MUST** be `type: X509`, OAuth client credentials, or a documented protocol-specific scheme such as SASL. OAuth access tokens **MUST** be audience-restricted to the intended BB and scope-restricted to the operation. The spec **MUST** distinguish citizen-facing from inter-BB operations.\nSender-constrained access tokens under RFC 8705 or RFC 9449 **SHOULD** be used across an inter-BB trust boundary.\nWhen the GovStack shared component library (`govstack-openapi-common.yaml`, published from the govstack-api-common repository) defines a service-to-service security scheme and a client-identification header for calls routed through the Information Mediator, a BB specification **SHOULD** reference that shared definition by `$ref`, through its vendored copy under §2.8, instead of defining its own. No such shared definition is published yet; until one is, the BB defines the scheme locally as the first paragraph requires."
 - id: "13.4"
   title: "Namespaced OAuth scopes"
   class: M
@@ -1086,7 +1104,7 @@ rules:
   surface: OpenAPI
   page: part-d/15-asynchronous-operations.md
   anchor: 151-202-with-operation-location
-  text: "Operations that cannot complete synchronously **MUST** return `202 Accepted` with a `Location` header pointing to an Operation resource and **MUST** return the current Operation representation in the response body."
+  text: "Operations that cannot complete synchronously **MUST** return `202 Accepted` with a `Location` header pointing to an Operation resource and, where HTTP permits response content, **MUST** return the current Operation representation in the response body. Such a response **MUST** declare content and a concrete, non-empty schema. A `HEAD` response **MUST NOT** declare content.\nCreating a job or Operation resource that is itself addressable when the response returns is a completed creation, and it uses `201` under §7.2. `202` applies when nothing addressable exists yet beyond the Operation resource that §15.2 describes."
 - id: "15.2"
   title: "Local Operation resource shape"
   class: M+R
@@ -1141,6 +1159,15 @@ rules:
   page: part-d/15-asynchronous-operations.md
   anchor: 157-documented-result-retention
   text: "Operation result availability **SHOULD** be documented as a consumer-visible contract. A reference specification **SHOULD** state the required minimum retention or the configuration parameter that controls it. Concrete retention values belong in implementation profiles."
+- id: "15.8"
+  title: "Per-request callback URL"
+  class: M+R
+  level: MUST
+  kinds: ["write"]
+  surface: OpenAPI
+  page: part-d/15-asynchronous-operations.md
+  anchor: 158-per-request-callback-url
+  text: "When an operation accepts a per-request callback URL (a URL the server calls when the work completes, as opposed to the subscription-managed webhooks of §16), the URL **MUST** be carried in the request body in a property named `callbackUrl`, **MUST** use `https` (§13.7), and **MUST NOT** be carried in a header or query parameter. The OpenAPI operation **MUST** describe the callback request with an OpenAPI `callbacks` object whose runtime expression references that property (`{$request.body#/callbackUrl}`). The callback request body **MUST** be the Operation representation of §15.2 or a CloudEvent (§16) carrying it, and the callback request **MUST** be authenticated under §13, with the mechanism documented in the specification.\nAn operation **MAY** offer a per-request callback as an alternative to polling (§15.4) or to the subscription webhooks of §15.6. Retries and the delivery-failure contract follow §16.10."
 - id: "16.1"
   title: "Event surfaces documented"
   class: M+R
@@ -1176,7 +1203,7 @@ rules:
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 164-stable-cloudevents-source
-  text: "The CloudEvents `source` field **MUST** be a stable, non-empty URI-reference identifying the publishing BB or BB surface. It **MUST NOT** identify a specific deployment host, pod, broker, queue, or environment.\nAn absolute URI or URN **SHOULD** be used."
+  text: "The CloudEvents `source` field **MUST** be a stable, non-empty URI-reference identifying the context in which the event happened. A stable logical authority, tenant, deployment, or environment is a valid source context. An ephemeral runtime instance or transport intermediary, such as a replaceable pod replica or delivery queue, **MUST NOT** be used unless it is itself the context whose occurrence the event describes. A hostname, IP address, or port is not by itself evidence that a source is unstable.\nAn absolute URI, including a URN, **SHOULD** be used. Producers that share one `source` **MUST** coordinate their `id` values so that each distinct event has a unique `source` and `id` pair. Schema checks can validate pinned or example values as non-empty URI-references, but whether an identity is stable and denotes the occurrence context requires human review."
 - id: "16.5"
   title: "Optional signed event delivery"
   class: R
@@ -1221,7 +1248,7 @@ rules:
   surface: Event-driven
   page: part-d/16-cloudevents-and-webhooks.md
   anchor: 169-readiness-for-a-shared-signature-profile
-  text: "A shared signature profile is outside the baseline. It should be considered only after key discovery, key rotation, replay-window enforcement, protocol mappings, conformance test vectors, and interoperable implementations in at least two commonly used GovStack implementation languages exist. Operational signing controls remain outside this guide (§1.2)."
+  text: "(informative) A shared signature profile is outside the baseline. It should be considered only after key discovery, key rotation, replay-window enforcement, protocol mappings, conformance test vectors, and interoperable implementations in at least two commonly used GovStack implementation languages exist. Operational signing controls remain outside this guide (§1.2)."
 - id: "16.10"
   title: "Documented delivery-failure contract"
   class: R
@@ -1428,7 +1455,7 @@ rules:
   surface: Universal
   page: part-d/18-compatibility-and-lifecycle.md
   anchor: 181-semver-versioning
-  text: "`info.version` **MUST** follow SemVer and identify the version of that surface's published contract, not the implementation version. When a surface also exposes a major version in a path, channel, or protocol field, the two **MUST** agree. An implementation may therefore be at `0.16.3` while the contract it serves is at `1.4.0`."
+  text: "`info.version` **MUST** follow SemVer and identify the version of that surface's published contract, not the implementation version. When a surface also exposes a major version in a path, channel, or protocol field, the two **MUST** agree. An implementation may therefore be at `0.16.3` while the contract it serves is at `1.4.0`.\nThe GovStack Specification Framework (CFR §5.2.2) versions the specification document that contains a BB's requirements. In this guide that document version is independent from `info.version`, which versions the API contract. A specification release **SHOULD** record which `info.version` of each surface it ships with, for example in `api/index.yaml` or in the release notes, so that readers can relate the two numbers."
 - id: "18.2"
   title: "Major version in path or channel"
   class: M
@@ -1464,7 +1491,7 @@ rules:
   surface: Universal
   page: part-d/18-compatibility-and-lifecycle.md
   anchor: 185-deprecation-and-sunset-headers
-  text: "Deprecated HTTP endpoints **MUST** return a `Deprecation` header per RFC 9745 (a Structured Field date carrying the deprecation timestamp, for example `Deprecation: @1735689600`) and a `Link` with relation `deprecation` pointing to migration documentation. When removal is planned, they **MUST** additionally return a `Sunset` header per RFC 8594; its timestamp **MUST NOT** precede the deprecation timestamp. The GovStack governance process owns the minimum deprecation window and maximum number of concurrent major versions."
+  text: "Deprecated HTTP endpoints **MUST** return a `Deprecation` header per RFC 9745 (a Structured Field date carrying the deprecation timestamp, for example `Deprecation: @1735689600`) and a `Link` with relation `deprecation` pointing to migration documentation. When removal is planned, they **MUST** additionally return a `Sunset` header per RFC 8594; its timestamp **MUST NOT** precede the deprecation timestamp. The GovStack governance process owns the minimum deprecation window and maximum number of concurrent major versions.\nAn incompatible security correction still follows §18.4. When continued operation presents an unacceptable security risk, the responsible authority determines whether immediate retirement is justified under GovStack governance; this guide sets no requirement to keep an unsafe endpoint running until a replacement major exists. Retirement calls for direct notification to affected operators and migration guidance, with the headers above where the old endpoint still responds. Those headers do not replace operational communication."
 - id: "18.6"
   title: "Clients ignore unknown fields"
   class: informative
@@ -1491,7 +1518,7 @@ rules:
   surface: Universal
   page: part-e/19-localisation.md
   anchor: 191-honour-the-request-language
-  text: "Localisable content (error `title`/`detail`, enum display labels, free-text status messages) **MUST** respect the request language header appropriate to the surface: `Accept-Language` for HTTP, `acceptLanguage` for AsyncAPI messages."
+  text: "Localisable content (error `title`/`detail`, enum display labels, free-text status messages) **MUST** respect the request language header appropriate to the surface: `Accept-Language` for HTTP, `acceptLanguage` for AsyncAPI messages.\nA deployment offering one language satisfies this rule by declaring that supported language as its default under §19.3 and identifying it in responses under §19.4. A request for an unsupported language uses that declared fallback; it does not require translation into a language the deployment does not offer."
 - id: "19.2"
   title: "Never translate stable content"
   class: R
@@ -1536,7 +1563,7 @@ rules:
   surface: Universal
   page: part-e/20-conformance-and-validation.md
   anchor: 202-passes-the-govstack-spectral-ruleset
-  text: "Every BB API spec, including each example contract, **MUST** pass the exact GovStack Spectral ruleset version declared under §20.3 for the machine-checkable rules applicable to its surface. The machine-checkable rules are those tagged `[M]`, together with the mechanical portion of `[M+R]` rules (§1.9). Ruleset `0.2.0-draft` **MUST** cover the OpenAPI, CloudEvents, and AsyncAPI documentation rules recorded in its coverage manifest. Validation **MUST** fail when the declared ruleset artifact is unavailable or differs from the exact declared version; tooling **MUST NOT** select “latest” or fall back by major/minor compatibility.\nThe ruleset and `rules.yaml` are the reference expressions of the rules (§1.5). A finding that appears to contradict a page is a defect in the guide: report it so that the page or the ruleset is corrected by erratum, rather than editing the ruleset locally."
+  text: "Every BB API spec, including each example contract, **MUST** pass the exact GovStack Spectral ruleset version declared under §20.3 for the machine-checkable rules applicable to its surface. The automated checks and their limits are described in the per-rule Verification details (§1.9) and the coverage manifest. Ruleset `0.3.0-draft` **MUST** cover the OpenAPI, CloudEvents, and AsyncAPI documentation rules recorded in its coverage manifest. Validation **MUST** fail when the declared ruleset artifact is unavailable or differs from the exact declared version; tooling **MUST NOT** select “latest” or fall back by major/minor compatibility.\nThe ruleset and `rules.yaml` are the reference expressions of the rules (§1.5). A finding that appears to contradict a page is a defect in the guide: report it so that the page or the ruleset is corrected by erratum, rather than editing the ruleset locally."
 - id: "20.3"
   title: "Declared guide conformance version"
   class: M
@@ -1545,4 +1572,4 @@ rules:
   surface: Universal
   page: part-e/20-conformance-and-validation.md
   anchor: 203-declared-guide-conformance-version
-  text: "Each canonical specification file and example contract **MUST** declare the exact guide and ruleset versions it targets in the `info`-level `x-govstack-api-guide` object using `version` and `rulesetVersion`, each an exact SemVer value rather than a range. For this draft both values **MUST** be `0.2.0-draft`. An optional `exceptions` array **MUST** contain objects with exactly these fields: `rule` (guide rule ID), `scope` (RFC 6901 JSON Pointer into the declaring document), `rationale` (non-empty explanation), `record` (absolute HTTPS URI for the approved public record), `reviewedBy` (non-empty approving authority), `reviewedAt` (calendar date `YYYY-MM-DD`), and `expiresAt` (calendar date `YYYY-MM-DD`). An exception **MUST** suppress only its named rule at or below its declared scope. An expired entry, invalid field, or exception not approved under §1.6 **MUST** fail validation rather than suppress the rule. Offline validation **MUST NOT** require dereferencing the record URI."
+  text: "Each canonical specification file and example contract **MUST** declare the exact guide and ruleset versions it targets in the `info`-level `x-govstack-api-guide` object using `version` and `rulesetVersion`, each an exact SemVer value rather than a range. For this draft both values **MUST** be `0.3.0-draft`. An optional `profile` member **MUST** be either `standard` (the default when absent) or `legacy`, and validation tooling **MUST** reject any other value. A surface **MUST NOT** declare `legacy` unless it was published before its BB first pinned this guide and remains on that same major version under §1.10; a new surface or a new major version **MUST NOT** declare it. An optional `exceptions` array **MUST** contain objects with exactly these fields: `rule` (guide rule ID), `scope` (RFC 6901 JSON Pointer into the declaring document), `rationale` (non-empty explanation), `record` (absolute HTTPS URI for the approved public record), `reviewedBy` (non-empty approving authority), `reviewedAt` (calendar date `YYYY-MM-DD`), and `expiresAt` (calendar date `YYYY-MM-DD`). An exception **MUST** suppress only its named rule at or below its declared scope. An expired entry, invalid field, or exception not approved under §1.6 **MUST** fail validation rather than suppress the rule. Offline validation **MUST NOT** require dereferencing the record URI.\nDeclaring `profile: legacy` records that the ruleset's legacy profile reports wire-contract rules (paths, names, headers, status codes, envelopes, security schemes under §13.2 to §13.6, event addresses) at informational severity for that surface, while documentation rules (file layout, metadata, descriptions, examples, security declarations under §13.1, and this declaration) stay enforced. It is the machine-readable form of the transition in §1.10: the wire-contract gaps are closed in the next major version, where the declaration is dropped."

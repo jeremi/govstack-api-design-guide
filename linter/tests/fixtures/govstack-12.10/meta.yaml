@@ -1,0 +1,5 @@
+# fail.yaml: array-typed fields with default (exploded) serialisation, enum
+# view switch, required fields, a conforming fields parameter on an operation
+# without a 400 response, an explicitly exploded array, and an array of
+# non-string items.
+expect_fail_count: 6

@@ -24,3 +24,13 @@ paths:
           description: OK
         '500':
           description: Internal Server Error
+    head:
+      operationId: headThing
+      summary: Check a thing
+      description: Returns the headers of a single thing.
+      tags: [things]
+      responses:
+        '200':
+          description: OK
+        '500':
+          description: Internal Server Error

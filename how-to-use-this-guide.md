@@ -4,7 +4,7 @@ description: "Entry points by audience and guidance for reviewing the draft."
 
 # How to use this guide
 
-The guide is written for lookup, not end-to-end reading ([§1.4](1-introduction.md#14-audience)). Every rule has its own heading and a stable deep link, an identifier like **9.2**, an enforcement badge (**[M]** machine-checkable, **[R]** review, **[M+R]** both; see [§1.9](1-introduction.md#19-rule-enforcement-classes)), and RFC 2119 keywords in the body.
+The guide is written for lookup, not end-to-end reading ([§1.4](1-introduction.md#14-audience)). Every rule has its own heading and a stable deep link, an identifier like **9.2**, verification details describing the current checks and their limits (see [§1.9](1-introduction.md#19-rule-enforcement-classes)), and RFC 2119 keywords in the body.
 
 ## What a BB publishes <a href="#what-a-bb-publishes" id="what-a-bb-publishes"></a>
 
@@ -15,7 +15,11 @@ Conformance to this guide comes down to a short list of artifacts in the BB repo
 3. An `info.x-govstack-api-guide` block in each canonical file pinning the exact guide and ruleset versions ([§20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version)).
 4. A clean run of the linter ([§20.2](part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset)):
 
+Requires Node.js 20 or newer, npm, and the base validator for each declared API surface. For OpenAPI, install Python and uv; both validator executables must be available on `PATH` when their surface is used. The first two commands below are one-time setup for the applicable surfaces; `npm ci` installs only the linter dependencies.
+
 ```bash
+uv tool install openapi-spec-validator==0.9.0  # OpenAPI surfaces
+npm install --global @asyncapi/cli@6.0.2       # AsyncAPI surfaces
 cd api-design-guide/linter && npm ci && node cli.mjs --repo-root ../..
 ```
 

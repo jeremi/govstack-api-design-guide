@@ -14,18 +14,52 @@ description: "Rules governing localisation of API content: request-language hand
 
 ## 19.1 Honour the request language <a href="#191-honour-the-request-language" id="191-honour-the-request-language"></a>
 
-**[R]** Localisable content (error `title`/`detail`, enum display labels, free-text status messages) **MUST** respect the request language header appropriate to the surface: `Accept-Language` for HTTP, `acceptLanguage` for AsyncAPI messages.
+<!-- rule-class: R -->
+
+Localisable content (error `title`/`detail`, enum display labels, free-text status messages) **MUST** respect the request language header appropriate to the surface: `Accept-Language` for HTTP, `acceptLanguage` for AsyncAPI messages.
+
+A deployment offering one language satisfies this rule by declaring that supported language as its default under [§19.3](#193-declared-default-language) and identifying it in responses under [§19.4](#194-declare-the-response-language). A request for an unsupported language uses that declared fallback; it does not require translation into a language the deployment does not offer.
+
+<!-- verification:start -->
+**Verification:** Runtime verification required; outside the specification linter.
+
+honouring request language runtime
+<!-- verification:end -->
 
 ## 19.2 Never translate stable content <a href="#192-never-translate-stable-content" id="192-never-translate-stable-content"></a>
 
-**[R]** Stable content (HTTP Problem `type`, transport-neutral asynchronous error `code`, enum values, identifiers, timestamps, currency codes) **MUST NOT** be translated.
+<!-- rule-class: R -->
+
+Stable content (HTTP Problem `type`, transport-neutral asynchronous error `code`, enum values, identifiers, timestamps, currency codes) **MUST NOT** be translated.
+
+<!-- verification:start -->
+**Verification:** Runtime verification required; outside the specification linter.
+
+not translating stable content runtime
+<!-- verification:end -->
 
 ## 19.3 Declared default language <a href="#193-declared-default-language" id="193-declared-default-language"></a>
 
-**[R]** The specification **MUST** declare its default response language.
+<!-- rule-class: R -->
+
+The specification **MUST** declare its default response language.
 
 English **SHOULD** be used as the cross-border fallback when deployment policy or law does not select another default.
 
+<!-- verification:start -->
+**Verification:** Review or evidence assessment required.
+
+review the declared default response language for HTTP and event specifications; English is advisory where deployment policy or law does not select another default
+<!-- verification:end -->
+
 ## 19.4 Declare the response language <a href="#194-declare-the-response-language" id="194-declare-the-response-language"></a>
 
-**[M+R]** Responses or messages with localised content **MUST** include the response language header appropriate to the surface: `Content-Language` for HTTP, `contentLanguage` for AsyncAPI messages.
+<!-- rule-class: M+R -->
+
+Responses or messages with localised content **MUST** include the response language header appropriate to the surface: `Content-Language` for HTTP, `contentLanguage` for AsyncAPI messages.
+
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
+
+proxy: localised responses declare Content-Language/contentLanguage header
+<!-- verification:end -->

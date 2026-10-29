@@ -1,0 +1,14 @@
+openapi: 3.1.0
+info:
+  title: External schema type check
+  version: 1.0.0
+paths:
+  /records:
+    get:
+      responses:
+        "200":
+          description: Records
+          content:
+            application/json:
+              schema:
+                $ref: ./external-schema.yaml#/$defs/Record

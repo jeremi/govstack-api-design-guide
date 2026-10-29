@@ -1,13 +1,29 @@
 # Rules for §20 conformance and validation — generated from the guide; see coverage.yaml.
 #
 # Implements guide rule 20.3 (the info.x-govstack-api-guide conformance
-# declaration). Source text: ../../rules.yaml. 20.1 (run the OpenAPI/AsyncAPI
-# schema validator) and 20.2 (meta/self-referential governance of the ruleset
-# itself) are driver/CI and human territory respectively, out of scope here.
+# declaration), plus an exact OpenAPI Schema Object `type` check supporting
+# the 20.1 validation contract. Source text: ../../rules.yaml. The complete
+# validator run for 20.1 and 20.2's meta/self-referential governance remain
+# driver/CI and human territory respectively.
 functionsDir: "../functions"
 functions:
   - extensionShape
+  - schemaTypes
 rules:
+  # 20.1 [M] — exact guard for a validation gap in Spectral's base OpenAPI
+  # rules: Schema Object `type` values must use JSON Schema primitive names.
+  # The function receives the document so it checks only schema positions and
+  # can defer explicit unsupported custom dialects to their own validator.
+  govstack-20.1-schema-types:
+    description: "OpenAPI Schema Object type keywords must use valid JSON Schema primitive names (guide 20.1, [M])."
+    message: "[20.1][M] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-e/20-conformance-and-validation.md#201-every-file-passes-validation
+    severity: error
+    formats: [oas3_1]
+    given: $
+    then:
+      function: schemaTypes
+
   # 20.3 [M] — info.x-govstack-api-guide MUST be an object with exact-target
   # SemVer `version` and `rulesetVersion`. Exact supported-version matching is
   # enforced by the repository driver. Surface: Universal, so this applies to both OpenAPI and

@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Payments Events API
   version: 1.0.0
-  description: CloudEvents source points at a deployment host/env/port.
+  description: CloudEvents source is not a valid non-empty URI-reference.
   contact:
     name: Sample BB Team
     url: https://example.org/contact
@@ -24,7 +24,8 @@ webhooks:
                 source:
                   type: string
                   examples:
-                    - "https://pay-prod-eu1.internal:8443/events"
+                    - ""
+                    - "https://agency.gov.example/source with space"
                 type:
                   type: string
                   const: "global.govstack.payments.payment.completed"

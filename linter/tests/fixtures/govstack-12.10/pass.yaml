@@ -1,0 +1,91 @@
+openapi: 3.1.0
+info:
+  title: Fixture API
+  version: 1.0.0
+  description: Fixture for govstack-12.10.
+  contact: {}
+paths:
+  /v1/foos/{id}:
+    get:
+      operationId: getFoo
+      summary: Get a record
+      description: Get a record with optional field selection.
+      tags: [foos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: fields
+          in: query
+          description: Comma-separated top-level property names to return.
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object }
+        '400':
+          description: Unknown field name.
+          content:
+            application/problem+json:
+              schema: { type: object }
+  /v1/quxs/{id}:
+    get:
+      operationId: getQux
+      summary: Get a record
+      description: Get a record with optional field selection.
+      tags: [foos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: '#/components/parameters/QuxFields'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object }
+        '400':
+          description: Unknown field name.
+          content:
+            application/problem+json:
+              schema: { type: object }
+  /v1/bars/{id}:
+    get:
+      operationId: getBar
+      summary: Get a record
+      description: Get a record with optional field selection.
+      tags: [foos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object }
+components:
+  parameters:
+    QuxFields:
+      name: fields
+      in: query
+      description: Comma-separated top-level property names to return.
+      style: form
+      explode: false
+      schema:
+        $ref: '#/components/schemas/QuxFields'
+  schemas:
+    QuxFields:
+      allOf:
+        - type: array
+          minItems: 1
+          items: { type: string }
+        - type: array
+          items: { type: string, enum: [name, status] }

@@ -2,7 +2,7 @@ import { isObject } from './lib/util.js';
 
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
 
-// Path segments that identify an operational (health-like) endpoint per §5.9.
+// Path segments that identify an operational (health-like) endpoint for the §13.6 proxy.
 const OPERATIONAL = new Set([
   'health', 'healthz', 'live', 'livez', 'ready', 'readyz',
   'metrics', 'ping', 'status', 'startup', 'startupz',
@@ -15,7 +15,7 @@ const OPERATIONAL = new Set([
  * scheme yet is not an operational endpoint.
  *
  * It is a proxy: it cannot decide "reads or writes personal data", so it uses a
- * path heuristic (§5.9 operational names) and flags apiKey use on everything
+ * path heuristic (health-like operational names) and flags apiKey use on everything
  * else. It also cannot see credentials applied outside declared security
  * requirements.
  *

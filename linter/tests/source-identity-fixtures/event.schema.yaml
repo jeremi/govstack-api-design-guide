@@ -1,0 +1,15 @@
+type: object
+required: [specversion, id, source, type, data]
+properties:
+  specversion:
+    const: "1.0"
+  id:
+    type: string
+  source:
+    type: string
+    const: "not a URI reference"
+  type:
+    type: string
+    const: "global.govstack.registry.record.created"
+  data:
+    type: object

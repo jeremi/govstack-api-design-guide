@@ -1,30 +1,31 @@
 # Rules for §15 asynchronous operations — generated from the guide.
 #
-# Implements 15.1 and 15.5, plus the 15.4 polling-path proxy. Operation
+# Implements 15.1 and 15.5, plus the 15.4 polling-path proxy and the 15.8
+# per-request callback URL checks. Operation
 # resource fields and lifecycle states are owned and documented by each BB.
 # Source text: ../../rules.yaml. Severity/formats per ../README.md#rule-naming-and-severities.
 functionsDir: "../functions"
 functions:
-  - responseHeaderRequired
+  - s15-responseContent
   - s15-operationsPolling
   - s15-cancelPath
+  - s15-callbackUrl
 rules:
   # 15.1 [M+R] — operations that cannot complete synchronously MUST return 202
-  # with a Location header. Mechanically: every 202 response declares a Location
-  # header. That the Location "points to an Operation resource" is a runtime
-  # value and is not verified here.
+  # with an Operation response body. Mechanically: every non-HEAD 202 response
+  # has at least one media type and each declared media type has a concrete,
+  # non-empty schema. HEAD is the HTTP no-body exception, and declaring content
+  # there is rejected. Rule 7.3 owns the separate Location-header requirement,
+  # avoiding duplicate diagnostics for one missing header.
   govstack-15.1:
-    description: "every 202 response must declare a Location header (guide 15.1, [M+R])."
+    description: "every non-HEAD 202 response must declare content with a concrete schema (guide 15.1, [M+R])."
     message: "[15.1][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#151-202-with-operation-location
     severity: error
     formats: [oas3_1]
-    given: "$.paths[*][get,put,post,delete,patch].responses"
+    given: $
     then:
-      function: responseHeaderRequired
-      functionOptions:
-        status: "202"
-        headers: [Location]
+      function: s15-responseContent
 
   # 15.4 [M+R] — PROXY (bucket B), notched to warn.
   # Verifies: when the Operations pattern is used (an Operation schema or an
@@ -57,3 +58,53 @@ rules:
     given: $.paths
     then:
       function: s15-cancelPath
+
+  # 15.8 [M+R]: PROXY, MUST notched to warn. A per-request callback URL MUST
+  # NOT travel in a header or query parameter. Verifies: no header or query
+  # parameter (operation, path item, or components.parameters) has a name
+  # matching /callback/i. The name match is the proxy: it does NOT detect a
+  # callback URL carried under an unrelated parameter name.
+  govstack-15.8:
+    description: "callback URLs must not be carried in a header or query parameter (guide 15.8, [M+R], proxy)."
+    message: "[15.8][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#158-per-request-callback-url
+    severity: warn
+    formats: [oas3_1]
+    given: $
+    then:
+      function: s15-callbackUrl
+      functionOptions: { mode: placement }
+
+  # 15.8 [M+R]: an operation whose request body declares `callbackUrl` MUST
+  # describe the callback with an OpenAPI `callbacks` object. Deterministic on
+  # the exact property name, hence error. §16 subscription paths are exempt:
+  # their `callbackUrl` is the subscription webhook target, not a per-request
+  # callback. Does NOT verify: that the callback runtime expression references
+  # {$request.body#/callbackUrl}, the callback body (Operation or CloudEvent),
+  # or the callback's authentication.
+  govstack-15.8-callbacks:
+    description: "operations accepting a callbackUrl must declare an OpenAPI callbacks object (guide 15.8, [M+R])."
+    message: "[15.8][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#158-per-request-callback-url
+    severity: error
+    formats: [oas3_1]
+    given: $
+    then:
+      function: s15-callbackUrl
+      functionOptions: { mode: callbacks }
+
+  # 15.8 [M+R]: PROXY, MUST notched to warn. The callback URL MUST use https;
+  # the proxy checks that a request body `callbackUrl` declares format: uri.
+  # Does NOT verify the https scheme (neither format: uri nor a pattern proves
+  # what a caller sends; that is runtime validation). §16 subscription paths
+  # are exempt, as above.
+  govstack-15.8-format:
+    description: "a request body callbackUrl should declare format: uri (guide 15.8, [M+R], proxy)."
+    message: "[15.8][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#158-per-request-callback-url
+    severity: warn
+    formats: [oas3_1]
+    given: $
+    then:
+      function: s15-callbackUrl
+      functionOptions: { mode: format }

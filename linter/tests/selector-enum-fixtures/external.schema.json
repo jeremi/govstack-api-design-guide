@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "RequestFields": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["policyName", "effectiveDate"]
+      }
+    },
+    "SharedSort": {
+      "type": "string",
+      "enum": ["effectiveDate", "-effectiveDate"]
+    }
+  }
+}

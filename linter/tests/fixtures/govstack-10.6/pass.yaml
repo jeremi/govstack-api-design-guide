@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Sample API
   version: 1.0.0
-  description: Fixture for govstack-10.6 (RFC 5322 email addresses).
+  description: Fixture for govstack-10.6 (RFC 5321 Mailbox email addresses).
   contact:
     name: Sample BB Team
 paths:

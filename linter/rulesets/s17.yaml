@@ -9,6 +9,7 @@
 functionsDir: "../functions"
 functions:
   - valuePattern
+  - s16-eventSources
   - s17-channelIds
   - schemaPropertyNames
   - s17-channelParameters
@@ -96,6 +97,25 @@ rules:
     given: $.components.messages[*]
     then:
       function: s17-cloudEventsPayload
+
+  # 16.4 [M+R]: PARTIAL PROXY (bucket B), notched MUST -> warn.
+  # Applies the same pinned-value URI-reference shape check as the OpenAPI
+  # webhook surface. Stability and occurrence-context semantics require review.
+  govstack-16.4-async:
+    description: "Pinned CloudEvents source values must be non-empty URI-references; source stability requires review (guide 16.4, [M+R], partial proxy)."
+    message: "[16.4][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#164-stable-cloudevents-source
+    severity: warn
+    formats: [aas3]
+    given: $
+    then:
+      function: s16-eventSources
+      functionOptions:
+        property: source
+        name: event source
+        sources: [const, enum, default, example, examples]
+        expected: "a non-empty URI-reference with valid percent escapes"
+        match: '^(?!$)(?!.*%(?![0-9A-Fa-f]{2}))[A-Za-z0-9._~:/?#\[\]@!$&''()*+,;=%-]+$'
 
   # 17.7 [M] — Message Objects and conforming event envelopes may remain local.
   # Recognizable bare or wrapped async errors MUST reuse the common error schema.

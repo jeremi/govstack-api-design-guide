@@ -1,0 +1,43 @@
+openapi: 3.1.0
+info:
+  title: Fixture API
+  version: 1.0.0
+  description: Fixture for govstack-15.8-format.
+  contact: {}
+paths:
+  /v1/exports:
+    post:
+      operationId: createExport
+      summary: Start work
+      description: Starts asynchronous work.
+      tags: [exports]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                format: { type: string }
+                callbackUrl:
+                  type: string
+                  format: uri
+                  pattern: "^https://"
+      callbacks:
+        exportCompleted:
+          '{$request.body#/callbackUrl}':
+            post:
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema: { type: object }
+              responses:
+                '204':
+                  description: Callback received.
+      responses:
+        '202':
+          description: Accepted
+          headers:
+            Location:
+              schema: { type: string }

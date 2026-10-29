@@ -4,12 +4,24 @@ description: "The commands to run against a BB's OpenAPI or AsyncAPI file, and a
 
 # Validating your spec
 
+## Prerequisites
+
+The guide driver requires Node.js 20 or newer and npm. It also requires a base
+validator for each declared surface: `openapi-spec-validator` for OpenAPI and
+the `asyncapi` executable from `@asyncapi/cli` for AsyncAPI. Install Python and
+uv for the OpenAPI validator. Ensure the uv tool and npm global executable
+directories are on `PATH`; the driver reports unavailable validators rather
+than treating a skipped validation as success.
+
+The commands below pin the same validator versions as the guide's CI action.
+Installing the linter with `npm ci` does not install these tools.
+
 ## OpenAPI
 
 Install the validator and run it against the canonical entrypoint:
 
 ```bash
-pip install openapi-spec-validator==0.9.0
+uv tool install openapi-spec-validator==0.9.0
 openapi-spec-validator api/openapi.yaml
 ```
 
@@ -18,16 +30,19 @@ This checks that the entrypoint is structurally valid for its declared qualified
 ## AsyncAPI
 
 ```bash
-npx @asyncapi/cli@6.0.2 validate api/asyncapi.yaml
+npm install --global @asyncapi/cli@6.0.2
+asyncapi validate api/asyncapi.yaml
 ```
 
 This checks that the file is a structurally valid AsyncAPI 3 document. It is the mechanical check behind [3.4](../part-a/3-asyncapi-document-standards.md#34-passes-an-asyncapi-validator).
 
 ## The GovStack Spectral ruleset
 
-The exact `0.2.0-draft` ruleset that encodes this guide's `[M]` rules ([20.2](../part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset)) ships at [`linter/`](../linter/README.md). The recommended entrypoint is the driver, which discovers default canonical files or consumes `api/index.yaml`, validates `api/coverage.yaml`, runs the base validators and file-layout checks, lints example contracts under `api/examples/`, and applies [20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) exception handling:
+The exact `0.3.0-draft` ruleset that implements the automated specification checks ([20.2](../part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset)) ships at [`linter/`](../linter/README.md). The recommended entrypoint is the driver, which discovers default canonical files or consumes `api/index.yaml`, validates `api/coverage.yaml`, runs the base validators and file-layout checks, lints example contracts under `api/examples/`, and applies [20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) exception handling:
 
 ```bash
+uv tool install openapi-spec-validator==0.9.0  # OpenAPI surfaces, one-time setup
+npm install --global @asyncapi/cli@6.0.2       # AsyncAPI surfaces, one-time setup
 cd api-design-guide/linter && npm ci
 node cli.mjs --repo-root ../..
 ```
@@ -38,7 +53,7 @@ Or run Spectral directly against the ruleset:
 npx @stoplight/spectral-cli lint -r api-design-guide/linter/ruleset.yaml api/openapi.yaml
 ```
 
-Every finding is prefixed with the guide rule ID it enforces (for example `[7.13][M]`) and links to the rule. Each canonical file must declare `info.x-govstack-api-guide.version: 0.2.0-draft` and `rulesetVersion: 0.2.0-draft`; a missing, unavailable, or different exact version is an error, not a request to use the latest rules. An exception suppresses only the declared `rule` at or below its JSON Pointer `scope`, and only when all governance fields required by [§20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) are valid and unexpired. Offline validation checks the HTTPS record URI syntax but does not dereference it. An opt-in `strict.yaml` adds noisier heuristics; [`linter/coverage.yaml`](../linter/coverage.yaml) records how each guide rule is covered. In CI, the same checks run through `linter/action.yml`.
+Every finding is prefixed with the guide rule ID it enforces (for example `[7.13][M]`) and links to the rule. Each canonical file must declare `info.x-govstack-api-guide.version: 0.3.0-draft` and `rulesetVersion: 0.3.0-draft`; a missing, unavailable, or different exact version is an error, not a request to use the latest rules. An exception suppresses only the declared `rule` at or below its JSON Pointer `scope`, and only when all governance fields required by [§20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) are valid and unexpired. Offline validation checks the HTTPS record URI syntax but does not dereference it. An opt-in `strict.yaml` adds noisier heuristics; [`linter/coverage.yaml`](../linter/coverage.yaml) records how each guide rule is covered. In CI, the same checks run through `linter/action.yml`.
 
 Running `npx @stoplight/spectral-cli lint api/openapi.yaml` *without* `-r` applies only Spectral's generic built-in rules: useful as a quick structural check, but it knows nothing about this guide.
 

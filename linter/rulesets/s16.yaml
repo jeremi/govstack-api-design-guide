@@ -117,14 +117,14 @@ rules:
         expected: "no major-version segment"
         forbidSegments: '^v[0-9]+$'
 
-  # 16.4 [M+R] — PROXY (bucket B), notched MUST/MUST NOT -> warn.
-  # Verifies: the pinned CloudEvents `source` value contains no deployment-host /
-  # environment / pod / broker / queue token (localhost, IPs, ports, .internal,
-  # .svc, .cluster.local, dev/test/staging/prod/... segments).
-  # Does NOT verify: that the source positively identifies the publishing BB in
-  # a "stable" way — only known-unstable tokens are flagged.
+  # 16.4 [M+R]: PARTIAL PROXY (bucket B), notched MUST -> warn.
+  # Verifies: pinned CloudEvents `source` values are non-empty and have the
+  # lexical shape of URI-references, including valid percent escapes.
+  # Does NOT verify: whether the identity is stable or denotes the occurrence
+  # context. Environment names, hostnames, IP addresses, and ports are valid
+  # parts of a stable source identity and are deliberately not guessed at here.
   govstack-16.4:
-    description: "CloudEvents source must be stable, not a deployment host/env/pod/broker/queue (guide 16.4, [M+R], proxy)."
+    description: "Pinned CloudEvents source values must be non-empty URI-references; source stability requires review (guide 16.4, [M+R], partial proxy)."
     message: "[16.4][M+R] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#164-stable-cloudevents-source
     severity: warn
@@ -136,9 +136,8 @@ rules:
         property: source
         name: event source
         sources: [const, enum, default, example, examples]
-        flags: i
-        expected: "it must not identify a specific deployment host, pod, broker, queue, or environment"
-        forbidPattern: '(?:^|[^a-z0-9])(?:dev|test|staging|stage|qa|uat|prod|production|preprod|sandbox|pod|broker|queue)(?:[^a-z0-9]|$)|localhost|\.svc(?:[./]|$)|\.cluster\.local|\.internal(?:[:/]|$)|(?:\d{1,3}\.){3}\d{1,3}|:\d{2,5}(?:/|$)'
+        expected: "a non-empty URI-reference with valid percent escapes"
+        match: '^(?!$)(?!.*%(?![0-9A-Fa-f]{2}))[A-Za-z0-9._~:/?#\[\]@!$&''()*+,;=%-]+$'
 
   # 16.11 [M+R] — PROXY (bucket B), notched MUST -> warn.
   # Verifies: when a subscription surface exists (paths named /subscriptions),

@@ -22,3 +22,11 @@ paths:
       responses:
         '200':
           description: OK
+    head:
+      operationId: headThing
+      summary: Check a thing
+      description: Returns the headers of a single thing.
+      tags: [things]
+      responses:
+        '200':
+          description: OK

@@ -36,12 +36,17 @@ const ARRAY_KEYS = ['allOf', 'anyOf', 'oneOf', 'prefixItems'];
  * @param {unknown} root - a JSON Schema object (anything else is a no-op).
  * @param {(node: object, path: (string|number)[]) => void} visit
  *        Called once per schema node. `path` is relative to `root`.
- * @param {{ maxDepth?: number }} [opts]
+ * @param {{ maxDepth?: number, skipKeys?: string[] }} [opts]
+ *        `skipKeys` names keywords whose subschemas are not descended into,
+ *        for example `['not']` for rules where a negated subschema is an
+ *        exclusion rather than a description of data. A node skipped there is
+ *        still visited if it is also reachable by another path.
  */
 export function walkSchema(root, visit, opts = {}) {
   if (!isObject(root) || typeof visit !== 'function') return;
   const seen = new WeakSet();
   const maxDepth = Number.isInteger(opts.maxDepth) ? opts.maxDepth : 200;
+  const skip = new Set(Array.isArray(opts.skipKeys) ? opts.skipKeys : []);
 
   const recur = (node, path, depth) => {
     if (!isObject(node) || seen.has(node) || depth > maxDepth) return;
@@ -50,19 +55,22 @@ export function walkSchema(root, visit, opts = {}) {
     visit(node, path);
 
     for (const key of MAP_KEYS) {
+      if (skip.has(key)) continue;
       const m = node[key];
       if (isObject(m)) {
         for (const name of Object.keys(m)) recur(m[name], [...path, key, name], depth + 1);
       }
     }
     for (const key of ARRAY_KEYS) {
+      if (skip.has(key)) continue;
       const a = node[key];
       if (Array.isArray(a)) a.forEach((sub, i) => recur(sub, [...path, key, i], depth + 1));
     }
     for (const key of SUBSCHEMA_KEYS) {
+      if (skip.has(key)) continue;
       if (isObject(node[key])) recur(node[key], [...path, key], depth + 1);
     }
-    const items = node.items;
+    const items = skip.has('items') ? undefined : node.items;
     if (Array.isArray(items)) {
       items.forEach((sub, i) => recur(sub, [...path, 'items', i], depth + 1));
     } else if (isObject(items)) {
@@ -78,13 +86,14 @@ export function walkSchema(root, visit, opts = {}) {
  * @param {unknown} root
  * @param {(name: string, propSchema: unknown, path: (string|number)[]) => void} cb
  *        `path` points at the property schema (…/properties/<name>).
+ * @param {{ maxDepth?: number, skipKeys?: string[] }} [opts] passed to walkSchema.
  */
-export function forEachProperty(root, cb) {
+export function forEachProperty(root, cb, opts = {}) {
   if (typeof cb !== 'function') return;
   walkSchema(root, (node, path) => {
     const props = node.properties;
     if (isObject(props)) {
       for (const name of Object.keys(props)) cb(name, props[name], [...path, 'properties', name]);
     }
-  });
+  }, opts);
 }

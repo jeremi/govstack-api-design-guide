@@ -1,6 +1,6 @@
 # Rules for §4 documentation and descriptions — generated from the guide; see coverage.yaml
 #
-# Implements guide rules 4.1, 4.2, 4.3. Source text: ../../rules.yaml.
+# Implements guide rules 4.1, 4.2, 4.3, 4.7. Source text: ../../rules.yaml.
 # Severity policy and formats follow ../README.md#rule-naming-and-severities.
 # 4.4 is STRICT-ONLY and lives in s04-strict.yaml instead.
 #
@@ -13,6 +13,7 @@ functions:
   - schemaDescriptions
   - s04-bodyExamplesEnums
   - s04-noPlaceholderText
+  - s04-operationMetadata
 rules:
   # 4.1 [M] — schema descriptions are conditional/advisory. This heuristic warns
   # on every missing description because semantic obviousness is not decidable.
@@ -66,3 +67,43 @@ rules:
     given: $
     then:
       function: s04-noPlaceholderText
+
+  # 4.7 [M+R]: operation metadata extensions, shape when present (MUST).
+  # Verifies: on OpenAPI operations (paths and webhooks) and AsyncAPI
+  # operations and messages, `x-govstack-use-case` is a non-empty string or a
+  # non-empty array of non-empty strings, and `x-govstack-pii` is a boolean.
+  # Declaring either extension is a MAY, so absence is never flagged.
+  # Does NOT verify: that use-case identifiers name real GovStack use cases or
+  # requirements, or that `x-govstack-pii` truthfully reflects the payload.
+  govstack-4.7:
+    description: "x-govstack-use-case must be a non-empty string or string array and x-govstack-pii a boolean (guide 4.7, [M+R])."
+    message: "[4.7][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#47-operation-metadata-extensions
+    severity: error
+    formats: [oas3_1, aas3]
+    given:
+      - $.paths[*][get,put,post,delete,options,head,patch,trace]
+      - $.webhooks[*][get,put,post,delete,options,head,patch,trace]
+      - $.operations[*]
+      - $.components.messages[*]
+    then:
+      function: s04-operationMetadata
+      functionOptions: { mode: shape }
+
+  # 4.7 [M+R]: an operation marked `x-govstack-pii: true` MUST NOT be
+  # protected by an API key (aligned with 13.6). Verifies: no applicable
+  # security requirement (operation `security`, else document `security`)
+  # references an `apiKey` scheme. Deterministic given the declared marker,
+  # hence error. Does NOT verify: operations carrying personal data that are
+  # not marked (13.6's path-heuristic proxy covers those at warn), or
+  # credentials applied outside declared security requirements.
+  govstack-4.7-pii-apikey:
+    description: "operations marked x-govstack-pii: true must not use an apiKey security scheme (guide 4.7, [M+R])."
+    message: "[4.7][M+R] {{error}}"
+    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#47-operation-metadata-extensions
+    severity: error
+    formats: [oas3_1]
+    given: $
+    then:
+      function: s04-operationMetadata
+      functionOptions: { mode: piiApiKey }

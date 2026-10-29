@@ -63,24 +63,29 @@ rules:
 
   # 10.2 [M] — PROXY (bucket B), MUST -> warn.
   # Guide: timestamps MUST be RFC 3339 with timezone, declared as
-  # format: date-time. Proxy: properties ending in "At" or "Timestamp"
-  # (createdAt, updatedAt, eventTimestamp) must declare type: string,
-  # format: date-time. Does NOT verify the value itself is RFC 3339 with an
-  # explicit timezone offset (that's a data-instance check, out of scope for a
-  # schema-shape linter) or catch timestamp fields using other naming
-  # conventions.
+  # format: date-time. Properties ending in "At" may instead explicitly
+  # declare format: date when the field is a calendar-date coordinate. A
+  # composed schema is accepted only when every non-null branch declares one
+  # of those formats. Properties ending in "Timestamp" remain instant-only.
+  # This proxy does NOT inspect data instances or prove UTC serialization.
   govstack-10.2:
-    description: "Properties ending in At/Timestamp must declare type: string, format: date-time (guide 10.2, [M], proxy)."
+    description: "Properties ending in At must explicitly declare date/date-time semantics; Timestamp fields must declare date-time (guide 10.2, [M], proxy)."
     message: "[10.2][M] {{error}}"
     documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#102-rfc-3339-timestamps
     severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
     then:
-      function: schemaFieldFormat
-      functionOptions:
-        namePattern: '(At|Timestamp)$'
-        require: { type: string, format: date-time }
+      - function: schemaFieldFormat
+        functionOptions:
+          namePattern: 'At$'
+          composed: true
+          require: { type: string, formatOneOf: [date, date-time] }
+      - function: schemaFieldFormat
+        functionOptions:
+          namePattern: 'Timestamp$'
+          composed: true
+          require: { type: string, format: date-time }
 
   # 10.3 [M] — PROXY (bucket B), MUST -> warn.
   # Guide: dates without time MUST be RFC 3339 calendar dates, declared as
@@ -99,6 +104,7 @@ rules:
       function: schemaFieldFormat
       functionOptions:
         namePattern: 'Date$'
+        excludeNamePattern: '^amount(?:After|on)DueDate$'
         require: { type: string, format: date }
 
   # 10.4 [M+R] — PROXY (bucket B), MUST -> warn.
@@ -145,10 +151,10 @@ rules:
         require: { type: string, pattern: '^\+[1-9]\d{1,14}$' }
 
   # 10.6 [M+R] — PROXY (bucket B), MUST -> warn.
-  # Guide: email addresses MUST be RFC 5322 strings, declared as
+  # Guide: email addresses use RFC 5321 Mailbox syntax, declared as
   # format: email. Proxy: properties whose name contains "email"
   # (case-insensitive) must declare type: string, format: email. Does NOT
-  # verify the value is actually a deliverable/valid RFC 5322 address.
+  # verify instance syntax or whether an address is deliverable.
   govstack-10.6:
     description: "Properties matching *email* must declare type: string, format: email (guide 10.6, [M+R], proxy)."
     message: "[10.6][M+R] {{error}}"

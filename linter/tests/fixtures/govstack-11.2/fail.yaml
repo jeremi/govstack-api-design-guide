@@ -23,13 +23,37 @@ paths:
             application/json:
               schema: { type: object }
         '404':
-          description: Not found
+          description: Problem
           content:
             application/problem+json:
               schema:
                 type: object
-                required: [traceId, code, timestamp]
+                required: [type, title, status, traceId]
+                properties:
+                  type: { type: string }
+                  title: { type: string }
+                  status: { type: integer }
+                  traceId: { type: string }
+                  timestamp: { type: string, format: date-time }
+        '409':
+          description: Problem
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                required: [type, title, status, traceId]
+                properties:
+                  type: { type: string }
+                  title: { type: string }
+                  status: { type: integer }
+                  traceId: { type: string }
+                  code: { type: integer }
+        '422':
+          description: Problem
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                required: [traceId]
                 properties:
                   traceId: { type: string }
-                  code: { type: string }
-                  timestamp: { type: string, format: date-time }

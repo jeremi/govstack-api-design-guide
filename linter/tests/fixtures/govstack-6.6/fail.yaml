@@ -12,11 +12,11 @@ servers:
       gatewayHost:
         default: gateway.example.org
 paths:
-  /v1/widgets:search:
+  /v1/widgets/lookup:
     post:
-      operationId: searchWidgets
-      summary: Search widgets
-      description: Runs a complex widget search.
+      operationId: lookupWidget
+      summary: Look up a widget
+      description: Resolves one widget from exact selectors in the request body.
       tags: [widgets]
       requestBody:
         content:

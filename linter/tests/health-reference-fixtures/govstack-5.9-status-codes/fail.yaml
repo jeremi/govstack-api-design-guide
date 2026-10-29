@@ -15,7 +15,7 @@ paths:
       tags: [Health]
       security: []
       responses:
-        # Guide 5.9 carries health in the status code, so a consumer told to
+        # Historical §5.9 fixture: health was carried in the status code; a consumer told to
         # read it needs a documented 503 as well as the 200.
         "200":
           description: Service is healthy.

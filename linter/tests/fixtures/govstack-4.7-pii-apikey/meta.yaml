@@ -1,0 +1,3 @@
+# fail.yaml: a PII operation inheriting a document-level apiKey requirement,
+# and a PII operation offering apiKey as an alternative to OAuth.
+expect_fail_count: 2

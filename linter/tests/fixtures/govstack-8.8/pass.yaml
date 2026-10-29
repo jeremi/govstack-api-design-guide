@@ -1,0 +1,30 @@
+openapi: 3.1.0
+info:
+  title: Fixture API
+  version: 1.0.0
+  description: Fixture for govstack-8.8.
+  contact: {}
+paths:
+  /v1/people/{personId}:
+    get:
+      operationId: getPerson
+      summary: Read a person
+      description: Reads a person record.
+      tags: [people]
+      parameters:
+        - name: personId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: GovStack-Client
+          in: header
+          schema: { type: string }
+        - name: traceparent
+          in: header
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          headers:
+            ETag:
+              schema: { type: string }

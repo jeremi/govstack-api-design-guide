@@ -1,4 +1,4 @@
-# 15.1 fail: a 202 Accepted response does not declare a Location header.
+# 15.1 fail: a 202 Accepted response declares Location but no response body.
 openapi: 3.1.0
 info:
   title: Registry API
@@ -9,3 +9,7 @@ paths:
       responses:
         '202':
           description: accepted
+          headers:
+            Location:
+              schema:
+                type: string

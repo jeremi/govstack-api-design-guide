@@ -6,8 +6,8 @@
 # copy-able reference for BB spec editors.
 #
 # It deliberately exercises the guide's shapes: /v1 kebab-case paths, camelCase
-# params/properties, described schemas (§4.1) with examples (§4.2), the §5.9
-# health endpoint family, local error Response Objects/examples built on the
+# params/properties, described schemas (§4.1) with examples (§4.2), optional operational
+# endpoints exempt under §5.10, local error Response Objects/examples built on the
 # external RFC 9457 Problem and ValidationProblem schemas (§11), cursor pagination
 # (§12), a creating POST with Idempotency-Key + Location (§8.3/§14.1), traceparent
 # Trace Context correlation (§8.4), ETag/If-Match optimistic concurrency (§7.16/§7.17), merge-
@@ -18,9 +18,7 @@
 # This spec lints to ZERO findings under the default ruleset. The ruleset
 # exempts the §5.10 standard unversioned endpoints (here, /health) from the
 # resource-oriented rules that do not apply to them (§5.1 version prefix, §5.3
-# segment casing, §12.x pagination, §7.16 ETag), scopes the §5.9
-# application/json media type to the SUCCESS (200) response so the §11.1
-# problem+json error responses are satisfiable, and counts only non-param
+# segment casing, §12.x pagination, §7.16 ETag), and counts resource/action
 # segments toward §5.4 max nesting depth so the §15.5 action sub-resource path
 # (/v1/operations/{operationId}/cancel) stays within two levels.
 openapi: 3.1.0
@@ -41,8 +39,8 @@ info:
     name: CC-BY-4.0
     url: https://creativecommons.org/licenses/by/4.0/
   x-govstack-api-guide:
-    version: 0.2.0-draft
-    rulesetVersion: 0.2.0-draft
+    version: 0.3.0-draft
+    rulesetVersion: 0.3.0-draft
 servers:
   - url: https://api.example.gov/registry
     description: Production gateway for the Registry Building Block.
@@ -66,7 +64,7 @@ paths:
       operationId: getHealth
       summary: Liveness check
       description: >-
-        Unversioned operational liveness endpoint per guide §5.9. Health is carried
+        Illustrative unversioned operational endpoint. This example carries health
         by the status code: 200 when the service can accept work, 503 when it
         temporarily cannot. Unauthenticated and free of citizen data and
         system-internal detail.
@@ -84,11 +82,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HealthStatus'
-        # §5.9 requires the unhealthy status code as well as the healthy one, and
-        # §11.1 makes every 4xx/5xx application/problem+json, so the 503 carries
-        # the standard problem envelope (Cache-Control: no-store included). The
-        # §5.9 application/json media type applies to the SUCCESS (200) payload
-        # above, not to error responses.
+        # This example selects 503 for an unavailable service. Section 11.1
+        # applies the standard problem envelope to that declared error response.
         '503':
           $ref: '#/components/responses/ServiceUnavailable'
         # §7.13 requires a documented 500 on every operation.
@@ -902,7 +897,7 @@ components:
             status: 500
             traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
     ServiceUnavailable:
-      description: The service is temporarily unable to accept work (guide §5.9).
+      description: The service is temporarily unable to accept work.
       headers:
         Cache-Control:
           $ref: '#/components/headers/CacheControl'
@@ -925,11 +920,9 @@ components:
     HealthStatus:
       type: object
       description: >-
-        Minimal application/json body accompanying a 200 from the liveness
-        endpoint. Health itself is carried by the status code (§5.9), so this
-        body is informational: it names the service and nothing more. Versions,
-        hostnames, and dependency topology are system-internal detail §5.9
-        forbids here.
+        Illustrative application/json body accompanying a 200 operational
+        response. This example uses the status code to carry health and the
+        body to name the service, omitting internal implementation details.
       properties:
         description:
           type: string
@@ -975,7 +968,7 @@ components:
         emailAddress:
           type: string
           format: email
-          description: The registrant's contact email address (RFC 5322).
+          description: The registrant's contact email address (RFC 5321 Mailbox).
         phoneNumber:
           type: string
           description: The registrant's phone number in E.164 form.
@@ -1043,7 +1036,7 @@ components:
         emailAddress:
           type: string
           format: email
-          description: The registrant's contact email address (RFC 5322).
+          description: The registrant's contact email address (RFC 5321 Mailbox).
         phoneNumber:
           type: string
           description: The registrant's phone number in E.164 form.

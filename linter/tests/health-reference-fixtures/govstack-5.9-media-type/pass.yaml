@@ -24,7 +24,7 @@ paths:
                 properties:
                   description: { type: string }
         # Per guide 11.1 an error response is problem+json, not application/json.
-        # 5.9-media-type is scoped to the 200 response, so it must NOT fire here.
+        # Historical 5.9-media-type check applied only to the 200 response.
         "503":
           description: Service is temporarily unable to accept work.
           content:

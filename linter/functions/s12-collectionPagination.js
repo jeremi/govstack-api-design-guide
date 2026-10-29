@@ -1,7 +1,6 @@
 import { isObject, asArray } from './lib/util.js';
 import { isStandardUnversionedPath } from './lib/standardEndpoints.js';
 import envelopeShape from './envelopeShape.js';
-import { resourcePath } from './lib/resourcePaths.js';
 import { collectionShape } from './lib/collectionShape.js';
 
 /**
@@ -9,25 +8,28 @@ import { collectionShape } from './lib/collectionShape.js';
  * operation that need to branch on whether the operation opted into
  * offset-based pagination (guide §12.6) instead of the cursor-based default
  * (guide §12.2/§12.3). Reuses `envelopeShape` for the actual shape check so
- * the envelope rules (cursor vs. flat/offset) stay in one place.
+ * the envelope rules (cursor vs. flat/offset) stay in one place. A POST
+ * search (guide §12.9) selects the same envelope checks through its request
+ * body.
  *
  * `given` should select the operation object itself, e.g.
  * `$.paths[?(!@property.match(/\/\{[^}]+\}$/))][get]` (a "collection" path:
  * one that does not end in a `{param}` segment).
  *
  * An operation is considered to have opted into offset pagination when its
- * `parameters` array declares a parameter named `offset`.
+ * `parameters` array declares a parameter named `offset`, or its JSON request
+ * body schema declares an `offset` property (a §12.9 body-based search).
  *
  * Three carve-outs apply to every mode, so that the whole of §12's collection
  * surface answers them the same way:
  *   - the guide §5.10 standard unversioned endpoints are not collections;
- *   - GET custom methods need a declared array/items response to be classified
- *     as collections; their resource target alone does not imply a list;
+ *   - a GET whose response explicitly declares one object is not a collection,
+ *     unless the operation itself declares pagination controls;
  *   - a collection whose 200 response declares its own bound with `maxItems`
  *     may be returned unpaginated (guide §12.1).
  *
  * options:
- *   mode {'pageParam'|'cursorParams'|'cursorEnvelope'|'pageSizeBounds'|'offsetEnvelope'} (required)
+ *   mode {'pageParam'|'cursorParams'|'cursorEnvelope'|'pageSizeBounds'|'offsetEnvelope'|'searchBody'} (required)
  *     - pageParam:      operation MUST declare some page-size-like query
  *                       parameter (`pageSize` or `offset`).
  *     - cursorParams:   operation MUST declare both `pageSize` and `cursor`
@@ -42,10 +44,15 @@ import { collectionShape } from './lib/collectionShape.js';
  *     - pageSizeBounds: the `pageSize` parameter MUST exist and declare both a
  *                       `default` and a `maximum` (guide §12.4).
  *     - offsetEnvelope: the 200 response body schema MUST declare the §12.6
- *                       flat envelope `{ items, offset, limit, total }`.
+ *                       flat envelope `{ items, offset, limit, total? }`;
+ *                       `total` is optional and, when declared, an integer.
  *                       No-op when the operation does NOT have an `offset`
  *                       parameter (nothing to check: it isn't using offset
  *                       pagination).
+ *     - searchBody:     the request body schema MUST declare the controls of
+ *                       one pagination contract: `offset` and `limit` when it
+ *                       declares `offset`, otherwise `pageSize` and `cursor`
+ *                       (guide §12.9). No-op without a request body schema.
  *   mediaType {string} content-type key to inspect on the 200 response,
  *                       default "application/json".
  *
@@ -67,6 +74,22 @@ function effective(schema) {
     if (isObject(branch.properties)) Object.assign(properties, branch.properties);
   }
   return { required, properties };
+}
+
+/** True when a conjunctive schema declaration explicitly identifies one object. */
+function declaresObject(schema) {
+  if (!isObject(schema)) return false;
+  const pending = [schema];
+  const seen = new WeakSet();
+  while (pending.length) {
+    const node = pending.pop();
+    if (!isObject(node) || seen.has(node)) continue;
+    seen.add(node);
+    const types = asArray(node.type);
+    if (types.includes('object') && types.every((type) => type === 'object' || type === 'null')) return true;
+    pending.push(...asArray(node.allOf));
+  }
+  return false;
 }
 
 function nullableNonEmptyString(schema) {
@@ -111,20 +134,42 @@ export default function collectionPagination(targetVal, options, context) {
   const pathKey = base.length >= 2 ? base[base.length - 2] : undefined;
   if (isStandardUnversionedPath(pathKey)) return undefined;
 
-  // A GET custom method need not return a collection. Only apply the list
-  // proxy when its response explicitly declares an array or an items array.
-  // POST search is selected separately by §12.9 and retains its envelope check.
   const shape = collectionShape(responseSchema);
-  if (base.at(-1) === 'get' && resourcePath(pathKey).customMethod !== undefined) {
-    if (!shape.isCollection) return undefined;
-  }
+  const params = asArray(targetVal.parameters).filter(isObject);
+  const paginationNames = new Set(['pageSize', 'cursor', 'offset', 'limit']);
+  const declaresPagination = params.some((parameter) => paginationNames.has(parameter.name));
+
+  // The path selector is only a collection proxy. An explicit object response
+  // is stronger evidence that the operation returns one resource, even when
+  // that resource embeds an array. Keep checking operations that declare
+  // pagination, because an object there may instead be a malformed envelope.
+  if (
+    base.at(-1) === 'get' &&
+    declaresObject(responseSchema) &&
+    !shape.isCollection &&
+    !declaresPagination
+  ) return undefined;
 
   // Guide §12.1: a collection bounded by its own schema may skip pagination,
   // and with it the pagination parameters and envelopes of §12.2–§12.4.
   if (shape.bounded) return undefined;
 
-  const params = asArray(targetVal.parameters).filter(isObject);
-  const offsetMode = params.some((p) => p.name === 'offset');
+  const bodySchema = targetVal.requestBody?.content?.[mediaType]?.schema;
+  const bodyProperties = isObject(bodySchema) ? effective(bodySchema).properties : {};
+  const offsetMode = params.some((p) => p.name === 'offset') || 'offset' in bodyProperties;
+
+  if (opts.mode === 'searchBody') {
+    if (!isObject(bodySchema)) return undefined;
+    const wanted = offsetMode ? ['offset', 'limit'] : ['pageSize', 'cursor'];
+    const missing = wanted.filter((name) => !(name in bodyProperties));
+    if (missing.length === 0) return undefined;
+    return [{
+      message: offsetMode
+        ? `search request body declares "offset" and must also declare ${missing.map((n) => `"${n}"`).join(' and ')} (guide 12.9, 12.6)`
+        : `search request body must declare ${missing.map((n) => `"${n}"`).join(' and ')} for cursor pagination, or "offset" and "limit" for offset pagination (guide 12.9)`,
+      path: [...base, 'requestBody', 'content', mediaType, 'schema'],
+    }];
+  }
 
   if (opts.mode === 'pageParam') {
     const names = new Set(params.map((p) => p.name));
@@ -212,8 +257,9 @@ export default function collectionPagination(targetVal, options, context) {
   return envelopeShape(
     schema,
     {
-      requiredProperties: ['items', 'offset', 'limit', 'total'],
+      requiredProperties: ['items', 'offset', 'limit'],
       properties: { items: { type: 'array' } },
+      optionalProperties: { total: { type: 'integer' } },
     },
     { path: schemaPath },
   );

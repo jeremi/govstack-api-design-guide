@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.join(HERE, '..', 'cli.mjs');
 const MINI_RULESET = path.join(HERE, 'driver-fixtures', 'mini-ruleset.yaml');
-const GUIDE_VERSION = '0.2.0-draft';
+const GUIDE_VERSION = '0.3.0-draft';
 const ADVISORY = ['--mode', 'advisory', '--skip-validators'];
 
 function makeRepo(files) {
@@ -1025,6 +1025,28 @@ test('missing base validator fails conformance but is an advisory notice', () =>
   }
 });
 
+test('missing validators report pinned validator setup commands', () => {
+  const cases = [
+    ['api/openapi.yaml', cleanOpenapi(), /uv tool install openapi-spec-validator==0\.9\.0/],
+    ['api/asyncapi.yaml', cleanAsyncapi(), /npm install --global @asyncapi\/cli@6\.0\.2/],
+  ];
+  for (const [filename, contents, expected] of cases) {
+    const dir = makeRepo({ [filename]: contents, 'api/coverage.yaml': VALID_COVERAGE });
+    try {
+      const result = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET], {
+        env: { ...process.env, PATH: '' },
+      });
+      assert.equal(result.status, 1, result.stderr);
+      const findings = result.json.files.flatMap((file) => file.findings)
+        .filter((finding) => finding.code === 'base-validator-unavailable');
+      assert.equal(findings.length, 1);
+      assert.match(findings[0].message, expected);
+    } finally {
+      cleanup(dir);
+    }
+  }
+});
+
 test('conformance rejects --skip-validators', () => {
   const dir = makeRepo({});
   try {
@@ -1120,5 +1142,450 @@ test('bad flag and missing ruleset are operational errors', () => {
   } finally {
     cleanup(empty);
     cleanup(spec);
+  }
+});
+
+const openapiWithProfile = (profileLine) => cleanOpenapi().replace(
+  `rulesetVersion: ${GUIDE_VERSION}`,
+  `rulesetVersion: ${GUIDE_VERSION}${profileLine === null ? '' : `\n    profile: ${profileLine}`}`,
+);
+
+function profileFindings(report) {
+  return report.files.flatMap((file) => file.findings.filter((finding) => finding.code === 'guide-profile'));
+}
+
+function withProfileRepo(profileLine, fn) {
+  const dir = makeRepo({
+    'api/openapi.yaml': openapiWithProfile(profileLine),
+    'api/coverage.yaml': VALID_COVERAGE,
+  });
+  try {
+    fn(dir);
+  } finally {
+    cleanup(dir);
+  }
+}
+
+test('an invalid declared profile is an error in conformance and a warning in advisory', () => {
+  for (const value of ['strict', '42', '[legacy]']) {
+    withProfileRepo(value, (dir) => {
+      const bin = fakeOpenapiValidator(dir);
+      const conform = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET], {
+        env: { ...process.env, PATH: bin },
+      });
+      assert.equal(conform.status, 1, `${conform.stderr}\n${conform.stdout}`);
+      const [finding] = profileFindings(conform.json);
+      assert.equal(finding?.severity, 'error', value);
+      assert.equal(finding.guideRule, '20.3');
+
+      const advisory = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+      assert.equal(advisory.status, 0, advisory.stderr);
+      assert.equal(profileFindings(advisory.json)[0]?.severity, 'warn', value);
+    });
+  }
+});
+
+test('a surface declaring profile legacy is told to run with --profile legacy', () => {
+  withProfileRepo('legacy', (dir) => {
+    for (const extra of [[], ['--profile', 'standard'], ['--profile', 'strict'], ['--strict']]) {
+      const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY, ...extra]);
+      assert.equal(r.status, 0, r.stderr);
+      const findings = profileFindings(r.json);
+      assert.equal(findings.length, 1, JSON.stringify(extra));
+      assert.equal(findings[0].severity, 'info');
+      assert.match(findings[0].message, /surface declares profile legacy; run with --profile legacy/);
+    }
+  });
+});
+
+test('the legacy run profile warns on a surface that does not declare profile legacy', () => {
+  for (const value of [null, 'standard']) {
+    withProfileRepo(value, (dir) => {
+      const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY, '--profile', 'legacy']);
+      assert.equal(r.status, 0, r.stderr);
+      const findings = profileFindings(r.json);
+      assert.equal(findings.length, 1, String(value));
+      assert.equal(findings[0].severity, 'warn');
+      assert.match(findings[0].message, /legacy profile used for a surface that does not declare profile: legacy/);
+    });
+  }
+});
+
+test('the legacy run profile is silent on a surface declaring profile legacy', () => {
+  withProfileRepo('legacy', (dir) => {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY, '--profile', 'legacy']);
+    assert.equal(r.status, 0, r.stderr);
+    assert.deepEqual(profileFindings(r.json), []);
+  });
+  withProfileRepo('standard', (dir) => {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.deepEqual(profileFindings(r.json), []);
+  });
+});
+
+test('--profile rejects unknown values and conflicts with --strict', () => {
+  const dir = makeRepo({});
+  try {
+    const bogus = runCli(['--repo-root', dir, '--profile', 'lenient', ...ADVISORY]);
+    assert.equal(bogus.status, 2);
+    assert.match(bogus.stderr, /Invalid --profile value "lenient"/);
+
+    const conflict = runCli(['--repo-root', dir, '--strict', '--profile', 'legacy', ...ADVISORY]);
+    assert.equal(conflict.status, 2);
+    assert.match(conflict.stderr, /--strict .* --profile legacy/);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('--help prints usage including --profile and exits 0', () => {
+  const r = runCli(['--help']);
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, /Usage: /);
+  assert.match(r.stdout, /--profile <standard\|strict\|legacy>/);
+});
+
+const PROPERTY_DESCRIPTION_RULESET = `rules:
+  govstack-4.1-property-description:
+    description: Every property needs a description
+    message: Property description is required
+    given: "$.components.schemas.*.properties.*"
+    severity: warn
+    then:
+      field: description
+      function: truthy
+`;
+
+const externalRefOpenapi = (schemaNames, scopes) => {
+  const exceptions = scopes.length === 0 ? '' : `
+    exceptions:
+${scopes.map((scope, i) => `      - rule: "4.1"
+        scope: ${JSON.stringify(scope)}
+        rationale: "Temporary exception for external schema occurrence ${i + 1}."
+        record: "https://example.org/exceptions/EXTERNAL-${i + 1}"
+        reviewedBy: "API Working Group"
+        reviewedAt: "2026-07-10"
+        expiresAt: "2099-12-31"`).join('\n')}`;
+  const base = cleanOpenapi().replace(
+    `rulesetVersion: ${GUIDE_VERSION}`,
+    `rulesetVersion: ${GUIDE_VERSION}${exceptions}`,
+  );
+  const schemas = schemaNames
+    .map((name) => `    ${name}: { $ref: './schemas/shared.yaml' }`)
+    .join('\n');
+  return `${base}
+components:
+  schemas:
+${schemas}
+`;
+};
+
+function runExternalRefExceptionCase(schemaNames, scopes) {
+  const dir = makeRepo({
+    'api/openapi.yaml': externalRefOpenapi(schemaNames, scopes),
+    'api/schemas/shared.yaml': `type: object
+properties:
+  name:
+    type: string
+`,
+    'api/coverage.yaml': VALID_COVERAGE,
+    'property-ruleset.yaml': PROPERTY_DESCRIPTION_RULESET,
+  });
+  try {
+    const args = ['--repo-root', dir, '--ruleset', path.join(dir, 'property-ruleset.yaml'), ...ADVISORY];
+    return { ...runCliJson(args), text: runCli(args) };
+  } finally {
+    cleanup(dir);
+  }
+}
+
+test('a scoped exception suppresses a finding reached through its external ref', () => {
+  const r = runExternalRefExceptionCase(['First'], ['/components/schemas/First']);
+  assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
+  assert.equal(r.json.summary.warnings, 0);
+  assert.equal(r.json.summary.suppressed, 1);
+  const [suppressed] = r.json.files.find((file) => file.path === 'api/schemas/shared.yaml')?.suppressed ?? [];
+  assert.equal(suppressed?.exceptionRecord, 'https://example.org/exceptions/EXTERNAL-1');
+  assert.deepEqual(suppressed?.exceptionRecords, ['https://example.org/exceptions/EXTERNAL-1']);
+});
+
+test('one scoped exception cannot suppress the same external defect through another ref', () => {
+  const r = runExternalRefExceptionCase(
+    ['First', 'Second'],
+    ['/components/schemas/First'],
+  );
+  assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
+  const source = r.json.files.find((file) => file.path === 'api/schemas/shared.yaml');
+  assert.equal(source?.findings.length, 1);
+  assert.equal(source?.suppressed.length, 0);
+  assert.equal(r.json.summary.suppressed, 0);
+});
+
+test('scoped exceptions for every external ref suppress the deduplicated defect', () => {
+  const r = runExternalRefExceptionCase(
+    ['First', 'Second'],
+    ['/components/schemas/First', '/components/schemas/Second'],
+  );
+  assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
+  assert.equal(r.json.summary.warnings, 0);
+  assert.equal(r.json.summary.suppressed, 1);
+  const [suppressed] = r.json.files.find((file) => file.path === 'api/schemas/shared.yaml')?.suppressed ?? [];
+  assert.equal(suppressed?.exceptionRecord, 'https://example.org/exceptions/EXTERNAL-1');
+  assert.deepEqual(suppressed?.exceptionRecords, [
+    'https://example.org/exceptions/EXTERNAL-1',
+    'https://example.org/exceptions/EXTERNAL-2',
+  ]);
+  assert.match(
+    r.text.stdout,
+    /records: https:\/\/example\.org\/exceptions\/EXTERNAL-1, https:\/\/example\.org\/exceptions\/EXTERNAL-2/,
+  );
+});
+
+test('a root exception suppresses findings reached through external refs', () => {
+  const r = runExternalRefExceptionCase(['First', 'Second'], ['']);
+  assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
+  assert.equal(r.json.summary.warnings, 0);
+  assert.equal(r.json.summary.suppressed, 1);
+});
+
+function runChainedExternalRefCase(rootSchemas, scopes, sharedSchema) {
+  const dir = makeRepo({
+    'api/openapi.yaml': externalRefOpenapi(rootSchemas, scopes)
+      .replaceAll("'./schemas/shared.yaml'", "'./schemas/wrapper.yaml'"),
+    'api/schemas/wrapper.yaml': `type: object
+properties:
+  nested:
+    $ref: './shared.yaml#/$defs/First'
+`,
+    'api/schemas/shared.yaml': sharedSchema,
+    'api/coverage.yaml': VALID_COVERAGE,
+    'property-ruleset.yaml': PROPERTY_DESCRIPTION_RULESET,
+  });
+  try {
+    return runCliJson([
+      '--repo-root', dir, '--ruleset', path.join(dir, 'property-ruleset.yaml'), ...ADVISORY,
+    ]);
+  } finally {
+    cleanup(dir);
+  }
+}
+
+const SHARED_SCHEMA_WITH_FRAGMENTS = `$defs:
+  First:
+    type: object
+    properties:
+      name: { type: string }
+  Second:
+    type: object
+    properties:
+      name: { type: string, description: Already documented }
+`;
+
+test('a covered direct ref cannot hide an unexcepted transitive ref to the same source', () => {
+  const root = externalRefOpenapi(['Direct', 'Wrapped'], ['/components/schemas/Direct'])
+    .replace("Wrapped: { $ref: './schemas/shared.yaml' }", "Wrapped: { $ref: './schemas/wrapper.yaml' }");
+  const dir = makeRepo({
+    'api/openapi.yaml': root,
+    'api/schemas/wrapper.yaml': `type: object
+properties:
+  nested: { $ref: './shared.yaml' }
+`,
+    'api/schemas/shared.yaml': `type: object
+properties:
+  name: { type: string }
+`,
+    'api/coverage.yaml': VALID_COVERAGE,
+    'property-ruleset.yaml': PROPERTY_DESCRIPTION_RULESET,
+  });
+  try {
+    const r = runCliJson([
+      '--repo-root', dir, '--ruleset', path.join(dir, 'property-ruleset.yaml'), ...ADVISORY,
+    ]);
+    const source = r.json.files.find((file) => file.path === 'api/schemas/shared.yaml');
+    assert.ok(source?.findings.length > 0, `${r.stderr}\n${r.stdout}`);
+    assert.equal(source?.suppressed.length, 0);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('an exception on an unrelated fragment cannot suppress a transitive source finding', () => {
+  const root = externalRefOpenapi(['Wrapped', 'Unrelated'], ['/components/schemas/Unrelated'])
+    .replace("Wrapped: { $ref: './schemas/shared.yaml' }", "Wrapped: { $ref: './schemas/wrapper.yaml' }")
+    .replace("Unrelated: { $ref: './schemas/shared.yaml' }", "Unrelated: { $ref: './schemas/shared.yaml#/$defs/Second' }");
+  const dir = makeRepo({
+    'api/openapi.yaml': root,
+    'api/schemas/wrapper.yaml': `type: object
+properties:
+  nested: { $ref: './shared.yaml#/$defs/First' }
+`,
+    'api/schemas/shared.yaml': SHARED_SCHEMA_WITH_FRAGMENTS,
+    'api/coverage.yaml': VALID_COVERAGE,
+    'property-ruleset.yaml': PROPERTY_DESCRIPTION_RULESET,
+  });
+  try {
+    const r = runCliJson([
+      '--repo-root', dir, '--ruleset', path.join(dir, 'property-ruleset.yaml'), ...ADVISORY,
+    ]);
+    const source = r.json.files.find((file) => file.path === 'api/schemas/shared.yaml');
+    assert.equal(source?.findings.length, 1, `${r.stderr}\n${r.stdout}`);
+    assert.equal(source?.suppressed.length, 0);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('a scope on the single root origin suppresses a chained external finding', () => {
+  const r = runChainedExternalRefCase(
+    ['Wrapped'],
+    ['/components/schemas/Wrapped'],
+    SHARED_SCHEMA_WITH_FRAGMENTS,
+  );
+  assert.equal(r.json.summary.warnings, 0, `${r.stderr}\n${r.stdout}`);
+  assert.equal(r.json.summary.suppressed, 1);
+});
+
+test('a root exception suppresses a finding when every reference is indirect', () => {
+  const r = runChainedExternalRefCase(['Wrapped'], [''], SHARED_SCHEMA_WITH_FRAGMENTS);
+  assert.equal(r.json.summary.warnings, 0, `${r.stderr}\n${r.stdout}`);
+  assert.equal(r.json.summary.suppressed, 1);
+});
+
+test('findings in a multiply referenced external schema use the source file and deduplicate', () => {
+  const withSharedSchema = (operationId) => `${cleanOpenapi().replace('listThings', operationId)}
+components:
+  schemas:
+    First: { $ref: './schemas/shared.yaml' }
+    Second: { $ref: './schemas/shared.yaml' }
+`;
+  const dir = makeRepo({
+    'api/index.yaml': `version: 1
+apis:
+  - { type: openapi, path: api/first.yaml }
+  - { type: openapi, path: api/second.yaml }
+`,
+    'api/first.yaml': withSharedSchema('listFirst'),
+    'api/second.yaml': withSharedSchema('listSecond'),
+    'api/schemas/shared.yaml': `type: object
+properties:
+  name:
+    type: string
+`,
+    'api/coverage.yaml': VALID_COVERAGE,
+    'property-ruleset.yaml': PROPERTY_DESCRIPTION_RULESET,
+  });
+  try {
+    const r = runCliJson([
+      '--repo-root', dir, '--ruleset', path.join(dir, 'property-ruleset.yaml'), ...ADVISORY,
+    ]);
+    assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
+    const external = r.json.files.find((file) => file.path === 'api/schemas/shared.yaml');
+    assert.ok(external, JSON.stringify(r.json.files, null, 2));
+    assert.equal(external.findings.length, 1);
+    assert.equal(external.findings[0].code, 'govstack-4.1-property-description');
+    assert.ok(!r.json.files.find((file) => file.path === 'api/first.yaml').findings.length);
+    assert.ok(!r.json.files.find((file) => file.path === 'api/second.yaml').findings.length);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('repository scan reports malformed API candidates but ignores unrelated malformed YAML', () => {
+  const dir = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'api/coverage.yaml': VALID_COVERAGE,
+    'api/broken.yaml': 'openapi: 3.1.0\ninfo: [\n',
+    'deploy/unrelated.yaml': 'service: [\n',
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    assert.equal(r.status, 1, `${r.stderr}\n${r.stdout}`);
+    const malformed = r.json.files.filter((file) =>
+      file.findings.some((finding) => finding.code === 'file-unparseable-spec'));
+    assert.equal(malformed.length, 1);
+    assert.equal(malformed[0].path, 'api/broken.yaml');
+    assert.equal(malformed[0].findings[0].guideRule, '4.5');
+    assert.ok(!r.json.files.some((file) => file.path === 'deploy/unrelated.yaml'));
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('undeclared OpenAPI findings cite canonical entrypoint and inventory rules', () => {
+  const dir = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'api/coverage.yaml': VALID_COVERAGE,
+    'api/copy.yaml': cleanOpenapi(),
+  });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    const finding = r.json.files
+      .find((file) => file.path === 'api/copy.yaml')
+      ?.findings.find((item) => item.code === 'file-undeclared-spec');
+    assert.equal(finding?.guideRule, '4.5');
+    assert.match(finding?.message ?? '', /guide §2\.2 and §4\.5/);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('an explicit OpenAPI run does not repeat findings for other repository surfaces', () => {
+  const dir = makeRepo({
+    'api/openapi.yaml': cleanOpenapi(),
+    'api/coverage.yaml': VALID_COVERAGE,
+    'api/copy.yaml': cleanOpenapi(),
+  });
+  try {
+    const r = runCliJson([
+      '--repo-root', dir, '--openapi', 'api/openapi.yaml', '--ruleset', MINI_RULESET, ...ADVISORY,
+    ]);
+    assert.equal(r.status, 0, `${r.stderr}\n${r.stdout}`);
+    assert.deepEqual(r.json.files.map((file) => file.path), ['api/openapi.yaml']);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('grouped text preserves property locations and explains truncated locations', () => {
+  const properties = Array.from({ length: 7 }, (_, i) => `        property${i + 1}: { type: string }`).join('\n');
+  const dir = makeRepo({
+    'api/openapi.yaml': `${cleanOpenapi()}
+components:
+  schemas:
+    Example:
+      type: object
+      properties:
+${properties}
+`,
+    'api/coverage.yaml': VALID_COVERAGE,
+    'property-ruleset.yaml': PROPERTY_DESCRIPTION_RULESET,
+  });
+  try {
+    const args = ['--repo-root', dir, '--ruleset', path.join(dir, 'property-ruleset.yaml'), ...ADVISORY];
+    const json = runCliJson(args);
+    const propertyFindings = json.json.files.flatMap((file) => file.findings)
+      .filter((finding) => finding.code === 'govstack-4.1-property-description');
+    assert.equal(propertyFindings.length, 7);
+    assert.equal(new Set(propertyFindings.map((finding) => finding.range.start.line)).size, 7);
+
+    const text = runCli(args);
+    assert.equal(text.status, 0, `${text.stderr}\n${text.stdout}`);
+    assert.match(text.stdout, /govstack-4\.1-property-description \(§4\.1\) ×7/);
+    assert.match(text.stdout, /at (?:\d+:\d+, ){4}\d+:\d+, 2 more; use `--format json`/);
+  } finally {
+    cleanup(dir);
+  }
+});
+
+test('missing coverage cites guide rule 4.6', () => {
+  const dir = makeRepo({ 'api/openapi.yaml': cleanOpenapi() });
+  try {
+    const r = runCliJson(['--repo-root', dir, '--ruleset', MINI_RULESET, ...ADVISORY]);
+    const finding = r.json.files
+      .flatMap((file) => file.findings)
+      .find((item) => item.code === 'coverage-missing');
+    assert.equal(finding?.guideRule, '4.6');
+  } finally {
+    cleanup(dir);
   }
 });

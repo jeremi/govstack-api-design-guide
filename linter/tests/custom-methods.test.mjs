@@ -23,59 +23,93 @@ const search = () => ({
 const selected = (findings, codes) => findings.filter((finding) => codes.includes(finding.code));
 const searchRules = ['govstack-6.6', 'govstack-12.9-body', 'govstack-12.9-response'];
 
-test('custom search and action sub-resource search receive the same status and pagination checks', async () => {
-  for (const path of ['/v1/households:search', '/v1/households/search']) {
-    assert.deepEqual(selected(await lintString(spectral, doc({ [path]: { post: search() } })), searchRules), []);
-    const invalid = search();
-    invalid.responses = { 201: response(page), 200: response({ type: 'object' }) };
-    invalid.requestBody.content['application/json'].schema = { type: 'object' };
-    const findings = selected(await lintString(spectral, doc({ [path]: { post: invalid } })), searchRules);
-    assert.deepEqual(new Set(findings.map((finding) => finding.code)), new Set(searchRules), path);
-  }
+test('action sub-resource search receives status and pagination checks', async () => {
+  const path = '/v1/households/search';
+  assert.deepEqual(selected(await lintString(spectral, doc({ [path]: { post: search() } })), searchRules), []);
+  const invalid = search();
+  invalid.responses = { 201: response(page), 200: response({ type: 'object' }) };
+  invalid.requestBody.content['application/json'].schema = { type: 'object' };
+  const findings = selected(await lintString(spectral, doc({ [path]: { post: invalid } })), searchRules);
+  assert.deepEqual(new Set(findings.map((finding) => finding.code)), new Set(searchRules));
 });
 
-test('exact lookup receives status checks without collection pagination', async () => {
+const offsetPage = {
+  type: 'object', required: ['items', 'offset', 'limit'], properties: {
+    items: { type: 'array', items: { type: 'object' } },
+    offset: { type: 'integer' }, limit: { type: 'integer' }, total: { type: 'integer' },
+  },
+};
+const searchWith = (body, schema) => {
+  const operation = search();
+  operation.requestBody.content['application/json'].schema = { type: 'object', properties: body };
+  operation.responses = { 200: response(schema) };
+  return operation;
+};
+const cursorBody = { pageSize: { type: 'integer' }, cursor: { type: 'string' } };
+const offsetBody = { offset: { type: 'integer' }, limit: { type: 'integer' } };
+const searchFindings = async (operation) => selected(
+  await lintString(spectral, doc({ '/v1/households/search': { post: operation } })),
+  ['govstack-12.9-body', 'govstack-12.9-response'],
+);
+
+test('search accepts the offset pagination contract of §12.6', async () => {
+  assert.deepEqual(await searchFindings(searchWith(offsetBody, offsetPage)), []);
+  const composed = searchWith({}, offsetPage);
+  composed.requestBody.content['application/json'].schema = { allOf: [{ properties: { criteria: { type: 'object' } } }, { properties: offsetBody }] };
+  assert.deepEqual(await searchFindings(composed), []);
+});
+
+test('search flags an incomplete body contract and a body/envelope mismatch', async () => {
+  const codes = async (operation) => (await searchFindings(operation)).map((finding) => finding.code).sort();
+  assert.deepEqual(await codes(searchWith({ offset: { type: 'integer' } }, offsetPage)), ['govstack-12.9-body']);
+  assert.deepEqual(await codes(searchWith({ pageSize: { type: 'integer' } }, page)), ['govstack-12.9-body']);
+  const neither = await searchFindings(searchWith({}, page));
+  assert.equal(neither.length, 1);
+  assert.match(neither[0].message, /offset/);
+  assert.ok((await codes(searchWith(offsetBody, page))).includes('govstack-12.9-response'));
+  assert.ok((await codes(searchWith(cursorBody, offsetPage))).includes('govstack-12.9-response'));
+});
+
+test('exact lookup sub-resource receives status checks without collection pagination', async () => {
   const lookup = { post: { operationId: 'lookupRecord', responses: { 200: response({ type: 'object' }) } } };
   const relevant = [...searchRules, 'govstack-12.1', 'govstack-12.2', 'govstack-12.3', 'govstack-12.4'];
-  assert.deepEqual(selected(await lintString(spectral, doc({ '/v1/households:lookup': lookup })), relevant), []);
+  assert.deepEqual(selected(await lintString(spectral, doc({ '/v1/households/lookup': lookup })), relevant), []);
   lookup.post.responses = { 201: response({ type: 'object' }) };
-  assert.ok(selected(await lintString(spectral, doc({ '/v1/households:lookup': lookup })), ['govstack-6.6']).length > 0);
+  assert.ok(selected(await lintString(spectral, doc({ '/v1/households/lookup': lookup })), ['govstack-6.6']).length > 0);
 });
 
-test('colon methods pass bundled path rules while plain CRUD and malformed custom methods still fail', async () => {
-  const pathRules = ['govstack-5.2', 'govstack-5.3', 'govstack-5.4', 'govstack-5.7'];
+const pathRules = ['govstack-5.2', 'govstack-5.3', 'govstack-5.4', 'govstack-5.7'];
+
+test('search and lookup action sub-resources pass the bundled path rules', async () => {
   const good = await lintString(spectral, doc({
-    '/v1/households:search': { post: search() },
-    '/v1/birth-registrations/{recordId}:rotateSecret': { post: { responses: { 200: response({ type: 'object' }) } } },
+    '/v1/households/search': { post: search() },
+    '/v1/households/lookup': { post: { responses: { 200: response({ type: 'object' }) } } },
   }));
   assert.deepEqual(selected(good, pathRules), []);
   const bad = await lintString(spectral, doc({
-    '/v1/household:create': { post: { responses: { 201: response({ type: 'object' }) } } },
-    '/v1/birthRegistrations:rotate-secret': { post: { responses: { 200: response({ type: 'object' }) } } },
+    '/v1/household/create': { post: { responses: { 201: response({ type: 'object' }) } } },
+    '/v1/birthRegistrations/search': { post: search() },
   }));
   assert.deepEqual(new Set(selected(bad, pathRules).map((finding) => finding.code)), new Set(['govstack-5.2', 'govstack-5.3', 'govstack-5.7']));
 });
 
-test('custom methods are not inferred to be bulk CRUD or paginated GETs from their target alone', async () => {
-  const custom = await lintString(spectral, doc({
-    '/v1/households:refresh': { patch: { responses: { 200: response({ type: 'object' }) } } },
-    '/v1/households/{recordId}:lookup': { get: { responses: { 200: response({ type: 'object' }) } } },
-  }));
-  assert.deepEqual(selected(custom, ['govstack-6.7', 'govstack-12.1', 'govstack-12.2', 'govstack-12.3', 'govstack-12.4']), []);
-  const arrayResult = await lintString(spectral, doc({
-    '/v1/households/{recordId}:members': { get: { responses: { 200: response({ type: 'array', items: { type: 'object' } }) } } },
-  }));
-  assert.ok(selected(arrayResult, ['govstack-12.1']).length > 0);
+test('colon custom methods are rejected with a pointer to action sub-resources', async () => {
+  for (const path of ['/v1/households:search', '/v1/households:lookup', '/v1/events/{eventId}:cancel']) {
+    const findings = selected(await lintString(spectral, doc({ [path]: { post: search() } })), ['govstack-5.3']);
+    assert.equal(findings.length, 1, path);
+    assert.match(findings[0].message, /action sub-resource/, path);
+    assert.match(findings[0].message, /5\.8/, path);
+  }
 });
 
 const paginationRules = ['govstack-12.1', 'govstack-12.2', 'govstack-12.3', 'govstack-12.4', 'govstack-12.6'];
 const array = { type: 'array', items: { type: 'object' } };
-const collectionFindings = async (schema, path = '/v1/households/{recordId}:members') => selected(
+const collectionFindings = async (schema, path = '/v1/households/{recordId}/members') => selected(
   await lintString(spectral, doc({ [path]: { get: { responses: { 200: response(schema) } } } })),
   paginationRules,
 );
 
-test('custom GETs enforce pagination on direct and composed unbounded arrays', async () => {
+test('sub-resource GETs enforce pagination on direct and composed unbounded arrays', async () => {
   const schemas = [
     array,
     { allOf: [array] },
@@ -107,7 +141,7 @@ test('bounded collections retain their exemption through nested and split allOf 
       ] },
     ];
     for (const schema of schemas) {
-      for (const path of ['/v1/households:members', '/v1/households']) {
+      for (const path of ['/v1/households/{recordId}/members', '/v1/households']) {
         assert.deepEqual(await collectionFindings(schema, path), [], JSON.stringify({ schema, path }));
       }
     }
@@ -127,9 +161,4 @@ test('invalid bounds and additional unbounded arrays do not exempt a composed co
   for (const schema of schemas) {
     assert.ok((await collectionFindings(schema)).some((finding) => finding.code === 'govstack-12.1'), JSON.stringify(schema));
   }
-});
-
-test('a composed single-resource custom GET does not acquire collection pagination', async () => {
-  const schema = { allOf: [{ allOf: [{ type: 'object', properties: { id: { type: 'string' } } }] }] };
-  assert.deepEqual(await collectionFindings(schema, '/v1/households:lookup'), []);
 });

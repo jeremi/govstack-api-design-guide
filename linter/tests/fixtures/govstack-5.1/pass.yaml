@@ -16,12 +16,12 @@ paths:
       responses:
         "200":
           description: A page of events.
-  # Guide 5.9 mandates an UNVERSIONED /health endpoint; 5.1 must not fire on it.
+  # Guide 5.10 exempts an optional unversioned /health endpoint from 5.1.
   /health:
     get:
       operationId: getHealth
       summary: Liveness check
-      description: Unversioned operational liveness probe (guide 5.9).
+      description: Optional operational endpoint, exempt under guide 5.10.
       tags: [Health]
       security: []
       responses:

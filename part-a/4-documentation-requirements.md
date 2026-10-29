@@ -12,27 +12,61 @@ description: "Documentation requirements for schemas, examples, and operation de
 
 ## 4.1 Useful schema descriptions <a href="#41-useful-schema-descriptions" id="41-useful-schema-descriptions"></a>
 
-**[M]** A schema **MUST** have a `description` when its name and structure do not make its semantics clear.
+<!-- rule-class: M -->
+
+A schema **MUST** have a `description` when its name and structure do not make its semantics clear.
 
 Other schemas **SHOULD** have concise descriptions. Filler text added only to satisfy a universal presence check is not useful documentation.
 
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification.
+
+advisory proxy: warns on every missing schema description, except combinator wrappers, required-only assertions under not, and branch properties narrowing a described property; whether a non-obvious schema has a useful description is not mechanically decidable
+<!-- verification:end -->
+
 ## 4.2 Examples for bodies and enums <a href="#42-examples-for-bodies-and-enums" id="42-examples-for-bodies-and-enums"></a>
 
-**[M+R]** Every `enum` whose values are not self-explanatory **MUST** document what its values mean; an example alone is insufficient.
+<!-- rule-class: M+R -->
+
+Every `enum` whose values are not self-explanatory **MUST** document what its values mean; an example alone is insufficient.
 
 Request and response bodies **SHOULD** have representative examples, especially when conditional fields or multi-step behavior are involved.
 
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
+
+advisory body-example presence; enum "values documented" proxied by description presence
+<!-- verification:end -->
+
 ## 4.3 No placeholder text <a href="#43-no-placeholder-text" id="43-no-placeholder-text"></a>
 
-**[M+R]** The spec **MUST NOT** contain placeholder text: `TBD`, `Lorem ipsum`, `a, b, c`, content from other BBs with the original BB name still present, or test plans with literal placeholder steps.
+<!-- rule-class: M+R -->
+
+The spec **MUST NOT** contain placeholder text: `TBD`, `Lorem ipsum`, `a, b, c`, content from other BBs with the original BB name still present, or test plans with literal placeholder steps.
+
+<!-- verification:start -->
+**Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.
+
+regex scan all text for TBD/Lorem ipsum/"a, b, c"; cross-BB-name leakage needs external list
+<!-- verification:end -->
 
 ## 4.4 Accurate operation descriptions <a href="#44-accurate-operation-descriptions" id="44-accurate-operation-descriptions"></a>
 
-**[R]** Operation `description` **MUST** describe what the operation actually does. (Copy-pasted descriptions that document a different endpoint than the one they sit on are a recurring problem in existing BB specifications.)
+<!-- rule-class: R -->
+
+Operation `description` **MUST** describe what the operation actually does. (Copy-pasted descriptions that document a different endpoint than the one they sit on are a recurring problem in existing BB specifications.)
+
+<!-- verification:start -->
+**Verification:** Heuristic check in the optional strict profile.
+
+proxy: flag identical descriptions reused across operations
+<!-- verification:end -->
 
 ## 4.5 API surface inventory <a href="#45-api-surface-inventory" id="45-api-surface-inventory"></a>
 
-**[M+R]** If neither default file exists, the BB **MUST** provide `api/index.yaml`. The index **MUST** contain `version: 1` and exactly one of: a non-empty `apis` list, or `noApi: true` together with a non-empty `reason`.
+<!-- rule-class: M+R -->
+
+If neither default file exists, the BB **MUST** provide `api/index.yaml`. The index **MUST** contain `version: 1` and exactly one of: a non-empty `apis` list, or `noApi: true` together with a non-empty `reason`.
 
 A BB that uses only `api/openapi.yaml`, only `api/asyncapi.yaml`, or both default canonical paths **MAY** omit `api/index.yaml`.
 
@@ -64,9 +98,17 @@ apis:
     discovery: /.well-known/openid-configuration
 ```
 
+<!-- verification:start -->
+**Verification:** Automated repository or validator checks. Semantic review is also required.
+
+driver validates canonical discovery, OpenAPI/AsyncAPI paths, explicit noApi reasons, and undeclared spec copies; protocol-standard entries block conformance until an approved registry/profile can validate them
+<!-- verification:end -->
+
 ## 4.6 Functional-requirement traceability <a href="#46-functional-requirement-traceability" id="46-functional-requirement-traceability"></a>
 
-**[M+R]** Every GovStack requirement in `spec/**/*.md` **MUST** follow the GovStack Requirements Model. Its heading **MUST** use `### #<number> <title> (<level> <mutability> <verification>)`, where level is `REQUIRED`, `RECOMMENDED`, `DRAFT`, or `DEPRECATED`; mutability is `IMMUTABLE`, `EXTENSIBLE`, `REPLACEABLE`, or `INAPPLICABLE`; and verification is `OBSERVABLE` or `AUDITABLE`. The next non-empty line **MUST** contain its canonical `govstack-...#req-<number>` identifier, the two numbers **MUST** match, and body text **MUST** follow any optional `KF:` metadata lines. A child requirement that changes a parent **MUST** identify the parent with `extends` or `replaces` as defined by the GovStack Specification Framework.
+<!-- rule-class: M+R -->
+
+Every GovStack requirement in `spec/**/*.md` **MUST** follow the GovStack Requirements Model. Its heading **MUST** use `### #<number> <title> (<level> <mutability> <verification>)`, where level is `REQUIRED`, `RECOMMENDED`, `DRAFT`, or `DEPRECATED`; mutability is `IMMUTABLE`, `EXTENSIBLE`, `REPLACEABLE`, or `INAPPLICABLE`; and verification is `OBSERVABLE` or `AUDITABLE`. The next non-empty line **MUST** contain its canonical `govstack-...#req-<number>` identifier, the two numbers **MUST** match, and body text **MUST** follow any optional `KF:` metadata lines. A child requirement that changes a parent **MUST** identify the parent with `extends` or `replaces` as defined by the GovStack Specification Framework.
 
 Every BB that declares at least one API **MUST** provide `api/coverage.yaml` with `version: 1`. Its `requirements` array **MUST** match the active REQUIRED and RECOMMENDED requirement IDs exactly: no missing or extra IDs. This array is empty when there are no active requirements; validating an API contract does not require promoting DRAFT requirements. DRAFT is a level, not a strength, so a DRAFT requirement's body states the level it is intended to take when promoted and readers treat its RFC 2119 keywords as that intended obligation. DRAFT and DEPRECATED requirements, and requirements classified INAPPLICABLE, are not active coverage obligations. A repository that uses `noApi: true` under [§4.5](#45-api-surface-inventory) **MUST NOT** contain `api/coverage.yaml`.
 
@@ -101,3 +143,38 @@ draftRequirements:
     operations:
       - retrieveApplication
 ```
+
+<!-- verification:start -->
+**Verification:** Automated repository or validator checks. Semantic review is also required.
+
+driver validates CFR requirement headings, bodies, canonical IDs and classifiers; exact active coverage ID sets including the empty set; optional separate DRAFT mappings; disposition evidence; operation/message references; uniqueness; and planned active gaps; draft maturity is explicit in notices
+<!-- verification:end -->
+
+## 4.7 Operation metadata extensions <a href="#47-operation-metadata-extensions" id="47-operation-metadata-extensions"></a>
+
+<!-- rule-class: M+R -->
+
+When present on an OpenAPI operation or an AsyncAPI operation or message, `x-govstack-use-case` **MUST** be a string or a non-empty array of strings, each a GovStack use-case or requirement identifier (for example `UC-C-PIC-A-001`, or a `govstack-...#req-<number>` identifier as used in [§4.6](#46-functional-requirement-traceability)), and `x-govstack-pii` **MUST** be a boolean whose value `true` states that the operation's request or response carries personal data as defined in [§8.6](../part-b/8-headers.md#86-no-personal-data-in-addressable-locations). An operation marked `x-govstack-pii: true` **MUST NOT** declare an API key security scheme ([§13.6](../part-d/13-authentication-and-authorisation.md#136-api-keys-only-for-operational-endpoints)).
+
+An operation **MAY** declare either extension. For new surfaces, these names replace the ad hoc extensions seen in existing BB specifications (`x-specification-usecase`, `x-specification-scenario`, `x-specification-pii-or-sensitive`). The linter uses `x-govstack-pii` to sharpen its [§13.6](../part-d/13-authentication-and-authorisation.md#136-api-keys-only-for-operational-endpoints) check. The `x-govstack-` prefix is governed by [§9.10](../part-c/9-json-conventions-and-naming.md#910-govstack-extension-prefix).
+
+**Example (informative).**
+
+```yaml
+paths:
+  /v1/applications/{applicationId}:
+    get:
+      operationId: retrieveApplication
+      x-govstack-use-case:
+        - UC-C-PIC-A-001
+        - "govstack-bb-registration-fr#req-2"
+      x-govstack-pii: true
+      security:
+        - oauth2: [bb:registration:application:read]
+```
+
+<!-- verification:start -->
+**Verification:** Automated specification check. Semantic review is also required.
+
+x-govstack-use-case is a non-empty string or non-empty array of non-empty strings and x-govstack-pii a boolean on OpenAPI and AsyncAPI operations and AsyncAPI messages; x-govstack-pii: true fails when any applicable security requirement references an apiKey scheme; identifier existence and the truth of the pii marker are review
+<!-- verification:end -->

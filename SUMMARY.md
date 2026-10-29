@@ -7,27 +7,27 @@
 * [Draft changes](draft-changes.md)
 * [1. Introduction](1-introduction.md)
 
-## Part A. API artifacts
+## API artifacts
 
 * [2. OpenAPI document standards](part-a/2-openapi-document-standards.md)
 * [3. AsyncAPI document standards](part-a/3-asyncapi-document-standards.md)
 * [4. Documentation requirements](part-a/4-documentation-requirements.md)
 
-## Part B. The API surface
+## The API surface
 
 * [5. URL structure and versioning](part-b/5-url-structure-and-versioning.md)
 * [6. HTTP methods](part-b/6-http-methods.md)
 * [7. HTTP status codes](part-b/7-http-status-codes.md)
 * [8. Headers](part-b/8-headers.md)
 
-## Part C. Data
+## Data
 
 * [9. JSON conventions and naming](part-c/9-json-conventions-and-naming.md)
 * [10. Data types and formats](part-c/10-data-types-and-formats.md)
 * [11. Errors](part-c/11-errors.md)
 * [12. Pagination, filtering, sorting](part-c/12-pagination-filtering-sorting.md)
 
-## Part D. Behaviour
+## Behaviour
 
 * [13. Authentication and authorisation](part-d/13-authentication-and-authorisation.md)
 * [14. Idempotency](part-d/14-idempotency.md)
@@ -36,7 +36,7 @@
 * [17. AsyncAPI channel documentation rules](part-d/17-asyncapi-channel-rules.md)
 * [18. Compatibility and lifecycle](part-d/18-compatibility-and-lifecycle.md)
 
-## Part E. Cross-cutting
+## Cross-cutting
 
 * [19. Localisation](part-e/19-localisation.md)
 * [20. Conformance and validation](part-e/20-conformance-and-validation.md)
@@ -44,6 +44,7 @@
 ## Appendices
 
 * [Appendix. References](appendix/references.md)
+* [Appendix. Current practice census](appendix/current-practice-census.md)
 
 ## Guides
 

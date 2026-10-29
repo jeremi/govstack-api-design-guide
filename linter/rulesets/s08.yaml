@@ -1,6 +1,6 @@
 # Rules for §8 HTTP headers — implements guide rules 8.1-8.5, 8.7.
 #
-# 8.6 is STRICT-ONLY; see ./s08-strict.yaml. Source text: ../../rules.yaml.
+# 8.6 and 8.8 are STRICT-ONLY; see ./s08-strict.yaml. Source text: ../../rules.yaml.
 # Severity policy and formats follow ../README.md#rule-naming-and-severities.
 #
 # Custom functions: none of the shared library functions (functions/README.md)
@@ -11,7 +11,6 @@ functionsDir: "../functions"
 functions:
   - s08-credentialsInUrl
   - s08-headerEcho
-  - s08-idempotencyKeyRequired
   - s08-traceContext
   - s08-noXHeaders
   - s08-rateLimitHeaders
@@ -50,21 +49,6 @@ rules:
       functionOptions:
         requestHeader: Accept-Language
         responseHeader: Content-Language
-
-  # 8.3 [M+R] — PROXY (bucket B), notched one step: MUST -> warn.
-  # Verifies: a POST operation declaring a 201 response (proxy for "requires
-  # idempotency under §14") accepts an Idempotency-Key header parameter.
-  # Does NOT verify: the actual §14 idempotency-requirement determination,
-  # nor the §14.6 opt-out.
-  govstack-8.3:
-    description: "create-POSTs (201) must accept an Idempotency-Key header (guide 8.3, [M+R], proxy)."
-    message: "[8.3][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#83-idempotency-key-header-accepted
-    severity: warn
-    formats: [oas3_1]
-    given: "$.paths[*].post"
-    then:
-      function: s08-idempotencyKeyRequired
 
   # 8.4 [M+R] — cross-service proxy: operations with effective nonempty
   # security declare the W3C traceparent request header. Explicit security: []

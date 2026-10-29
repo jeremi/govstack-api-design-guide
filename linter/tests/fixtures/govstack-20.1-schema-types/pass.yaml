@@ -1,0 +1,17 @@
+openapi: 3.1.0
+info:
+  title: Valid schema types
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Record:
+      type: [object, "null"]
+      properties:
+        type:
+          type: string
+        optionalAmount:
+          type: [number, "null"]
+        unconstrained: true
+      example:
+        type: domain-value

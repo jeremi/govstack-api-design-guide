@@ -1,0 +1,3 @@
+# fail.yaml: 404 declares timestamp (1); 409 declares a non-string code (1);
+# 422 omits type, title and status from required (3).
+expect_fail_count: 5

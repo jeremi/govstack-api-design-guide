@@ -22,13 +22,15 @@ import { spawn } from 'node:child_process';
 import YAML from 'yaml';
 import spectralCore from '@stoplight/spectral-core';
 import Parsers from '@stoplight/spectral-parsers';
+import refResolver from '@stoplight/spectral-ref-resolver';
 import bundler from '@stoplight/spectral-ruleset-bundler/with-loader';
 
 const { Spectral, Document } = spectralCore;
+const { createHttpAndFileResolver } = refResolver;
 const { bundleAndLoadRuleset } = bundler;
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const SUPPORTED_GUIDE_VERSION = '0.2.0-draft';
+const SUPPORTED_GUIDE_VERSION = '0.3.0-draft';
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace'];
 
 // Spectral severity numbers -> our names. 0=error 1=warn 2=info 3=hint.
@@ -37,6 +39,37 @@ const SEVERITY_NUM = { error: 0, warn: 1, info: 2, hint: 3 };
 // --fail-on threshold: a finding fails the run when its severity number <= threshold.
 const FAIL_ON_THRESHOLD = { error: 0, warn: 1, info: 2, never: -1 };
 const MODES = new Set(['conformance', 'advisory']);
+// --profile -> bundled ruleset file. `legacy` reports wire-contract rules at info.
+const PROFILE_RULESETS = { standard: 'ruleset.yaml', strict: 'strict.yaml', legacy: 'legacy.yaml' };
+// Values a surface may declare in info.x-govstack-api-guide.profile (guide 20.3).
+const DECLARED_PROFILES = new Set(['standard', 'legacy']);
+
+const USAGE = `Usage: node cli.mjs [options]
+
+Lints a Building Block repository against the GovStack Cross-BB API Design Guide.
+
+Options:
+  --repo-root <dir>          repository root (default: nearest ancestor with .git)
+  --openapi <path>           lint only this OpenAPI file (relative to the repo root)
+  --asyncapi <path>          lint only this AsyncAPI file (relative to the repo root)
+  --profile <standard|strict|legacy>
+                             bundled ruleset: standard (ruleset.yaml, default),
+                             strict (strict.yaml, adds noisy heuristics), or
+                             legacy (legacy.yaml, wire-contract rules at info for
+                             surfaces declaring profile: legacy)
+  --strict                   alias of --profile strict
+  --ruleset <file>           custom Spectral ruleset (overrides the profile's file)
+  --mode <conformance|advisory>
+                             conformance (default) requires base validators
+  --fail-on <error|warn|info|never>
+                             lowest severity that fails the run (default: error)
+  --format <text|json>       report format (default: text)
+  --skip-validators          skip base validators (advisory mode only)
+  --help                     print this help
+
+Exit codes: 0 clean or below threshold, 1 findings at or above --fail-on,
+2 operational error.
+`;
 
 // Directories never scanned for divergent spec copies (§2.3/§3.3).
 const DIVERGENT_EXCLUDE_DIRS = new Set([
@@ -65,6 +98,8 @@ function parseCliArgs(argv) {
         asyncapi: { type: 'string' },
         ruleset: { type: 'string' },
         strict: { type: 'boolean', default: false },
+        profile: { type: 'string' },
+        help: { type: 'boolean', default: false },
         'fail-on': { type: 'string', default: 'error' },
         format: { type: 'string', default: 'text' },
         mode: { type: 'string', default: 'conformance' },
@@ -76,6 +111,19 @@ function parseCliArgs(argv) {
   } catch (err) {
     throw new OperationalError(`Invalid arguments: ${err.message}`);
   }
+  if (values.help) return values;
+
+  if (values.profile !== undefined && !Object.prototype.hasOwnProperty.call(PROFILE_RULESETS, values.profile)) {
+    throw new OperationalError(
+      `Invalid --profile value "${values.profile}" (expected standard|strict|legacy).`,
+    );
+  }
+  if (values.strict && values.profile !== undefined && values.profile !== 'strict') {
+    throw new OperationalError(
+      `--strict is an alias of --profile strict and cannot be combined with --profile ${values.profile}.`,
+    );
+  }
+  values.profile = values.profile ?? (values.strict ? 'strict' : 'standard');
 
   const failOn = values['fail-on'];
   if (!Object.prototype.hasOwnProperty.call(FAIL_ON_THRESHOLD, failOn)) {
@@ -127,7 +175,7 @@ function resolveConfig(values) {
   if (values.ruleset) {
     rulesetPath = path.resolve(values.ruleset);
   } else {
-    rulesetPath = path.join(HERE, values.strict ? 'strict.yaml' : 'ruleset.yaml');
+    rulesetPath = path.join(HERE, PROFILE_RULESETS[values.profile]);
   }
 
   return {
@@ -135,6 +183,7 @@ function resolveConfig(values) {
     openapiPath,
     asyncapiPath,
     rulesetPath,
+    profile: values.profile,
     failOn: values['fail-on'],
     format: values.format,
     mode: values.mode,
@@ -444,6 +493,14 @@ const SNIFF_RE = /(?:^|[\s"'{,])(openapi|asyncapi)["']?\s*:/im;
 const SNIFF_BYTES = 2048;
 const FULL_PARSE_MAX_BYTES = 5 * 1024 * 1024;
 
+function topLevelKindFromHead(head) {
+  const yaml = head.match(/^(openapi|asyncapi)\s*:/im);
+  const json = head.match(/^\s*\{\s*"(openapi|asyncapi)"\s*:/i);
+  const key = yaml?.[1] ?? json?.[1];
+  if (!key) return null;
+  return key.toLowerCase() === 'openapi' ? 'OpenAPI' : 'AsyncAPI';
+}
+
 // Cheap top-of-file sniff, then confirm by parse (only if not huge). Returns
 // { kind } when the file looks like a top-level OpenAPI/AsyncAPI document, else null.
 async function sniffSpec(absPath) {
@@ -468,8 +525,9 @@ async function sniffSpec(absPath) {
   let data;
   try {
     data = YAML.parse(await fsp.readFile(absPath, 'utf8'));
-  } catch {
-    return null;
+  } catch (err) {
+    const kind = topLevelKindFromHead(head);
+    return kind ? { kind, heuristic: false, unparseable: true, error: err.message } : null;
   }
   const shape = documentShape(data);
   return shape ? { ...shape, heuristic: false } : null;
@@ -562,13 +620,27 @@ async function scanDivergentCopies(repoRoot, skipAbs, rel, findings) {
         if (hit) {
           const insideCommonRoot = path.resolve(full).startsWith(`${commonRoot}${path.sep}`);
           if (insideCommonRoot && hit.supportOnly) continue;
-          const guideRule = hit.kind === 'AsyncAPI' ? '3.3' : '2.3';
+          const canonicalRule = hit.kind === 'AsyncAPI' ? '3.2' : '2.2';
+          const guideRule = '4.5';
+          if (hit.unparseable) {
+            findings.push(
+              driverFinding(
+                rel(full),
+                'file-unparseable-spec',
+                `${rel(full)} looks like an undeclared ${hit.kind} document but cannot be parsed: ${hit.error} ` +
+                  `(guide §${canonicalRule} and §4.5).`,
+                { guideRule },
+              ),
+            );
+            continue;
+          }
           findings.push(
             driverFinding(
               rel(full),
               'file-undeclared-spec',
               `${hit.heuristic ? 'Heuristic: ' : ''}${rel(full)} is an undeclared ${hit.kind} document. ` +
-                `Every top-level API specification must be canonical or listed in api/index.yaml (guide §${guideRule}).`,
+                `Every top-level API specification must be canonical or listed in api/index.yaml ` +
+                `(guide §${canonicalRule} and §4.5).`,
               { guideRule, severity: hit.heuristic ? 'warn' : 'error' },
             ),
           );
@@ -851,6 +923,7 @@ async function validateRequirementCoverage(cfg, specs, hasDeclaredSurface, noApi
         coverageRel,
         file.exists ? 'coverage-empty' : 'coverage-missing',
         'Declared API surfaces require api/coverage.yaml with version: 1 and a requirements array.',
+        { guideRule: '4.6' },
       ),
     );
     return;
@@ -1040,7 +1113,7 @@ async function validateOpenapi(absPath) {
     return {
       unavailable:
         `openapi-spec-validator not found; skipping OpenAPI base validation (§20.1). ` +
-          `Install with: pip install openapi-spec-validator`,
+          `Install with: uv tool install openapi-spec-validator==0.9.0`,
     };
   }
   if (r.code === 0) return { ok: true };
@@ -1068,7 +1141,7 @@ async function validateAsyncapi(absPath) {
     return {
       unavailable:
         `AsyncAPI CLI not found; skipping AsyncAPI base validation (§20.1). ` +
-          `Install with: npm i -g @asyncapi/cli`,
+          `Install with: npm install --global @asyncapi/cli@6.0.2`,
     };
   }
   if (global.code === 0) return { ok: true };
@@ -1120,10 +1193,21 @@ function guideRuleFromCode(code) {
   return m ? m[1] : null;
 }
 
-function mapSpectralResult(r, relPath) {
+function normalizeSpectralSource(source) {
+  if (typeof source !== 'string') return null;
+  if (!source.toLowerCase().startsWith('file:')) return source;
+  try {
+    return fileURLToPath(source);
+  } catch (err) {
+    throw new OperationalError(`Cannot interpret Spectral source ${JSON.stringify(source)}: ${err.message}`);
+  }
+}
+
+function mapSpectralResult(r, relPath, rel) {
   const severity = SEVERITY_NAME[r.severity] ?? 'info';
+  const source = normalizeSpectralSource(r.source);
   return {
-    file: relPath,
+    file: typeof source === 'string' ? rel(source) : relPath,
     code: String(r.code),
     guideRule: guideRuleFromCode(r.code),
     severity,
@@ -1195,10 +1279,171 @@ function applicableException(exceptions, finding) {
   );
 }
 
-function consumeGuideDeclaration(specData, relPath, findings, mode) {
+function refResource(ref, declaringFile) {
+  const hash = ref.indexOf('#');
+  const resource = hash === -1 ? ref : ref.slice(0, hash);
+  if (!resource) return declaringFile;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(resource)) {
+    if (resource.toLowerCase().startsWith('file:')) return normalizeSpectralSource(resource);
+    try {
+      return new URL(resource).href;
+    } catch (err) {
+      throw new OperationalError(`Cannot interpret external reference ${JSON.stringify(ref)}: ${err.message}`);
+    }
+  }
+  try {
+    return path.resolve(path.dirname(declaringFile), decodeURIComponent(resource));
+  } catch (err) {
+    throw new OperationalError(`Cannot interpret external reference ${JSON.stringify(ref)}: ${err.message}`);
+  }
+}
+
+function sameResource(left, right) {
+  if (left === null || right === null) return false;
+  const leftUrl = /^[a-z][a-z0-9+.-]*:/i.test(left);
+  const rightUrl = /^[a-z][a-z0-9+.-]*:/i.test(right);
+  if (leftUrl || rightUrl) return left === right;
+  return path.resolve(left) === path.resolve(right);
+}
+
+function refFragmentPath(ref) {
+  const hash = ref.indexOf('#');
+  if (hash === -1 || hash === ref.length - 1) return [];
+  let fragment;
+  try {
+    fragment = decodeURIComponent(ref.slice(hash + 1));
+  } catch (err) {
+    throw new OperationalError(`Cannot interpret external reference ${JSON.stringify(ref)}: ${err.message}`);
+  }
+  return decodeJsonPointer(fragment);
+}
+
+async function resolveReferenceGraph(resolver, spec) {
+  const resolved = await resolver.resolve(spec.data, {
+    baseUri: spec.abs,
+    parseResolveResult: (options) => {
+      const source = options.targetAuthority.href().replace(/\/$/, '');
+      const parser = path.extname(source).toLowerCase() === '.json' ? Parsers.Json : Parsers.Yaml;
+      const document = new Document(String(options.result), parser, source);
+      options.result = document.data;
+      return Promise.resolve(options);
+    },
+  });
+  return resolved.graph;
+}
+
+function isPathPrefix(prefix, candidate) {
+  return prefix.length <= candidate.length && prefix.every((token, i) => token === candidate[i]);
+}
+
+function traceReferenceOrigin(graph, targetRef, currentResource, rootPath, findingSource, findingPath, seen) {
+  const resource = refResource(targetRef, currentResource);
+  const fragmentPath = refFragmentPath(targetRef);
+  if (fragmentPath === null) return [];
+
+  if (sameResource(resource, findingSource)) {
+    if (!isPathPrefix(fragmentPath, findingPath)) return [];
+    return [[...rootPath, ...findingPath.slice(fragmentPath.length)]];
+  }
+
+  const traceKey = JSON.stringify([resource, fragmentPath]);
+  if (seen.has(traceKey) || !graph.hasNode(resource)) return [];
+  seen.add(traceKey);
+  const origins = [];
+  const refMap = graph.getNodeData(resource)?.refMap ?? {};
+  for (const [localPointer, nestedTarget] of Object.entries(refMap)) {
+    const localPath = refFragmentPath(localPointer);
+    if (localPath === null || !isPathPrefix(fragmentPath, localPath)) continue;
+    origins.push(
+      ...traceReferenceOrigin(
+        graph,
+        nestedTarget,
+        resource,
+        [...rootPath, ...localPath.slice(fragmentPath.length)],
+        findingSource,
+        findingPath,
+        seen,
+      ),
+    );
+  }
+  seen.delete(traceKey);
+  return origins;
+}
+
+// Spectral attributes a resolved finding to the external source fragment. Guide
+// exceptions are declared in the root document, so use the resolver graph to
+// recover every root occurrence that reaches the exact source fragment. A
+// defect is suppressed only when every origin is covered; incomplete provenance
+// returns no paths and therefore fails closed.
+function declaringPathsForExternalFinding(spec, result, finding, graph) {
+  const source = normalizeSpectralSource(result.source);
+  if (source === null || sameResource(source, spec.abs)) return [finding.jsonPath];
+  if (!graph.hasNode(spec.abs)) return [];
+
+  const origins = [];
+  const rootRefMap = graph.getNodeData(spec.abs)?.refMap ?? {};
+  for (const [rootPointer, targetRef] of Object.entries(rootRefMap)) {
+    const rootPath = refFragmentPath(rootPointer);
+    if (rootPath === null) continue;
+    origins.push(
+      ...traceReferenceOrigin(
+        graph,
+        targetRef,
+        spec.abs,
+        rootPath,
+        source,
+        finding.jsonPath.map(String),
+        new Set(),
+      ),
+    );
+  }
+  const unique = new Map(origins.map((origin) => [JSON.stringify(origin), origin]));
+  return [...unique.values()];
+}
+
+// §20.3 profile declaration vs the run profile. An invalid declared value is a
+// finding at the mode's severity; a mismatch between a declared legacy surface
+// and the run profile is reported (info when the surface could use a gentler
+// run, warn when the legacy run was not earned by a declaration).
+function checkProfileDeclaration(decl, relPath, findings, severity, runProfile) {
+  const declared = decl && typeof decl === 'object' && !Array.isArray(decl) ? decl.profile : undefined;
+  if (declared !== undefined && !(typeof declared === 'string' && DECLARED_PROFILES.has(declared))) {
+    findings.push(
+      driverFinding(
+        relPath,
+        'guide-profile',
+        `x-govstack-api-guide.profile must be "standard" or "legacy", got ${JSON.stringify(declared)}.`,
+        { guideRule: '20.3', severity },
+      ),
+    );
+    return;
+  }
+  if (declared === 'legacy' && runProfile !== 'legacy') {
+    findings.push(
+      driverFinding(
+        relPath,
+        'guide-profile',
+        'surface declares profile legacy; run with --profile legacy to report wire rules at info.',
+        { guideRule: '20.3', severity: 'info' },
+      ),
+    );
+  } else if (declared !== 'legacy' && runProfile === 'legacy') {
+    findings.push(
+      driverFinding(
+        relPath,
+        'guide-profile',
+        'legacy profile used for a surface that does not declare profile: legacy.',
+        { guideRule: '20.3', severity: 'warn' },
+      ),
+    );
+  }
+}
+
+function consumeGuideDeclaration(specData, relPath, findings, mode, runProfile) {
   const { version, ids } = getGuideCatalogue();
   const decl = specData?.info?.['x-govstack-api-guide'];
   const severity = mode === 'conformance' ? 'error' : 'warn';
+  checkProfileDeclaration(decl, relPath, findings, severity, runProfile);
   if (!decl || typeof decl !== 'object' || Array.isArray(decl)) {
     findings.push(
       driverFinding(
@@ -1346,7 +1591,8 @@ function renderText(report) {
       lines.push(`  [${g.severity}] ${g.code}${rule} ×${g.count}`);
       lines.push(`    ${g.message}`);
       if (g.locations.length) {
-        const more = g.count > g.locations.length ? ', …' : '';
+        const hidden = g.count - g.locations.length;
+        const more = hidden > 0 ? `, ${hidden} more; use \`--format json\`` : '';
         lines.push(`    at ${g.locations.join(', ')}${more}`);
       }
       if (g.documentationUrl) lines.push(`    docs: ${g.documentationUrl}`);
@@ -1358,7 +1604,14 @@ function renderText(report) {
     lines.push(`Suppressed (${suppressed.length}) — excepted via info.x-govstack-api-guide:`);
     for (const s of suppressed) {
       const rule = s.guideRule ? ` (§${s.guideRule})` : '';
-      const record = s.exceptionRecord ? `record: ${s.exceptionRecord}` : 'record: (none)';
+      const records = s.exceptionRecords?.length
+        ? s.exceptionRecords
+        : s.exceptionRecord
+          ? [s.exceptionRecord]
+          : [];
+      const record = records.length > 1
+        ? `records: ${records.join(', ')}`
+        : `record: ${records[0] ?? '(none)'}`;
       lines.push(`  [${s.severity}] ${s.code}${rule} — ${s.file} — ${record}`);
     }
   }
@@ -1402,6 +1655,7 @@ function renderJson(report) {
           range: x.range,
           documentationUrl: x.documentationUrl,
           exceptionRecord: x.exceptionRecord,
+          exceptionRecords: x.exceptionRecords,
         })),
       })),
       notices,
@@ -1421,6 +1675,10 @@ function renderJson(report) {
 
 async function main(argv) {
   const values = parseCliArgs(argv);
+  if (values.help) {
+    process.stdout.write(USAGE);
+    return 0;
+  }
   const cfg = resolveConfig(values);
   const rel = (p) => {
     const r = path.relative(cfg.repoRoot, p);
@@ -1438,12 +1696,14 @@ async function main(argv) {
   const hasDeclaredSurface = discovery.declarations.length > 0 || discovery.standardSurfaces.length > 0;
 
   // --- File-tree checks (§2.2/§2.3/§3.2/§3.3) -----------------------------------------
-  await checkLegacySwagger(cfg.repoRoot, rel, findings);
+  const explicitSpecs = Boolean(cfg.openapiPath || cfg.asyncapiPath);
   const skipAbs = new Set(discovery.declarations.map((entry) => path.resolve(entry.abs)));
   skipAbs.add(path.join(cfg.repoRoot, 'api', 'swagger.yaml'));
   skipAbs.add(path.join(cfg.repoRoot, 'api', 'swagger.json'));
-  await scanDivergentCopies(cfg.repoRoot, skipAbs, rel, findings);
-  const explicitSpecs = Boolean(cfg.openapiPath || cfg.asyncapiPath);
+  if (!explicitSpecs) {
+    await checkLegacySwagger(cfg.repoRoot, rel, findings);
+    await scanDivergentCopies(cfg.repoRoot, skipAbs, rel, findings);
+  }
   const exampleSpecs = explicitSpecs ? [] : await discoverExampleSpecs(cfg.repoRoot, skipAbs, rel);
   await validateRequirementCoverage(cfg, specs, hasDeclaredSurface, discovery.noApi, rel, findings, notices);
   if (discovery.noApi) notices.push('api/index.yaml explicitly declares that this BB exposes no API surface.');
@@ -1468,11 +1728,12 @@ async function main(argv) {
 
   // --- Spectral (§20.2) + base validators (§20.1) + guide declaration (§20.3) ----------
   let spectral;
+  const spectralFindingStates = new Map();
   for (const spec of [...specs, ...exampleSpecs]) {
     const relSpec = rel(spec.abs);
 
     // §20.3: version comparison + exception set for this spec.
-    const { exceptions } = consumeGuideDeclaration(spec.data, relSpec, findings, cfg.mode);
+    const { exceptions } = consumeGuideDeclaration(spec.data, relSpec, findings, cfg.mode, cfg.profile);
 
     // §20.1 base validator.
     if (!cfg.skipValidators) {
@@ -1486,6 +1747,14 @@ async function main(argv) {
       spectral.setRuleset(ruleset);
     }
     const doc = new Document(spec.content, Parsers.Yaml, spec.abs);
+    let referenceGraph;
+    try {
+      // Use a fresh resolver so its graph retains the complete transitive
+      // refMap. Reusing Spectral's cache would omit nested edges on later passes.
+      referenceGraph = await resolveReferenceGraph(createHttpAndFileResolver(), spec);
+    } catch (err) {
+      throw new OperationalError(`Cannot map reference origins for ${relSpec}: ${err.message}`);
+    }
     let results;
     try {
       results = await spectral.run(doc);
@@ -1494,15 +1763,43 @@ async function main(argv) {
     }
 
     for (const r of results) {
-      const finding = mapSpectralResult(r, relSpec);
-      const exception = finding.guideRule ? applicableException(exceptions, finding) : null;
-      if (exception) {
-        suppressed.push({ ...finding, exceptionRecord: exception.record });
+      const finding = mapSpectralResult(r, relSpec, rel);
+      const findingKey = JSON.stringify([
+        finding.file,
+        finding.code,
+        finding.severity,
+        finding.message,
+        finding.jsonPath,
+      ]);
+      const declaringPaths = declaringPathsForExternalFinding(spec, r, finding, referenceGraph);
+      const occurrenceExceptions = finding.guideRule
+        ? declaringPaths.map((jsonPath) => applicableException(exceptions, { ...finding, jsonPath }))
+        : [];
+      const allOccurrencesExcepted = declaringPaths.length > 0 && occurrenceExceptions.every(Boolean);
+      let state = spectralFindingStates.get(findingKey);
+      if (!state) {
+        state = { finding, unsuppressed: false, exceptionRecords: new Set() };
+        spectralFindingStates.set(findingKey, state);
+      }
+      if (allOccurrencesExcepted) {
+        for (const exception of occurrenceExceptions) state.exceptionRecords.add(exception.record);
       } else {
-        findings.push(finding);
+        state.unsuppressed = true;
       }
     }
 
+  }
+
+  for (const state of spectralFindingStates.values()) {
+    if (state.unsuppressed) findings.push(state.finding);
+    else {
+      const exceptionRecords = [...state.exceptionRecords];
+      suppressed.push({
+        ...state.finding,
+        exceptionRecord: exceptionRecords[0] ?? null,
+        exceptionRecords,
+      });
+    }
   }
 
   // --- Assemble per-file report --------------------------------------------------------

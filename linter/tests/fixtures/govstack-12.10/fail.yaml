@@ -1,0 +1,164 @@
+openapi: 3.1.0
+info:
+  title: Fixture API
+  version: 1.0.0
+  description: Fixture for govstack-12.10.
+  contact: {}
+paths:
+  /v1/foos/{id}:
+    get:
+      operationId: getFoo
+      summary: Get a record
+      description: Get a record with optional field selection.
+      tags: [foos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: fields
+          in: query
+          schema:
+            type: array
+            items: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object }
+        '400':
+          description: Unknown field name.
+          content:
+            application/problem+json:
+              schema: { type: object }
+  /v1/bars/{id}:
+    get:
+      operationId: getBar
+      summary: Get a record
+      description: Get a record with optional field selection.
+      tags: [foos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: fields
+          in: query
+          schema: { type: string, enum: [summary, full] }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object }
+        '400':
+          description: Unknown field name.
+          content:
+            application/problem+json:
+              schema: { type: object }
+  /v1/bazs/{id}:
+    get:
+      operationId: getBaz
+      summary: Get a record
+      description: Get a record with optional field selection.
+      tags: [foos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: fields
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object }
+        '400':
+          description: Unknown field name.
+          content:
+            application/problem+json:
+              schema: { type: object }
+  /v1/quxs/{id}:
+    get:
+      operationId: getQux
+      summary: Get a record
+      description: Get a record with optional field selection.
+      tags: [foos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: fields
+          in: query
+          description: Comma-separated top-level property names to return.
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object }
+  /v1/corges/{id}:
+    get:
+      operationId: getCorge
+      summary: Get a record
+      description: Get a record with optional field selection.
+      tags: [foos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: fields
+          in: query
+          style: form
+          explode: true
+          schema:
+            type: array
+            items: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object }
+        '400':
+          description: Unknown field name.
+          content:
+            application/problem+json:
+              schema: { type: object }
+  /v1/graults/{id}:
+    get:
+      operationId: getGrault
+      summary: Get a record
+      description: Get a record with optional field selection.
+      tags: [foos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: fields
+          in: query
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: object }
+        '400':
+          description: Unknown field name.
+          content:
+            application/problem+json:
+              schema: { type: object }

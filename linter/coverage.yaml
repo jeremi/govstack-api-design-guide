@@ -1,6 +1,6 @@
 # GovStack API lint coverage manifest: every guide rule and how (or why not) the linter covers it.
 # Hand-maintained alongside the rulesets; machine-checked by tests/coverage.test.mjs against
-# ../rules.yaml (all 171 ids present exactly once) and against the rule names actually defined
+# ../rules.yaml (every id present exactly once) and against the rule names actually defined
 # in ruleset.yaml / strict.yaml (spectral_rules lists must match, both directions).
 #
 # status values:
@@ -12,7 +12,7 @@
 #   runtime       - constrains wire behaviour; conformance test-harness territory, not a linter's
 #   human         - review/governance judgment; no useful automated check
 #   informative   - non-normative guide entry; nothing to enforce
-guide_version: "0.2.0-draft"
+guide_version: "0.3.0-draft"
 rules:
   - id: "2.1"
     class: "M"
@@ -42,8 +42,8 @@ rules:
   - id: "2.6"
     class: "M+R"
     status: partial-proxy
-    spectral_rules: [govstack-2.6]
-    note: "deterministic: non-empty HTTPS servers, no loopback, no duplicated /vN; meaningful/fake-domain judgment remains review"
+    spectral_rules: [govstack-2.6, govstack-2.6-version]
+    note: "deterministic: non-empty HTTPS servers, no loopback, no /vN duplicated between server and path; only the duplication check is informational under legacy; meaningful/fake-domain judgment remains review"
   - id: "2.7"
     class: "M+R"
     status: implemented
@@ -129,6 +129,11 @@ rules:
     status: driver
     spectral_rules: []
     note: "driver validates CFR requirement headings, bodies, canonical IDs and classifiers; exact active coverage ID sets including the empty set; optional separate DRAFT mappings; disposition evidence; operation/message references; uniqueness; and planned active gaps; draft maturity is explicit in notices"
+  - id: "4.7"
+    class: "M+R"
+    status: implemented
+    spectral_rules: [govstack-4.7, govstack-4.7-pii-apikey]
+    note: "x-govstack-use-case is a non-empty string or non-empty array of non-empty strings and x-govstack-pii a boolean on OpenAPI and AsyncAPI operations and AsyncAPI messages; x-govstack-pii: true fails when any applicable security requirement references an apiKey scheme; identifier existence and the truth of the pii marker are review"
   - id: "5.1"
     class: "M"
     status: partial-proxy
@@ -138,17 +143,17 @@ rules:
     class: "M+R"
     status: strict-only
     spectral_rules: [govstack-5.2]
-    note: "proxy: resource segment plural heuristic"
+    note: "proxy: resource segment plural heuristic; §5.10 standard unversioned endpoints are skipped"
   - id: "5.3"
     class: "M"
     status: implemented
     spectral_rules: [govstack-5.3]
-    note: "advisory default: resource segments use kebab-case and terminal colon custom-method suffixes use camelCase"
+    note: "advisory default: literal segments use kebab-case; a colon custom method is flagged with a pointer to §5.8 action sub-resources"
   - id: "5.4"
     class: "M"
-    status: implemented
+    status: partial-proxy
     spectral_rules: [govstack-5.4]
-    note: "<=2 non-param resource/action levels after /v{N}/; parameters and colon custom-method suffixes add no hierarchy level"
+    note: "counts resource/action levels after /v{N}/; parameters and fixed IDs evidenced by matching Digital Registries collection metadata add no level. Undeclared literal IDs need review; a sibling template alone does not prove identifier semantics, and no blanket collection exemption applies. Retains warn severity for the shallow-path SHOULD, including genuine revision-depth deviations"
   - id: "5.5"
     class: "M+R"
     status: partial-proxy
@@ -163,17 +168,17 @@ rules:
     class: "M+R"
     status: strict-only
     spectral_rules: [govstack-5.7]
-    note: "proxy: CRUD-like final segments or colon custom-method suffixes vs a lexical verb list; actual CRUD semantics require review"
+    note: "proxy: CRUD-like final segments vs a lexical verb list; actual CRUD semantics require review"
   - id: "5.8"
     class: "R"
     status: human
     spectral_rules: []
-    note: "action sub-resources and colon custom methods are permitted; choosing a resource scope and avoiding identifier shadowing require semantic review"
+    note: "colon custom methods are flagged by govstack-5.3; choosing a resource scope and reserving action names from the collection identifier format are review-only"
   - id: "5.9"
-    class: "M+R"
-    status: implemented
-    spectral_rules: [govstack-5.9-presence, govstack-5.9-media-type, govstack-5.9-status-codes, govstack-5.9-no-auth]
-    note: "/health present, unversioned, 200 media application/json, both 200 and 503 declared, no auth; the media-type check is scoped to the 200 response so the 11.1 problem+json error responses stay satisfiable. Not checked: 'cheap and bounded', 'MUST NOT expose system-internal detail', and the dependency-probing limit, none of which are decidable from the document."
+    class: "informative"
+    status: human
+    spectral_rules: []
+    note: "informative reference to govstack-cfr-architecture#req-15; this guide adds no health-specific contract or linter checks"
   - id: "5.10"
     class: "M"
     status: implemented
@@ -208,27 +213,27 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-6.6]
-    note: "POST /search, :search and :lookup return 200 not 201; identifying other read-only POSTs and their single-resource or collection semantics requires review"
+    note: "POST /search and /lookup return 200 not 201; identifying other read-only POSTs and their single-resource or collection semantics requires review"
   - id: "6.7"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-6.7]
-    note: "proxy: collection-targeted PUT/PATCH/DELETE require >=1 param; colon custom methods require semantic review and are not inferred to be bulk CRUD"
+    note: "proxy: collection-targeted PUT/PATCH/DELETE require >=1 param"
   - id: "7.1"
     class: "R"
     status: human
     spectral_rules: []
     note: "descriptive status mapping, no MUST"
   - id: "7.2"
-    class: "M"
-    status: implemented
+    class: "M+R"
+    status: partial-proxy
     spectral_rules: [govstack-7.2]
-    note: "every 201 response declares a Location header"
+    note: "checks Location on declared 201 responses; whether an operation creates a resource and therefore needs 201 requires semantic review, independent of its operationId spelling"
   - id: "7.3"
     class: "M+R"
-    status: implemented
-    spectral_rules: [govstack-7.3]
-    note: "every 202 response declares Location"
+    status: partial-proxy
+    spectral_rules: [govstack-7.3, govstack-15.1]
+    note: "declared 202 responses have Location checks under §7.3 and concrete content/schema checks under §15.1 where HTTP permits content; asynchronous applicability and the meaning of the local Operation resource require review"
   - id: "7.4"
     class: "R"
     status: human
@@ -293,7 +298,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-7.16]
-    note: "proxy: single-resource GETs declare ETag header + 304 (advisory SHOULD); skips GETs whose 200 body is a root array or items-array page (collection ETag is MAY); exempts the 5.9 operational endpoints /health and /ready (a liveness probe is not a cacheable resource)"
+    note: "proxy: single-resource GETs declare ETag header + 304 (advisory SHOULD); skips GETs whose 200 body is a root array or items-array page (collection ETag is MAY); exempts the 5.10 operational endpoints /health and /ready (a liveness probe is not a cacheable resource)"
   - id: "7.17"
     class: "M+R"
     status: partial-proxy
@@ -317,8 +322,8 @@ rules:
   - id: "7.21"
     class: "M"
     status: implemented
-    spectral_rules: [govstack-7.21]
-    note: "declared 2xx response media types carry non-empty schemas; 204 has no content"
+    spectral_rules: [govstack-7.21, govstack-15.1]
+    note: "declared 2xx response media types carry non-empty schemas across paths, webhooks and nested callbacks; HEAD, 204 and 205 responses have no content. The shared §15.1 check owns 202 content/schema findings, including HEAD's no-content exception, so each defect is reported once"
   - id: "8.1"
     class: "M+R"
     status: partial-proxy
@@ -332,8 +337,8 @@ rules:
   - id: "8.3"
     class: "M+R"
     status: partial-proxy
-    spectral_rules: [govstack-8.3]
-    note: "proxy: create-POSTs (201) declare Idempotency-Key header param"
+    spectral_rules: [govstack-14.1]
+    note: "shared with §14.1: POSTs returning 201 or 202 declare Idempotency-Key; reports once under §14.1"
   - id: "8.4"
     class: "M+R"
     status: partial-proxy
@@ -354,6 +359,11 @@ rules:
     status: partial-proxy
     spectral_rules: [govstack-8.7, govstack-8.7-no-legacy]
     note: "proxy: 429 responses declare Retry-After (SHOULD-level rule, proxy at info); structured RateLimit is MAY and unchecked; quota scope and gateway ownership are review-only; deterministic warn flags legacy RateLimit-Limit/Remaining/Reset"
+  - id: "8.8"
+    class: "M+R"
+    status: strict-only
+    spectral_rules: [govstack-8.8]
+    note: "proxy: flag request and response header names that look like tenant/organisation ids, customer ids, callback URLs or national/citizen ids; GovStack- prefix on cross-BB headers, plain names on BB-local headers and BB codes or versions in names need review"
   - id: "9.1"
     class: "M+R"
     status: partial-proxy
@@ -388,7 +398,7 @@ rules:
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-9.7]
-    note: "proxy: enum string values SCREAMING_SNAKE_CASE minus the rule's carve-outs (BCP 47 tags, reverse-DNS error codes and event types, media types, x-govstack-* vocabularies, and the JOSE/COSE names not already all-caps). IANA registry membership is not visible in a document, so a registered value outside the listed set is a miss. §12.7 sort keys are a known false positive."
+    note: "SHOULD-level proxy at info: enum string values SCREAMING_SNAKE_CASE minus the rule's carve-outs (BCP 47 tags, reverse-DNS error codes and event types, media types, x-govstack-* vocabularies, and the JOSE/COSE names not already all-caps). IANA registry membership is not visible in a document, so a registered value outside the listed set is a miss. Actual sort/fields query parameters and request-body properties identify selector enums through resolved file references; selectors reached under other names remain a known false positive."
   - id: "9.8"
     class: "M"
     status: partial-proxy
@@ -398,7 +408,7 @@ rules:
     class: "R"
     status: partial-proxy
     spectral_rules: [govstack-9.9]
-    note: "proxy: flag closed enums lacking x-extensible-enum/UNKNOWN fallback"
+    note: "proxy: flag closed enums lacking x-extensible-enum/UNKNOWN fallback; request-only field-selection and sort-key enums are exempt, while schemas also emitted in responses or events retain the check"
   - id: "9.10"
     class: "M+R"
     status: strict-only
@@ -418,7 +428,7 @@ rules:
     class: "M"
     status: partial-proxy
     spectral_rules: [govstack-10.2]
-    note: "proxy: timestamp-named fields declare format:date-time"
+    note: "proxy: At-named fields explicitly declare string date/date-time alternatives; Timestamp fields declare date-time only. Checks allOf/anyOf/oneOf and resolved references, with bounded expansion; instance validity and uppercase UTC Z serialization remain runtime obligations"
   - id: "10.3"
     class: "M"
     status: partial-proxy
@@ -468,12 +478,12 @@ rules:
     class: "M"
     status: implemented
     spectral_rules: [govstack-11.1]
-    note: "every 4xx/5xx response uses application/problem+json. OpenAPI surface only (problem+json/status-code mechanism has no AsyncAPI equivalent)."
+    note: "4xx/5xx and default error responses declare application/problem+json content; HEAD errors omit content. OpenAPI surface only (problem+json/status-code mechanism has no AsyncAPI equivalent)."
   - id: "11.2"
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-11.2, govstack-11.2-type]
-    note: "problem schema has type/title/status, omits code/timestamp after ref resolution, and literal examples use the canonical type URI; status/body equality, URI dereferenceability and no-sensitive-detail clauses require review or instance tests"
+    note: "problem schema has type/title/status, omits timestamp, and any declared code is type string, after ref resolution; literal examples use the canonical type URI; that code mirrors a documented BB/external machine code and is never required to interpret a problem, status/body equality, URI dereferenceability and no-sensitive-detail clauses require review or instance tests"
   - id: "11.3"
     class: "M"
     status: implemented
@@ -498,7 +508,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-12.1]
-    note: "proxy: likely collection paths declare pagination parameters; GET custom methods need a declared array/items response to be classified as collections; exempts standard unversioned endpoints and response arrays with maxItems bounds; nested array bounds, relationship collection classification, and completeness of the permitted view require semantic review"
+    note: "proxy: likely collection paths declare pagination parameters; exempts standard unversioned endpoints and response arrays with maxItems bounds; nested array bounds, relationship collection classification, and completeness of the permitted view require semantic review"
   - id: "12.2"
     class: "M+R"
     status: partial-proxy
@@ -523,7 +533,7 @@ rules:
     class: "M+R"
     status: implemented
     spectral_rules: [govstack-12.6]
-    note: "if offset param present, envelope {items,offset,limit,total} with total required"
+    note: "if offset param present, envelope {items,offset,limit,total?}: items/offset/limit required, total optional and integer when declared; the statement that total is omitted and short-page end-of-traversal semantics are review"
   - id: "12.7"
     class: "M"
     status: partial-proxy
@@ -538,12 +548,12 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-12.9-body, govstack-12.9-response]
-    note: "proxy: POST /search or :search carries pageSize/cursor in body + §12.3 envelope; other custom-method collection semantics require review"
+    note: "proxy: POST /search carries pageSize/cursor in body with the §12.3 envelope, or offset/limit with the §12.6 envelope (an offset body selects the offset contract, so a mismatch is flagged); follow-up criteria and other search semantics require review"
   - id: "12.10"
-    class: "informative"
-    status: informative
-    spectral_rules: []
-    note: "out-of-scope statement (informative)"
+    class: "M+R"
+    status: implemented
+    spectral_rules: [govstack-12.10]
+    note: "when a fields query parameter is declared: a string without an enum, or a string array (enum allowed on items) with style form and explode false; not required; and the operation declares 400 (4XX accepted); top-level-name semantics, always-returned members, the unknown-name Problem type and no authorisation widening are review/runtime"
   - id: "13.1"
     class: "M"
     status: implemented
@@ -583,7 +593,7 @@ rules:
     class: "M+R"
     status: partial-proxy
     spectral_rules: [govstack-14.1]
-    note: "proxy: create-POSTs (201) accept Idempotency-Key"
+    note: "proxy: POSTs returning 201 or 202 accept Idempotency-Key; other semantic triggers and natural-idempotency exemptions require review"
   - id: "14.2"
     class: "R"
     status: human
@@ -611,9 +621,9 @@ rules:
     note: "\"document per-operation duplicate handling\" - human"
   - id: "15.1"
     class: "M+R"
-    status: implemented
-    spectral_rules: [govstack-15.1]
-    note: "every 202 declares Location"
+    status: partial-proxy
+    spectral_rules: [govstack-15.1, govstack-7.3]
+    note: "§15.1 checks concrete non-empty content schemas on declared non-HEAD 202 responses and forbids HEAD 202 content; §7.3 owns Location checks. Whether work is asynchronous and whether the representation denotes its local Operation resource require semantic review"
   - id: "15.2"
     class: "M+R"
     status: human
@@ -644,6 +654,11 @@ rules:
     status: human
     spectral_rules: []
     note: "\"document result retention\" prose"
+  - id: "15.8"
+    class: "M+R"
+    status: partial-proxy
+    spectral_rules: [govstack-15.8, govstack-15.8-callbacks, govstack-15.8-format]
+    note: "deterministic: request body callbackUrl requires a callbacks object (subscription paths exempt); proxies: no header/query parameter named like /callback/i, callbackUrl declares format: uri; the https requirement, the runtime expression referencing callbackUrl, the callback body shape and callback authentication are NOT checked"
   - id: "16.1"
     class: "M+R"
     status: partial-proxy
@@ -662,8 +677,8 @@ rules:
   - id: "16.4"
     class: "M+R"
     status: partial-proxy
-    spectral_rules: [govstack-16.4]
-    note: "proxy: flag source const/example containing host/env/pod tokens"
+    spectral_rules: [govstack-16.4, govstack-16.4-async]
+    note: "OpenAPI and AsyncAPI proxies check pinned/example source values for non-empty URI-reference lexical shape and valid percent escapes; stable authority, tenant, deployment, environment, host, IP and port identities are permitted. Full URI semantics, stability, occurrence context, and source+id uniqueness require review or runtime evidence"
   - id: "16.5"
     class: "R"
     status: human
@@ -856,9 +871,9 @@ rules:
     note: "proxy: localised responses declare Content-Language/contentLanguage header"
   - id: "20.1"
     class: "M"
-    status: driver
-    spectral_rules: []
-    note: "run openapi-spec-validator / AsyncAPI parser"
+    status: partial-proxy
+    spectral_rules: [govstack-20.1-schema-types]
+    note: "driver runs mandatory openapi-spec-validator / AsyncAPI parser; Spectral additionally checks JSON Schema type keyword syntax throughout qualified OAS 3.1 schemas, including resolved local references; custom dialects require their own validator"
   - id: "20.2"
     class: "M"
     status: human

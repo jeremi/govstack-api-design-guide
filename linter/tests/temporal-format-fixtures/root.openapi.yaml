@@ -1,0 +1,58 @@
+openapi: 3.1.0
+info:
+  title: Temporal format proxy fixtures
+  version: 1.0.0
+  description: Local, external, and composed temporal schemas for rule 10.2.
+paths:
+  /records:
+    get:
+      operationId: listRecords
+      summary: List records
+      description: List records with temporal coordinates.
+      tags: [records]
+      responses:
+        '200':
+          description: Records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Envelope'
+components:
+  schemas:
+    TemporalValue:
+      type: string
+      anyOf:
+        - format: date
+        - format: date-time
+    Envelope:
+      type: object
+      properties:
+        effectiveAt:
+          $ref: '#/components/schemas/TemporalValue'
+        externalEffectiveAt:
+          $ref: './external.schema.yaml#/$defs/CalendarDate'
+        externalRecordedAt:
+          $ref: './external.schema.yaml#/$defs/UtcInstant'
+        composedAt:
+          allOf:
+            - type: string
+            - format: date
+        nullableAt:
+          anyOf:
+            - type: string
+              format: date
+            - type: 'null'
+        malformedAt:
+          oneOf:
+            - type: string
+              format: date
+            - type: string
+        unknownAt:
+          type: string
+        eventTimestamp:
+          type: string
+          format: date
+        unknownTimestamp:
+          type: string
+        processedTimestamp:
+          $ref: './external.schema.yaml#/$defs/UtcInstant'
