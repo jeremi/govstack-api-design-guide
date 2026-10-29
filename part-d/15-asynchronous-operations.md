@@ -5,7 +5,7 @@ description: "The local Operation resource shape and polling pattern BBs use for
 # 15. Asynchronous operations
 
 {% hint style="info" %}
-**Intent.** A common way to discover and poll accepted work across BBs. The `202` response and `Location` let a client find its status; the BB's local schema explains how to read that status and its result. In the guide, *Operation resource* (capitalised) is that polling resource; lowercase *operation* means an OpenAPI or AsyncAPI operation.
+**Intent.** A common way to discover and poll accepted work across BBs. The `202` response and `Location` let a client find its status; the BB's local schema explains how to read that status and its result. *Operation resource* (capitalised) is that polling resource; lowercase *operation* means an OpenAPI or AsyncAPI operation.
 
 **Applies to:** OpenAPI surface (HTTP/REST). The Operation resource is defined locally by each BB; the `202` and polling mechanics are HTTP-specific.
 {% endhint %}

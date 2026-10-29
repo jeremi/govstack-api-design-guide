@@ -79,4 +79,4 @@ The linter flags a missing `x-govstack-api-guide` object, unsupported versions, 
 
 ## Note on governance <a href="#note-on-governance" id="note-on-governance"></a>
 
-Publication gates, conformance levels, exception handling, transition timelines, and CI implementation are owned by the GovStack governance process and are out of scope ([§1.2](../1-introduction.md#12-scope)).
+Publication gates, conformance levels, exception handling, transition timelines, and CI implementation are ecosystem governance, owned by the GovStack governance process, and out of scope ([§1.2](../1-introduction.md#12-scope)).

@@ -16,7 +16,7 @@ description: "Rules governing SemVer versioning, backward-compatible and breakin
 
 `info.version` **MUST** follow SemVer and identify the version of that surface's published contract, not the implementation version. When a surface also exposes a major version in a path, channel, or protocol field, the two **MUST** agree. An implementation may therefore be at `0.16.3` while the contract it serves is at `1.4.0`.
 
-The GovStack Specification Framework (CFR §5.2.2) versions the specification document that contains a BB's requirements. In the guide, that document version is independent from `info.version`, which versions the API contract. A specification release **SHOULD** record which `info.version` of each surface it ships with, for example in `api/index.yaml` or in the release notes, so that readers can relate the two numbers.
+The GovStack Specification Framework (CFR §5.2.2) versions the specification document that contains a BB's requirements. That document version is independent from `info.version`, which versions the API contract. A specification release **SHOULD** record which `info.version` of each surface it ships with, for example in `api/index.yaml` or in the release notes, so that readers can relate the two numbers.
 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
