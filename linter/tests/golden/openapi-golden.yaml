@@ -912,11 +912,11 @@ components:
             traceId: 8f0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d
   schemas:
     Problem:
-      $ref: '../../../../api/common/govstack-openapi-common.yaml#/components/schemas/Problem'
+      $ref: '../common/govstack-openapi-common.yaml#/components/schemas/Problem'
     ValidationProblem:
-      $ref: '../../../../api/common/govstack-openapi-common.yaml#/components/schemas/ValidationProblem'
+      $ref: '../common/govstack-openapi-common.yaml#/components/schemas/ValidationProblem'
     FieldError:
-      $ref: '../../../../api/common/govstack-openapi-common.yaml#/components/schemas/FieldError'
+      $ref: '../common/govstack-openapi-common.yaml#/components/schemas/FieldError'
     HealthStatus:
       type: object
       description: >-
@@ -1125,7 +1125,7 @@ components:
       description: >-
         Page metadata. total, when present, is exact and describes the
         collection at the time this page is generated.
-      $ref: '../../../../api/common/govstack-openapi-common.yaml#/components/schemas/PageInfo'
+      $ref: '../common/govstack-openapi-common.yaml#/components/schemas/PageInfo'
     RegistrantPage:
       type: object
       description: A cursor-paginated page of registrant records.

@@ -9,6 +9,8 @@ description: "The rules every GovStack Building Block API specification must fol
 published or ratified.
 {% endhint %}
 
+**Repository status:** this is an incubation repository maintained by Jeremi Joslin. The guide is a draft candidate and is not an official GovStack publication. For the official GovStack specifications, see <https://specs.govstack.global/>.
+
 **Author:** Jeremi Joslin
 
 **Specification:** `govstack-cfr-api`<br>
@@ -24,7 +26,7 @@ The [draft change record](draft-changes.md) explains the current revision and it
 - **Editing a BB specification?** [What a BB publishes](how-to-use-this-guide.md#what-a-bb-publishes) lists the four artifacts, [Rules by API kind](rules-by-kind.md) shows which rules apply to your surface, the [spec editor checklist](guides/spec-editor-checklist.md) is the review pass, [Rules at a glance](all-rules.md) jumps to any rule, and [Validating your spec](guides/validating-your-spec.md) is the mechanical check.
 - **Reviewing this draft for the committee?** [How to use this guide](how-to-use-this-guide.md) says what feedback is most useful at this stage.
 - **Reviewing CFR alignment?** [§1.3](1-introduction.md#13-relationship-to-existing-govstack-documents) maps the guide to its proposed parent requirements and identifies the CFR changes needed for protocol-native and non-HTTP interfaces.
-- **Pointing an AI coding agent at the rules?** The book ships a machine-readable index of every rule with its level and API kinds (`rules.yaml`, at the root of this folder in the repository); [Using this guide with AI agents](guides/using-with-ai-agents.md) has a ready-made instruction block for a BB repository.
+- **Pointing an AI coding agent at the rules?** The book ships a machine-readable index of every rule with its level and API kinds (`rules.yaml`, at the root of this repository); [Using this guide with AI agents](guides/using-with-ai-agents.md) has a ready-made instruction block for a BB repository.
 
 ## Executive summary
 

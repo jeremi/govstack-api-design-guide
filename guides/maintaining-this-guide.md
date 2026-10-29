@@ -6,7 +6,7 @@ description: "Where the canonical copy of this guide lives, how to edit a rule w
 
 ## Where the canonical copy lives
 
-The canonical copy of this guide lives in the GovStack `bb-template` repository, in the `/api-design-guide` folder. A BB repository instantiated from the template inherits a snapshot copy of that folder at the time of instantiation, and may delete it entirely if it does not want the guide tracked locally. Edits belong upstream, in `bb-template`, not in an individual BB's copy: a fix made directly to a BB's inherited copy will be silently overwritten the next time that BB pulls a template update, and it never flows back to `bb-template` on its own. If a BB editor finds an error while working locally, the fix has to be raised or applied against `bb-template` directly.
+The canonical copy of this guide lives in the standalone `jeremi/govstack-api-design-guide` repository. A BB repository that vendors a snapshot of it holds a copy that goes stale: edits belong upstream, in `jeremi/govstack-api-design-guide`, not in an individual BB's copy, and a fix made directly to a vendored copy never flows back on its own. If a BB editor finds an error while working locally, the fix has to be raised or applied against `jeremi/govstack-api-design-guide` directly.
 
 ## Editing a rule
 
@@ -39,7 +39,7 @@ node linter/scripts/generate-verification.mjs --check
 python3 tools/build_rules_index.py --check
 ```
 
-Verifies that the source Verification blocks match the coverage manifest and that `rules.yaml`, `all-rules.md`, and `rules-by-kind.md` are still in sync with the pages, without rewriting them. Run these after any page or coverage edit; they are also natural checks to add to CI once this folder gets a CI hook (the template's CircleCI config does not run them today). The linter test suite also checks verification-block freshness.
+Verifies that the source Verification blocks match the coverage manifest and that `rules.yaml`, `all-rules.md`, and `rules-by-kind.md` are still in sync with the pages, without rewriting them. Run these after any page or coverage edit; this repository's `.github/workflows/checks.yml` runs them on every push to `main` and every pull request. The linter test suite also checks verification-block freshness.
 
 ```bash
 python3 tools/check_links.py

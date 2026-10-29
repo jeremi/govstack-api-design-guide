@@ -23,7 +23,7 @@ rules:
   govstack-4.1:
     description: "schemas should have useful descriptions where semantics are not obvious (guide 4.1, [M], proxy)."
     message: "[4.1][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#41-useful-schema-descriptions
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/4-documentation-requirements.md#41-useful-schema-descriptions
     severity: warn
     formats: [oas3_1, aas3]
     given:
@@ -45,7 +45,7 @@ rules:
   govstack-4.2:
     description: "request/response bodies need an example; enums need documented values (guide 4.2, [M+R], proxy)."
     message: "[4.2][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#42-examples-for-bodies-and-enums
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/4-documentation-requirements.md#42-examples-for-bodies-and-enums
     severity: warn
     formats: [oas3_1, aas3]
     given: $
@@ -61,7 +61,7 @@ rules:
   govstack-4.3:
     description: "the spec must not contain placeholder text (guide 4.3, [M+R], proxy)."
     message: "[4.3][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#43-no-placeholder-text
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/4-documentation-requirements.md#43-no-placeholder-text
     severity: warn
     formats: [oas3_1, aas3]
     given: $
@@ -78,7 +78,7 @@ rules:
   govstack-4.7:
     description: "x-govstack-use-case must be a non-empty string or string array and x-govstack-pii a boolean (guide 4.7, [M+R])."
     message: "[4.7][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#47-operation-metadata-extensions
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/4-documentation-requirements.md#47-operation-metadata-extensions
     severity: error
     formats: [oas3_1, aas3]
     given:
@@ -100,7 +100,7 @@ rules:
   govstack-4.7-pii-apikey:
     description: "operations marked x-govstack-pii: true must not use an apiKey security scheme (guide 4.7, [M+R])."
     message: "[4.7][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#47-operation-metadata-extensions
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/4-documentation-requirements.md#47-operation-metadata-extensions
     severity: error
     formats: [oas3_1]
     given: $

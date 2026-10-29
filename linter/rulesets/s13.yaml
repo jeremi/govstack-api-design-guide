@@ -22,7 +22,7 @@ rules:
   govstack-13.1:
     description: "every operation must be covered by a declared security scheme (guide 13.1, [M])."
     message: "[13.1][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/13-authentication-and-authorisation.md#131-default-security-on-every-operation
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/13-authentication-and-authorisation.md#131-default-security-on-every-operation
     severity: error
     formats: [oas3_1]
     given: $
@@ -44,7 +44,7 @@ rules:
   govstack-13.2:
     description: "an OAuth 2.0 / OpenID Connect (or resource-server bearer JWT) security scheme must be declared (guide 13.2, [M+R], proxy)."
     message: "[13.2][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations
     severity: warn
     formats: [oas3_1]
     given: $
@@ -60,7 +60,7 @@ rules:
   govstack-13.2-forbidden-flows:
     description: "OAuth2 schemes must not declare password or implicit flows (guide 13.2, [M+R])."
     message: "[13.2][M+R] OAuth2 password and implicit flows are forbidden."
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/13-authentication-and-authorisation.md#132-oauth-and-oidc-for-citizen-operations
     severity: error
     formats: [oas3_1]
     given: $.components.securitySchemes[*].flows
@@ -82,7 +82,7 @@ rules:
   govstack-13.3:
     description: "a service-to-service (mTLS / OAuth client-credentials) scheme must be declared (guide 13.3, [M+R], proxy)."
     message: "[13.3][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/13-authentication-and-authorisation.md#133-distinct-scheme-for-bb-to-bb-calls
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/13-authentication-and-authorisation.md#133-distinct-scheme-for-bb-to-bb-calls
     severity: warn
     formats: [oas3_1]
     given: $
@@ -103,7 +103,7 @@ rules:
   govstack-13.4:
     description: "OAuth scope strings must follow the ecosystem-wide naming convention (guide 13.4, [M], proxy)."
     message: "[13.4][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/13-authentication-and-authorisation.md#134-namespaced-oauth-scopes
     severity: warn
     formats: [oas3_1]
     given: $.components.securitySchemes[*].flows[*].scopes
@@ -123,7 +123,7 @@ rules:
   govstack-13.5:
     description: "apiKey security schemes must not use in: query or in: cookie (guide 13.5, [M+R])."
     message: "[13.5][M+R] Credentials must not be declared in query parameters or cookies; an apiKey scheme must not set in: query or in: cookie. Use the Authorization header."
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/13-authentication-and-authorisation.md#135-authorization-is-the-credential-channel
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/13-authentication-and-authorisation.md#135-authorization-is-the-credential-channel
     severity: error
     formats: [oas3_1]
     given: $.components.securitySchemes[*]
@@ -147,7 +147,7 @@ rules:
   govstack-13.6:
     description: "apiKey schemes must be applied only to operational (health-like) endpoints (guide 13.6, [R], proxy)."
     message: "[13.6][R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/13-authentication-and-authorisation.md#136-api-keys-only-for-operational-endpoints
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/13-authentication-and-authorisation.md#136-api-keys-only-for-operational-endpoints
     severity: warn
     formats: [oas3_1]
     given: $

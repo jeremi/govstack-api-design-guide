@@ -18,7 +18,7 @@ rules:
   govstack-3.1:
     description: "AsyncAPI version must be a qualified AsyncAPI 3 version, 3.0.0 or 3.1.0 (guide 3.1, [M])."
     message: "[3.1][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#31-asyncapi-300-required
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/3-asyncapi-document-standards.md#31-asyncapi-300-required
     severity: error
     formats: [aas2, aas3]
     given: $
@@ -38,7 +38,7 @@ rules:
   govstack-3.5:
     description: "AsyncAPI info block must include title, version, and description (guide 3.5, [M])."
     message: "[3.5][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#35-complete-asyncapi-info-block
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/3-asyncapi-document-standards.md#35-complete-asyncapi-info-block
     severity: error
     formats: [aas2, aas3]
     given: $.info
@@ -58,7 +58,7 @@ rules:
   govstack-3.5-semver:
     description: "AsyncAPI info.version must be a SemVer string (guide 3.5, [M])."
     message: "[3.5][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#35-complete-asyncapi-info-block
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/3-asyncapi-document-standards.md#35-complete-asyncapi-info-block
     severity: error
     formats: [aas2, aas3]
     given: $.info.version
@@ -74,7 +74,7 @@ rules:
   govstack-3.6:
     description: "servers, channels, operations and components.messages must all be non-empty (guide 3.6, [M+R])."
     message: "[3.6][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#36-servers-channels-operations-and-messages
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/3-asyncapi-document-standards.md#36-servers-channels-operations-and-messages
     severity: error
     formats: [aas3]
     given: $
@@ -101,7 +101,7 @@ rules:
   govstack-3.6-host:
     description: "AsyncAPI server host must not be localhost/loopback (guide 3.6, [M+R])."
     message: "[3.6][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#36-servers-channels-operations-and-messages
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/3-asyncapi-document-standards.md#36-servers-channels-operations-and-messages
     severity: error
     formats: [aas3]
     given: $.servers[*].host
@@ -120,7 +120,7 @@ rules:
   govstack-3.7:
     description: "every AsyncAPI operation must declare action/description/channel/>=1 channel message (guide 3.7, [M+R])."
     message: "[3.7][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#37-complete-asyncapi-operation-metadata
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/3-asyncapi-document-standards.md#37-complete-asyncapi-operation-metadata
     severity: error
     formats: [aas3]
     resolved: false
@@ -137,7 +137,7 @@ rules:
   govstack-3.9:
     description: "GovStack-owned AsyncAPI message payload properties should be camelCase (guide 3.9, [M], proxy for §9/§10)."
     message: "[3.9][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/3-asyncapi-document-standards.md#39-json-schema-payload-conventions
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/3-asyncapi-document-standards.md#39-json-schema-payload-conventions
     severity: warn
     formats: [aas3]
     given:

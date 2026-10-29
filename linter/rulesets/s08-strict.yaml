@@ -19,7 +19,7 @@ rules:
   govstack-8.6:
     description: "path/query/header parameter names must not look like personal data (guide 8.6, [R], strict heuristic)."
     message: "[8.6][R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#86-no-personal-data-in-addressable-locations
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-b/8-headers.md#86-no-personal-data-in-addressable-locations
     severity: warn
     formats: [oas3_1]
     given: $
@@ -38,7 +38,7 @@ rules:
   govstack-8.8:
     description: "custom headers should not carry business identifiers, tenant ids, callback URLs or personal data (guide 8.8, [M+R], strict heuristic)."
     message: "[8.8][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#88-custom-header-naming-and-placement
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-b/8-headers.md#88-custom-header-naming-and-placement
     severity: warn
     formats: [oas3_1]
     given: $

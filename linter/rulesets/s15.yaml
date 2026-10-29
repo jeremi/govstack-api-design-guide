@@ -20,7 +20,7 @@ rules:
   govstack-15.1:
     description: "every non-HEAD 202 response must declare content with a concrete schema (guide 15.1, [M+R])."
     message: "[15.1][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#151-202-with-operation-location
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/15-asynchronous-operations.md#151-202-with-operation-location
     severity: error
     formats: [oas3_1]
     given: $
@@ -37,7 +37,7 @@ rules:
   govstack-15.4:
     description: "a canonical GET /v{N}/operations/{operationId} poll endpoint must exist when Operations are used (guide 15.4, [M+R], proxy)."
     message: "[15.4][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#154-polling-the-operation-resource
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/15-asynchronous-operations.md#154-polling-the-operation-resource
     severity: warn
     formats: [oas3_1]
     given: $
@@ -52,7 +52,7 @@ rules:
   govstack-15.5:
     description: "Operation cancellation should use POST /v{N}/operations/{operationId}/cancel (guide 15.5, [M+R])."
     message: "[15.5][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#155-cancellation-via-cancel-sub-resource
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/15-asynchronous-operations.md#155-cancellation-via-cancel-sub-resource
     severity: warn
     formats: [oas3_1]
     given: $.paths
@@ -67,7 +67,7 @@ rules:
   govstack-15.8:
     description: "callback URLs must not be carried in a header or query parameter (guide 15.8, [M+R], proxy)."
     message: "[15.8][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#158-per-request-callback-url
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/15-asynchronous-operations.md#158-per-request-callback-url
     severity: warn
     formats: [oas3_1]
     given: $
@@ -85,7 +85,7 @@ rules:
   govstack-15.8-callbacks:
     description: "operations accepting a callbackUrl must declare an OpenAPI callbacks object (guide 15.8, [M+R])."
     message: "[15.8][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#158-per-request-callback-url
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/15-asynchronous-operations.md#158-per-request-callback-url
     severity: error
     formats: [oas3_1]
     given: $
@@ -101,7 +101,7 @@ rules:
   govstack-15.8-format:
     description: "a request body callbackUrl should declare format: uri (guide 15.8, [M+R], proxy)."
     message: "[15.8][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/15-asynchronous-operations.md#158-per-request-callback-url
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/15-asynchronous-operations.md#158-per-request-callback-url
     severity: warn
     formats: [oas3_1]
     given: $

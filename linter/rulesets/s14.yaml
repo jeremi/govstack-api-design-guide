@@ -17,7 +17,7 @@ rules:
   govstack-14.1:
     description: "POSTs returning 201 or 202 must accept an Idempotency-Key header (guide 14.1, [M+R], proxy)."
     message: "[14.1][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/14-idempotency.md#141-idempotency-key-on-non-idempotent-posts
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/14-idempotency.md#141-idempotency-key-on-non-idempotent-posts
     severity: warn
     formats: [oas3_1]
     given: $.paths[*]

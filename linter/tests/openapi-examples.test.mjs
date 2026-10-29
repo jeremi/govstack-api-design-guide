@@ -9,7 +9,7 @@ import YAML from 'yaml';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const goldenPath = path.join(here, 'golden/openapi-golden.yaml');
-const commonPath = path.resolve(here, '../../../api/common/govstack-openapi-common.yaml');
+const commonPath = path.resolve(here, 'common/govstack-openapi-common.yaml');
 const golden = YAML.parse(await readFile(goldenPath, 'utf8'));
 const common = YAML.parse(await readFile(commonPath, 'utf8'));
 const documents = new Map([
@@ -19,7 +19,7 @@ const documents = new Map([
 
 const EXPECTED_COMMON_REFS = new Set(
   ['Problem', 'ValidationProblem', 'FieldError', 'PageInfo'].map(
-    (name) => `../../../../api/common/govstack-openapi-common.yaml#/components/schemas/${name}`,
+    (name) => `../common/govstack-openapi-common.yaml#/components/schemas/${name}`,
   ),
 );
 
@@ -98,7 +98,7 @@ test('OpenAPI golden consumes only the four approved common schemas', () => {
   for (const name of ['Problem', 'ValidationProblem', 'FieldError', 'PageInfo']) {
     assert.equal(
       golden.components.schemas[name].$ref,
-      `../../../../api/common/govstack-openapi-common.yaml#/components/schemas/${name}`,
+      `../common/govstack-openapi-common.yaml#/components/schemas/${name}`,
     );
   }
   assert.equal(golden.components.schemas.Operation.$ref, undefined, 'Operation must remain BB-owned');

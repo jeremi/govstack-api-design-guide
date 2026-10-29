@@ -22,7 +22,7 @@ rules:
   govstack-11.1:
     description: "4xx/5xx and default error responses must use application/problem+json (guide 11.1, [M])."
     message: "[11.1][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#111-rfc-9457-problem-details
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/11-errors.md#111-rfc-9457-problem-details
     severity: error
     formats: [oas3_1]
     given: "$.paths[*][get,put,post,delete,options,head,patch,trace]"
@@ -41,7 +41,7 @@ rules:
   govstack-11.2:
     description: "problem+json schema must declare type, title, status, must not declare timestamp, and a declared code must be a string (guide 11.2, [M+R])."
     message: "[11.2][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#112-stable-http-problem-type-uri
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/11-errors.md#112-stable-http-problem-type-uri
     severity: error
     formats: [oas3_1]
     given: '$.paths[*][get,put,post,delete,options,head,patch,trace].responses[?(@property.match(/^(?:[45]|default$)/))].content[?(@property.match(/^application\/problem\+json(?:\s*;|$)/))].schema'
@@ -59,7 +59,7 @@ rules:
   govstack-11.3:
     description: "problem+json schema must declare traceId (guide 11.3, [M])."
     message: "[11.3][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#113-trace-identifier
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/11-errors.md#113-trace-identifier
     severity: error
     formats: [oas3_1]
     given: '$.paths[*][get,put,post,delete,options,head,patch,trace].responses[?(@property.match(/^(?:[45]|default$)/))].content[?(@property.match(/^application\/problem\+json(?:\s*;|$)/))].schema'
@@ -76,7 +76,7 @@ rules:
   govstack-11.4:
     description: "declared field errors must be a required errors[] array with pointer/message (guide 11.4, [M+R], proxy)."
     message: "[11.4][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#114-field-level-errors-array
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/11-errors.md#114-field-level-errors-array
     severity: warn
     formats: [oas3_1]
     given: '$.paths[*][get,put,post,delete,options,head,patch,trace].responses[?(@property.match(/^(?:[45]|default$)/))].content[?(@property.match(/^application\/problem\+json(?:\s*;|$)/))].schema'
@@ -89,7 +89,7 @@ rules:
   govstack-11.2-type:
     description: "literal problem types must use the canonical GovStack problem URI (guide 11.2, [M+R], proxy)."
     message: "[11.2][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/11-errors.md#112-stable-http-problem-type-uri
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/11-errors.md#112-stable-http-problem-type-uri
     severity: warn
     formats: [oas3_1]
     given: '$.paths[*][get,put,post,delete,options,head,patch,trace].responses[?(@property.match(/^(?:[45]|default$)/))].content[?(@property.match(/^application\/problem\+json(?:\s*;|$)/))]'

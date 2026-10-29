@@ -153,7 +153,7 @@ components:
       contentType: application/cloudevents+json
       payload:
         allOf:
-          - $ref: '../../../../api/common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope'
+          - $ref: '../common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope'
           - type: object
             description: Registry-specific event type and domain payload.
             required: [data]
@@ -212,7 +212,7 @@ components:
         description: Correlates the command with its reply on the command-replies channel.
       payload:
         allOf:
-          - $ref: '../../../../api/common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope'
+          - $ref: '../common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope'
           - type: object
             description: Registry-specific command type and domain payload.
             required: [idempotencykey, data]
@@ -270,7 +270,7 @@ components:
         description: Correlates the reply back to the originating command.
       payload:
         allOf:
-          - $ref: '../../../../api/common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope'
+          - $ref: '../common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope'
           - type: object
             description: Registry-specific result type and domain payload.
             required: [data]
@@ -323,7 +323,7 @@ components:
         location: $message.header#/correlationId
         description: Correlates the rejection back to the originating command.
       payload:
-        $ref: '../../../../api/common/govstack-asyncapi-common.yaml#/components/schemas/GovStackAsyncError'
+        $ref: '../common/govstack-asyncapi-common.yaml#/components/schemas/GovStackAsyncError'
       examples:
         - name: deregistrationRejected
           summary: A rejected deregistration.

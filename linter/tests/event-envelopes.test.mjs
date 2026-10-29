@@ -26,7 +26,7 @@ const document = (payload, version = '3.0.0', schemas = {}, contentType = 'appli
   components: { messages: { RecordCreated: { contentType, payload } }, schemas },
 });
 const eventFindings = async (doc) => (await lintString(
-  spectral, JSON.stringify(doc), resolve(LINTER_DIR, '../../api/asyncapi.yaml'),
+  spectral, JSON.stringify(doc), resolve(LINTER_DIR, 'tests/asyncapi.yaml'),
 )).filter(({ code }) => ['govstack-17.6', 'govstack-17.7', 'invalid-ref'].includes(code));
 
 for (const version of ['3.0.0', '3.1.0']) {

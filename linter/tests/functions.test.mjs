@@ -797,7 +797,7 @@ test('s17-cloudEventsPayload: scopes non-CloudEvents and requires a local vendor
     contentType: 'application/cloudevents+json',
     payload: {
       allOf: [
-        { $ref: '../../../../api/common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope' },
+        { $ref: '../common/govstack-asyncapi-common.yaml#/components/schemas/CloudEventEnvelope' },
       ],
     },
   };

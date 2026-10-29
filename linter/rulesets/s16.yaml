@@ -23,7 +23,7 @@ rules:
   govstack-16.1:
     description: "HTTP push events must use top-level webhooks, not operation callbacks (guide 16.1, [M+R], proxy)."
     message: "[16.1][M+R] HTTP push events MUST use OpenAPI 3.1 top-level `webhooks`; operation `callbacks` are not the GovStack push mechanism."
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#161-event-surfaces-documented
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/16-cloudevents-and-webhooks.md#161-event-surfaces-documented
     severity: warn
     formats: [oas3_1]
     given: $.paths[*][get,put,post,delete,patch].callbacks
@@ -35,7 +35,7 @@ rules:
   govstack-16.2:
     description: "webhook event payload must be a CloudEvents v1.0 envelope: specversion(const \"1.0\")/id/source/type/data (guide 16.2, [M])."
     message: "[16.2][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#162-cloudevents-envelope-required
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/16-cloudevents-and-webhooks.md#162-cloudevents-envelope-required
     severity: error
     formats: [oas3_1]
     given: $.webhooks[*][post,put,patch].requestBody.content[*].schema
@@ -51,7 +51,7 @@ rules:
   govstack-16.2-recommended:
     description: "CloudEvents envelope should include time and datacontenttype (guide 16.2, [M], SHOULD)."
     message: "[16.2][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#162-cloudevents-envelope-required
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/16-cloudevents-and-webhooks.md#162-cloudevents-envelope-required
     severity: warn
     formats: [oas3_1]
     given: $.webhooks[*][post,put,patch].requestBody.content[*].schema
@@ -70,7 +70,7 @@ rules:
   govstack-16.2-structured:
     description: "webhook events must use CloudEvents structured content mode, not binary (guide 16.2, [M])."
     message: "[16.2][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#162-cloudevents-envelope-required
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/16-cloudevents-and-webhooks.md#162-cloudevents-envelope-required
     severity: error
     formats: [oas3_1]
     given: $.webhooks[*][post,put,patch].requestBody.content
@@ -87,7 +87,7 @@ rules:
   govstack-16.3:
     description: "event type should use the GovStack reverse-DNS default (guide 16.3, [M], advisory proxy)."
     message: "[16.3][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types
     severity: warn
     formats: [oas3_1]
     given: $.webhooks[*][post,put,patch].requestBody.content[*].schema
@@ -105,7 +105,7 @@ rules:
   govstack-16.3-no-version:
     description: "event type must not contain a major-version segment (guide 16.3, [M])."
     message: "[16.3][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/16-cloudevents-and-webhooks.md#163-reverse-dns-event-types
     severity: error
     formats: [oas3_1]
     given: $.webhooks[*][post,put,patch].requestBody.content[*].schema
@@ -126,7 +126,7 @@ rules:
   govstack-16.4:
     description: "Pinned CloudEvents source values must be non-empty URI-references; source stability requires review (guide 16.4, [M+R], partial proxy)."
     message: "[16.4][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#164-stable-cloudevents-source
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/16-cloudevents-and-webhooks.md#164-stable-cloudevents-source
     severity: warn
     formats: [oas3_1]
     given: $.webhooks[*][post,put,patch].requestBody.content[*].schema
@@ -149,7 +149,7 @@ rules:
   govstack-16.11:
     description: "BB-managed subscriptions must expose create/list/delete (guide 16.11, [M+R], proxy)."
     message: "[16.11][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-d/16-cloudevents-and-webhooks.md#1611-subscription-management-interfaces
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-d/16-cloudevents-and-webhooks.md#1611-subscription-management-interfaces
     severity: warn
     formats: [oas3_1]
     given: $.paths

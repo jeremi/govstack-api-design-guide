@@ -17,13 +17,15 @@ Conformance to this guide comes down to a short list of artifacts in the BB repo
 
 Requires Node.js 20 or newer, npm, and the base validator for each declared API surface. For OpenAPI, install Python and uv; both validator executables must be available on `PATH` when their surface is used. The first two commands below are one-time setup for the applicable surfaces; `npm ci` installs only the linter dependencies.
 
+The commands below assume a checkout of `jeremi/govstack-api-design-guide` placed at `api-design-guide/` inside the BB repository.
+
 ```bash
 uv tool install openapi-spec-validator==0.9.0  # OpenAPI surfaces
 npm install --global @asyncapi/cli@6.0.2       # AsyncAPI surfaces
 cd api-design-guide/linter && npm ci && node cli.mjs --repo-root ../..
 ```
 
-The `api/` folder of the `bb-template` repository is the scaffold for these files: it ships `api/index.yaml` and the shared schemas under `api/common/`. [Rules by API kind](rules-by-kind.md) says which rules apply to a read-only API, an API with mutations, an event surface, and the deployment ([§1.11](1-introduction.md#111-which-rules-apply-to-your-api)).
+The `api/` folder of the [`bb-template` repository](https://github.com/jeremi/bb-template/tree/feat/api-design-guide-linter/api) is the scaffold for these files: it ships `api/index.yaml` and the shared schemas under `api/common/`. [Rules by API kind](rules-by-kind.md) says which rules apply to a read-only API, an API with mutations, an event surface, and the deployment ([§1.11](1-introduction.md#111-which-rules-apply-to-your-api)).
 
 ## Find your path
 

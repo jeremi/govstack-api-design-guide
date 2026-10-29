@@ -25,7 +25,7 @@ rules:
   govstack-8.1:
     description: "credentials must not travel in query/path parameters or an apiKey query/cookie scheme (guide 8.1, [M+R], proxy)."
     message: "[8.1][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#81-credentials-in-authorization-header
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-b/8-headers.md#81-credentials-in-authorization-header
     severity: warn
     formats: [oas3_1]
     given: $
@@ -40,7 +40,7 @@ rules:
   govstack-8.2:
     description: "operations accepting Accept-Language must echo Content-Language on success responses (guide 8.2, [M+R], proxy)."
     message: "[8.2][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#82-accept-language-and-content-language
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-b/8-headers.md#82-accept-language-and-content-language
     severity: warn
     formats: [oas3_1]
     given: "$.paths[*][get,put,post,delete,patch]"
@@ -56,7 +56,7 @@ rules:
   govstack-8.4:
     description: "secured cross-service operations should declare traceparent (guide 8.4, [M+R], proxy)."
     message: "[8.4][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#84-w3c-trace-context-correlation
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-b/8-headers.md#84-w3c-trace-context-correlation
     severity: warn
     formats: [oas3_1]
     given: $
@@ -68,7 +68,7 @@ rules:
   govstack-8.5:
     description: "new custom headers must not use the X- prefix (guide 8.5, [M])."
     message: "[8.5][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#85-no-new-x--prefixed-headers
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-b/8-headers.md#85-no-new-x--prefixed-headers
     severity: error
     formats: [oas3_1]
     given: $
@@ -84,7 +84,7 @@ rules:
   govstack-8.7:
     description: "429 responses should declare Retry-After (guide 8.7, [M+R], proxy)."
     message: "[8.7][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#87-rate-limit-headers-declared
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-b/8-headers.md#87-rate-limit-headers-declared
     severity: info
     formats: [oas3_1]
     given: "$.paths[*][get,put,post,delete,patch].responses"
@@ -96,7 +96,7 @@ rules:
   govstack-8.7-no-legacy:
     description: "legacy RateLimit-Limit/Remaining/Reset headers are not the pinned structured-field draft (guide 8.7, [M+R])."
     message: "[8.7][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/8-headers.md#87-rate-limit-headers-declared
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-b/8-headers.md#87-rate-limit-headers-declared
     severity: warn
     formats: [oas3_1]
     given: "$.paths[*][get,put,post,delete,patch].responses"

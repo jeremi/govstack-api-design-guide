@@ -13,7 +13,7 @@ rules:
   govstack-4.4:
     description: "operation descriptions must not be copy-pasted verbatim across operations (guide 4.4, [R], strict proxy)."
     message: "[4.4][R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/4-documentation-requirements.md#44-accurate-operation-descriptions
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/4-documentation-requirements.md#44-accurate-operation-descriptions
     severity: warn
     formats: [oas3_1, aas3]
     given: $

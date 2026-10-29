@@ -51,7 +51,7 @@ rules:
   govstack-10.1:
     description: "Properties named id/*Id must declare type: string, not an integer (guide 10.1, [M+R], proxy)."
     message: "[10.1][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#101-opaque-server-generated-identifiers
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/10-data-types-and-formats.md#101-opaque-server-generated-identifiers
     severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
@@ -71,7 +71,7 @@ rules:
   govstack-10.2:
     description: "Properties ending in At must explicitly declare date/date-time semantics; Timestamp fields must declare date-time (guide 10.2, [M], proxy)."
     message: "[10.2][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#102-rfc-3339-timestamps
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/10-data-types-and-formats.md#102-rfc-3339-timestamps
     severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
@@ -96,7 +96,7 @@ rules:
   govstack-10.3:
     description: "Properties ending in Date must declare type: string, format: date (guide 10.3, [M], proxy)."
     message: "[10.3][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#103-rfc-3339-calendar-dates
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/10-data-types-and-formats.md#103-rfc-3339-calendar-dates
     severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
@@ -119,7 +119,7 @@ rules:
   govstack-10.4:
     description: "Properties ending in amount/price/balance must not declare type: number or integer (guide 10.4, [M+R], proxy)."
     message: "[10.4][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#104-decimal-string-monetary-amounts
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/10-data-types-and-formats.md#104-decimal-string-monetary-amounts
     severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
@@ -139,7 +139,7 @@ rules:
   govstack-10.5:
     description: "Properties matching *phone* must declare type: string with an E.164 pattern (guide 10.5, [M+R], proxy)."
     message: "[10.5][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#105-e164-phone-numbers
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/10-data-types-and-formats.md#105-e164-phone-numbers
     severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
@@ -158,7 +158,7 @@ rules:
   govstack-10.6:
     description: "Properties matching *email* must declare type: string, format: email (guide 10.6, [M+R], proxy)."
     message: "[10.6][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#106-rfc-5322-email-addresses
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/10-data-types-and-formats.md#106-rfc-5322-email-addresses
     severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
@@ -184,7 +184,7 @@ rules:
   govstack-10.7:
     description: "Base64 fields (signature/certificate/qrCode/attestation) must declare contentEncoding: base64 and maxLength (guide 10.7, [M+R], proxy)."
     message: "[10.7][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#107-binary-uploads-and-base64-payloads
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/10-data-types-and-formats.md#107-binary-uploads-and-base64-payloads
     severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
@@ -206,7 +206,7 @@ rules:
   govstack-10.8:
     description: "Properties matching *country* must declare type: string with an ISO 3166-1 alpha-2 pattern (guide 10.8, [M+R], proxy)."
     message: "[10.8][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#108-iso-3166-1-country-codes
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/10-data-types-and-formats.md#108-iso-3166-1-country-codes
     severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
@@ -227,7 +227,7 @@ rules:
   govstack-10.9:
     description: "Properties matching *language*/*locale* must declare type: string with a BCP 47 shape pattern (guide 10.9, [M+R], proxy)."
     message: "[10.9][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#109-bcp-47-language-codes
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/10-data-types-and-formats.md#109-bcp-47-language-codes
     severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
@@ -250,7 +250,7 @@ rules:
   govstack-10.10:
     description: "Properties matching currency/*Currency* must declare type: string with an ISO 4217 alpha-3 pattern (guide 10.10, [M+R], proxy)."
     message: "[10.10][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#1010-iso-4217-currency-codes
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/10-data-types-and-formats.md#1010-iso-4217-currency-codes
     severity: warn
     formats: [oas3_1, aas3]
     given: "#DataSchemas"
@@ -268,7 +268,7 @@ rules:
   govstack-10.11-openapi:
     description: "No declared media type may set charset to an encoding other than UTF-8 (guide 10.11, [M])."
     message: "[10.11][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#1011-utf-8-text-encoding
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/10-data-types-and-formats.md#1011-utf-8-text-encoding
     severity: error
     formats: [oas3_1]
     given:
@@ -288,7 +288,7 @@ rules:
   govstack-10.11-asyncapi:
     description: "No declared contentType may set charset to an encoding other than UTF-8 (guide 10.11, [M])."
     message: "[10.11][M] contentType must not set charset to an encoding other than UTF-8 (§10.11)."
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-c/10-data-types-and-formats.md#1011-utf-8-text-encoding
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-c/10-data-types-and-formats.md#1011-utf-8-text-encoding
     severity: error
     formats: [aas3]
     given:

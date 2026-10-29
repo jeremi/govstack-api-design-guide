@@ -13,6 +13,10 @@ validator is a Node.js CLI. Their executable directories must be on `PATH`.
 The first two commands are one-time setup for the applicable surfaces;
 `npm ci` alone does not install the base validators.
 
+The commands below assume a checkout of `jeremi/govstack-api-design-guide` placed
+at `api-design-guide/` inside the BB repository; in CI, use the action reference
+under [CI](#ci) instead.
+
 ```bash
 uv tool install openapi-spec-validator==0.9.0  # OpenAPI surfaces
 npm install --global @asyncapi/cli@6.0.2       # AsyncAPI surfaces
@@ -252,13 +256,14 @@ in a BB repo:
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: ./api-design-guide/linter
+- uses: jeremi/govstack-api-design-guide/linter@<ref>
   with:
     fail-on: error
 ```
 
-The template's own workflow (`.github/workflows/api-spec-lint.yml`) runs both
-the linter's test suite and the repository conformance check. Empty legacy
+This repository's own workflow (`.github/workflows/checks.yml`) runs the
+linter's test suite, the golden-file validation, and the guide's index and link
+checks. Empty legacy
 placeholders are not conformant.
 
 ## Development

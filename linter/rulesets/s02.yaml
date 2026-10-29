@@ -15,7 +15,7 @@ rules:
   govstack-2.1:
     description: "OpenAPI version must be a qualified 3.1 patch (3.1.0-3.1.2; guide 2.1, [M])."
     message: "[2.1][M] Most guide checks require an OpenAPI 3.1 document. {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/2-openapi-document-standards.md#21-openapi-31-required
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/2-openapi-document-standards.md#21-openapi-31-required
     severity: error
     formats: [oas2, oas3]
     given: $
@@ -35,7 +35,7 @@ rules:
   govstack-2.5:
     description: "info block must include title, version, and description (guide 2.5, [M])."
     message: "[2.5][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/2-openapi-document-standards.md#25-complete-info-block
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/2-openapi-document-standards.md#25-complete-info-block
     severity: error
     formats: [oas3]
     given: $.info
@@ -55,7 +55,7 @@ rules:
   govstack-2.5-semver:
     description: "info.version must be a SemVer string (guide 2.5, [M])."
     message: "[2.5][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/2-openapi-document-standards.md#25-complete-info-block
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/2-openapi-document-standards.md#25-complete-info-block
     severity: error
     formats: [oas3]
     given: $.info.version
@@ -74,7 +74,7 @@ rules:
   govstack-2.6:
     description: "servers must be non-empty HTTPS URLs without loopback (guide 2.6, [M+R])."
     message: "[2.6][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/2-openapi-document-standards.md#26-meaningful-servers-block
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/2-openapi-document-standards.md#26-meaningful-servers-block
     severity: error
     formats: [oas3_1]
     given: $
@@ -104,7 +104,7 @@ rules:
   govstack-2.6-version:
     description: "server URLs must not repeat a numeric version segment used by path keys (guide 2.6, [M+R])."
     message: "[2.6][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/2-openapi-document-standards.md#26-meaningful-servers-block
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/2-openapi-document-standards.md#26-meaningful-servers-block
     severity: error
     formats: [oas3_1]
     given: $
@@ -116,7 +116,7 @@ rules:
   govstack-2.7:
     description: "every operation must declare a stable operationId and description (guide 2.7, [M+R])."
     message: "[2.7][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-a/2-openapi-document-standards.md#27-complete-operation-metadata
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-a/2-openapi-document-standards.md#27-complete-operation-metadata
     severity: error
     formats: [oas3_1]
     given: "$.paths[*][get,put,post,delete,options,head,patch,trace]"

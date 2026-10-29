@@ -9,7 +9,7 @@ import YAML from 'yaml';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const goldenPath = path.join(here, 'golden/asyncapi-golden.yaml');
-const commonPath = path.resolve(here, '../../../api/common/govstack-asyncapi-common.yaml');
+const commonPath = path.resolve(here, 'common/govstack-asyncapi-common.yaml');
 const golden = YAML.parse(await readFile(goldenPath, 'utf8'));
 const common = YAML.parse(await readFile(commonPath, 'utf8'));
 

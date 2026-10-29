@@ -17,7 +17,7 @@ rules:
   govstack-5.2:
     description: "Resource path segments should look like plural nouns (guide 5.2, [M+R], strict heuristic)."
     message: "[5.2][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#52-plural-noun-resources
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-b/5-url-structure-and-versioning.md#52-plural-noun-resources
     severity: warn
     formats: [oas3_1]
     given: $.paths
@@ -33,7 +33,7 @@ rules:
   govstack-5.7:
     description: "Verbs should not appear in paths for CRUD operations (guide 5.7, [M+R], strict heuristic)."
     message: "[5.7][M+R] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-b/5-url-structure-and-versioning.md#57-no-verbs-in-crud-paths
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-b/5-url-structure-and-versioning.md#57-no-verbs-in-crud-paths
     severity: warn
     formats: [oas3_1]
     given: $.paths

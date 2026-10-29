@@ -1,0 +1,132 @@
+asyncapi: 3.0.0
+info:
+  title: GovStack AsyncAPI Common Schemas
+  version: 0.1.0-draft
+  description: >-
+    Minimal reusable schemas for structured CloudEvents and transport-neutral
+    asynchronous errors in GovStack AsyncAPI specifications.
+  contact:
+    name: GovStack API Working Group
+    url: https://www.govstack.global/
+servers: {}
+channels: {}
+operations: {}
+x-govstack-components-version: 0.1.0-draft
+components:
+  schemas:
+    CloudEventEnvelope:
+      type: object
+      description: >-
+        CloudEvents 1.0 structured JSON envelope. A BB composes this schema in
+        a local Message Object and specialises type and data for its event.
+      required:
+        - specversion
+        - id
+        - source
+        - type
+      properties:
+        specversion:
+          type: string
+          const: '1.0'
+          description: CloudEvents wire version for the adopted 1.0.x specification.
+        id:
+          type: string
+          minLength: 1
+          description: Unique identifier of this event occurrence.
+        source:
+          type: string
+          format: uri-reference
+          minLength: 1
+          description: Stable logical URI reference for the publishing BB surface.
+        type:
+          type: string
+          pattern: '^global\.govstack\.[a-z][a-z0-9-]{1,30}\.[a-z][a-zA-Z0-9]*\.[a-z][a-zA-Z0-9]*$'
+          description: Reverse-DNS semantic event type without an API version segment.
+        time:
+          type: string
+          format: date-time
+          description: RFC 3339 time at which the event occurred.
+        datacontenttype:
+          type: string
+          const: application/json
+          description: Media type of the structured event data.
+        subject:
+          type: string
+          description: Optional opaque identifier of the resource concerned by the event.
+        traceparent:
+          type: string
+          pattern: '^00-(?!0{32})[\da-f]{32}-(?!0{16})[\da-f]{16}-0[01]$'
+          description: W3C Trace Context extension attribute for the distributed trace.
+        tracestate:
+          type: string
+          maxLength: 512
+          description: Optional W3C Trace Context vendor state containing no personal data.
+        correlationid:
+          type: string
+          description: Optional workflow correlation identifier.
+        causationid:
+          type: string
+          description: Optional identifier of the message that caused this event.
+        idempotencykey:
+          type: string
+          maxLength: 255
+          description: >-
+            Optional CloudEvents extension attribute for de-duplicating a
+            command that triggers non-idempotent processing.
+        data:
+          description: Optional event data whose requiredness and shape are specialised locally.
+    GovStackAsyncError:
+      type: object
+      description: Transport-neutral asynchronous command rejection or processing failure.
+      required:
+        - type
+        - title
+        - code
+        - traceId
+        - timestamp
+      properties:
+        type:
+          type: string
+          format: uri
+          description: Stable absolute problem-type URI.
+        title:
+          type: string
+          description: Short human-readable summary of the error type.
+        detail:
+          type: string
+          description: Human-readable explanation specific to this failure.
+        code:
+          type: string
+          pattern: '^global\.govstack\.[a-z][a-z0-9-]{1,30}\.(?:[a-z][a-zA-Z0-9]*|[0-9]+)$'
+          description: Stable namespaced machine-readable error identifier.
+        traceId:
+          type: string
+          pattern: '^(?!0{32}$)[\da-f]{32}$'
+          description: W3C trace-id correlating the failure with the originating work.
+        timestamp:
+          type: string
+          format: date-time
+          description: RFC 3339 time at which the failure occurred.
+        errors:
+          type: array
+          description: Optional field-level errors for invalid command data.
+          items:
+            $ref: '#/components/schemas/AsyncFieldError'
+    AsyncFieldError:
+      type: object
+      description: Field-level validation failure in asynchronous message data.
+      required:
+        - pointer
+        - code
+        - message
+      properties:
+        pointer:
+          type: string
+          description: JSON Pointer identifying the invalid message field.
+        code:
+          type: string
+          pattern: '^global\.govstack\.[a-z][a-z0-9-]{1,30}\.(?:[a-z][a-zA-Z0-9]*|[0-9]+)$'
+          description: Stable namespaced code for the field failure.
+        message:
+          type: string
+          description: Human-readable explanation of the field failure.

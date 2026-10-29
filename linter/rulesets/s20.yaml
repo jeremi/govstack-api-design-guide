@@ -17,7 +17,7 @@ rules:
   govstack-20.1-schema-types:
     description: "OpenAPI Schema Object type keywords must use valid JSON Schema primitive names (guide 20.1, [M])."
     message: "[20.1][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-e/20-conformance-and-validation.md#201-every-file-passes-validation
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-e/20-conformance-and-validation.md#201-every-file-passes-validation
     severity: error
     formats: [oas3_1]
     given: $
@@ -32,7 +32,7 @@ rules:
   govstack-20.3:
     description: "info.x-govstack-api-guide must declare SemVer version and rulesetVersion (guide 20.3, [M])."
     message: "[20.3][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version
     severity: error
     formats: [oas3, aas2, aas3]
     given: $.info
@@ -50,7 +50,7 @@ rules:
   govstack-20.3-exceptions:
     description: "x-govstack-api-guide.exceptions entries must be objects referencing an approved exception record (guide 20.3, [M])."
     message: "[20.3][M] {{error}}"
-    documentationUrl: https://github.com/GovStackWorkingGroup/bb-template/blob/main/api-design-guide/part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version
+    documentationUrl: https://github.com/jeremi/govstack-api-design-guide/blob/main/part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version
     severity: error
     formats: [oas3, aas2, aas3]
     given: $.info

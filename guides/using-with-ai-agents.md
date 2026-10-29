@@ -8,6 +8,8 @@ This guide is written to be read by people and by coding agents working inside a
 
 ## In the repository
 
+The paths below assume a checkout of `jeremi/govstack-api-design-guide` placed at `api-design-guide/` inside the BB repository.
+
 `rules.yaml` at the root of this book (`api-design-guide/rules.yaml`) is the machine-readable index of every rule: its ID, legacy compatibility class, level (`MUST`, `SHOULD`, `MAY`, or null for an informative entry, derived from the rule's first paragraph as [§1.5](../1-introduction.md#15-language) explains), the API kinds it applies to (`read`, `write`, `events`, `deployment`; see [§1.11](../1-introduction.md#111-which-rules-apply-to-your-api)), applicable surface, verbatim rule text, and the page and anchor it lives on. An agent working on an OpenAPI or AsyncAPI file should treat `rules.yaml` as the lookup table, not the whole guide, and follow the page and anchor for each rule it needs to reason about, so it gets the full intent, examples, and carve-outs rather than a one-line summary.
 
 ## On the published site
