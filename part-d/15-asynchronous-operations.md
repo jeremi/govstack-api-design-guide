@@ -5,7 +5,7 @@ description: "The local Operation resource shape and polling pattern BBs use for
 # 15. Asynchronous operations
 
 {% hint style="info" %}
-**Intent.** A common way to discover and poll accepted work across BBs. The `202` response and `Location` let a client find its status; the BB's local schema explains how to read that status and its result. In this guide, *Operation resource* (capitalised) is that polling resource; lowercase *operation* means an OpenAPI or AsyncAPI operation.
+**Intent.** A common way to discover and poll accepted work across BBs. The `202` response and `Location` let a client find its status; the BB's local schema explains how to read that status and its result. In the guide, *Operation resource* (capitalised) is that polling resource; lowercase *operation* means an OpenAPI or AsyncAPI operation.
 
 **Applies to:** OpenAPI surface (HTTP/REST). The Operation resource is defined locally by each BB; the `202` and polling mechanics are HTTP-specific.
 {% endhint %}
@@ -28,7 +28,7 @@ Creating a job or Operation resource that is itself addressable when the respons
 
 <!-- rule-class: M+R -->
 
-The local Operation schema **SHOULD** document how the identifier, lifecycle state, result, error, and any progress metadata are represented, including when each state-dependent field is present. Its identifier **SHOULD** be an opaque string and clients **SHOULD NOT** infer a UUID or any other internal format. This guide does not fix those field names or shapes. A shared Operation schema is deferred until multiple BBs demonstrate a stable reusable contract.
+The local Operation schema **SHOULD** document how the identifier, lifecycle state, result, error, and any progress metadata are represented, including when each state-dependent field is present. Its identifier **SHOULD** be an opaque string and clients **SHOULD NOT** infer a UUID or any other internal format. The guide does not fix those field names or shapes. A shared Operation schema is deferred until multiple BBs demonstrate a stable reusable contract.
 
 The response schema is required by [§7.21](../part-b/7-http-status-codes.md#721-schemas-for-successful-response-bodies) and defined locally under [§2.8](../part-a/2-openapi-document-standards.md#28-conditional-vendored-openapi-schemas).
 
@@ -42,7 +42,7 @@ local Operation identifier and state-dependent shape require semantic review; no
 
 <!-- rule-class: M+R -->
 
-The local Operation contract **SHOULD** distinguish terminal from non-terminal states and **SHOULD** document the result, error, polling, and cancellation semantics for each applicable state. This guide does not prescribe a status enum or lifecycle model.
+The local Operation contract **SHOULD** distinguish terminal from non-terminal states and **SHOULD** document the result, error, polling, and cancellation semantics for each applicable state. The guide does not prescribe a status enum or lifecycle model.
 
 **Example (informative).** An in-progress Operation resource:
 

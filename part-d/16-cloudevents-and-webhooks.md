@@ -138,7 +138,7 @@ experimental OpenAPI profile and adopter-supplied key/replay contract need commo
 
 ## 16.9 Readiness for a shared signature profile <a href="#169-readiness-for-a-shared-signature-profile" id="169-readiness-for-a-shared-signature-profile"></a>
 
-(informative) A shared signature profile is outside the baseline. It should be considered only after key discovery, key rotation, replay-window enforcement, protocol mappings, conformance test vectors, and interoperable implementations in at least two commonly used GovStack implementation languages exist. Operational signing controls remain outside this guide ([§1.2](../1-introduction.md#12-scope)).
+(informative) A shared signature profile is outside the baseline. It should be considered only after key discovery, key rotation, replay-window enforcement, protocol mappings, conformance test vectors, and interoperable implementations in at least two commonly used GovStack implementation languages exist. Operational signing controls remain out of scope ([§1.2](../1-introduction.md#12-scope)).
 
 <!-- verification:start -->
 **Verification:** Informative; no conformance check.

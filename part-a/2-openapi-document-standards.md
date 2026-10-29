@@ -26,7 +26,7 @@ assert openapi is one of the ruleset-qualified patches 3.1.0, 3.1.1, 3.1.2
 
 <!-- rule-class: M+R -->
 
-In the absence of `api/index.yaml`, the canonical OpenAPI entrypoint **MUST** be located at `api/openapi.yaml`, in YAML. A BB with a custom canonical path or multiple independently versioned API surfaces **MUST** enumerate every surface in `api/index.yaml` using [§4.5](../part-a/4-documentation-requirements.md#45-api-surface-inventory). Either discovery form **MUST** identify exactly one canonical artifact per surface. The legacy `api/swagger.yaml` and `api/swagger.json` names still used by some BBs are not canonical under this guide.
+In the absence of `api/index.yaml`, the canonical OpenAPI entrypoint **MUST** be located at `api/openapi.yaml`, in YAML. A BB with a custom canonical path or multiple independently versioned API surfaces **MUST** enumerate every surface in `api/index.yaml` using [§4.5](../part-a/4-documentation-requirements.md#45-api-surface-inventory). Either discovery form **MUST** identify exactly one canonical artifact per surface. The legacy `api/swagger.yaml` and `api/swagger.json` names still used by some BBs are not canonical under the guide.
 
 The canonical entrypoint **MAY** `$ref`-compose other repository files provided every reference resolves.
 

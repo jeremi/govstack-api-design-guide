@@ -20,7 +20,7 @@ Resource identifiers **MUST** be strings and unique within their resource scope.
 
 Newly assigned identifiers **SHOULD** be server-generated opaque values, with UUID v4 (`format: uuid`) as the default.
 
-The default scope is the BB; a specification **MAY** declare a narrower scope, such as a tenant, collection, or source system, where the enclosing endpoint or resource reference identifies that scope unambiguously. ULID, KSUID, or other opaque IDs **MAY** be used. A BB **MAY** reuse stable identifiers assigned by an existing source or governing scheme instead of allocating aliases solely to satisfy this guide.
+The default scope is the BB; a specification **MAY** declare a narrower scope, such as a tenant, collection, or source system, where the enclosing endpoint or resource reference identifies that scope unambiguously. ULID, KSUID, or other opaque IDs **MAY** be used. A BB **MAY** reuse stable identifiers assigned by an existing source or governing scheme instead of allocating aliases solely to satisfy the guide.
 
 The documented scope and identifier together identify the resource. Reusing a source key is appropriate when the key remains stable for that resource and is not reassigned to a different resource in that scope. This does not require a particular database key type or an identifier mapping service. A statutory identifier can be used in a URL only when it does not constitute personal data; a national ID or passport number instead belongs in a body-based lookup under [§6.6](../part-b/6-http-methods.md#66-post-search-for-complex-queries). Opaque spelling is not itself evidence that an identifier is safe to disclose.
 

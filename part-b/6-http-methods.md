@@ -5,7 +5,7 @@ description: "Rules defining the meaning, safety, and idempotency guarantees of 
 # 6. HTTP methods
 
 {% hint style="info" %}
-**Intent.** Each verb has one meaning. Specs MUST NOT redefine them.
+**Intent.** Each HTTP method has one meaning, set by HTTP itself (RFC 9110). Clients, caches and gateways act on that meaning, so a Building Block that gives a method another meaning breaks them without warning.
 
 **Applies to:** OpenAPI surface only (HTTP/REST).
 {% endhint %}

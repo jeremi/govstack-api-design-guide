@@ -267,7 +267,7 @@ Long-running asynchronous work triggered by a message **SHOULD** expose completi
 
 Protocol bindings **MUST** be present where protocol-specific fields affect interoperability.
 
-At minimum, Kafka-like bindings **SHOULD** declare topic and key semantics; MQTT bindings **SHOULD** declare QoS and retained-message policy; AMQP bindings **SHOULD** declare exchange, queue, and routing-key semantics; WebSocket and SSE bindings **SHOULD** declare connection and message framing. Detailed broker operations remain out of scope for this guide.
+At minimum, Kafka-like bindings **SHOULD** declare topic and key semantics; MQTT bindings **SHOULD** declare QoS and retained-message policy; AMQP bindings **SHOULD** declare exchange, queue, and routing-key semantics; WebSocket and SSE bindings **SHOULD** declare connection and message framing. Detailed broker operations remain out of scope ([§1.2](../1-introduction.md#12-scope)).
 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification. Semantic review is also required.

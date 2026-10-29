@@ -40,7 +40,7 @@ meta/self-referential (the ruleset itself)
 
 <!-- rule-class: M -->
 
-Each canonical specification file and example contract **MUST** declare the exact guide and ruleset versions it targets in the `info`-level `x-govstack-api-guide` object using `version` and `rulesetVersion`, each an exact SemVer value rather than a range. For this draft both values **MUST** be `0.3.0-draft`. An optional `profile` member **MUST** be either `standard` (the default when absent) or `legacy`, and validation tooling **MUST** reject any other value. A surface **MUST NOT** declare `legacy` unless it was published before its BB first pinned this guide and remains on that same major version under [§1.10](../1-introduction.md#110-applicability-and-transition); a new surface or a new major version **MUST NOT** declare it. An optional `exceptions` array **MUST** contain objects with exactly these fields: `rule` (guide rule ID), `scope` (RFC 6901 JSON Pointer into the declaring document), `rationale` (non-empty explanation), `record` (absolute HTTPS URI for the approved public record), `reviewedBy` (non-empty approving authority), `reviewedAt` (calendar date `YYYY-MM-DD`), and `expiresAt` (calendar date `YYYY-MM-DD`). An exception **MUST** suppress only its named rule at or below its declared scope. An expired entry, invalid field, or exception not approved under [§1.6](../1-introduction.md#16-exception-process) **MUST** fail validation rather than suppress the rule. Offline validation **MUST NOT** require dereferencing the record URI.
+Each canonical specification file and example contract **MUST** declare the exact guide and ruleset versions it targets in the `info`-level `x-govstack-api-guide` object using `version` and `rulesetVersion`, each an exact SemVer value rather than a range. For this draft both values **MUST** be `0.3.0-draft`. An optional `profile` member **MUST** be either `standard` (the default when absent) or `legacy`, and validation tooling **MUST** reject any other value. A surface **MUST NOT** declare `legacy` unless it was published before its BB first pinned the guide and remains on that same major version under [§1.10](../1-introduction.md#110-applicability-and-transition); a new surface or a new major version **MUST NOT** declare it. An optional `exceptions` array **MUST** contain objects with exactly these fields: `rule` (guide rule ID), `scope` (RFC 6901 JSON Pointer into the declaring document), `rationale` (non-empty explanation), `record` (absolute HTTPS URI for the approved public record), `reviewedBy` (non-empty approving authority), `reviewedAt` (calendar date `YYYY-MM-DD`), and `expiresAt` (calendar date `YYYY-MM-DD`). An exception **MUST** suppress only its named rule at or below its declared scope. An expired entry, invalid field, or exception not approved under [§1.6](../1-introduction.md#16-exception-process) **MUST** fail validation rather than suppress the rule. Offline validation **MUST NOT** require dereferencing the record URI.
 
 Declaring `profile: legacy` records that the ruleset's legacy profile reports wire-contract rules (paths, names, headers, status codes, envelopes, security schemes under §13.2 to §13.6, event addresses) at informational severity for that surface, while documentation rules (file layout, metadata, descriptions, examples, security declarations under §13.1, and this declaration) stay enforced. It is the machine-readable form of the transition in [§1.10](../1-introduction.md#110-applicability-and-transition): the wire-contract gaps are closed in the next major version, where the declaration is dropped.
 
@@ -61,7 +61,7 @@ info:
         expiresAt: "2027-01-31"
 ```
 
-**Example (informative).** A surface published before its BB first pinned this guide, still on that major version.
+**Example (informative).** A surface published before its BB first pinned the guide, still on that major version.
 
 ```yaml
 info:
@@ -79,4 +79,4 @@ exact guide/ruleset versions; scoped exceptions require known rule, rationale, H
 
 ## Note on governance <a href="#note-on-governance" id="note-on-governance"></a>
 
-Publication gates, conformance levels, exception handling, transition timelines, and CI implementation are owned by the GovStack governance process and are outside this guide.
+Publication gates, conformance levels, exception handling, transition timelines, and CI implementation are owned by the GovStack governance process and are out of scope ([§1.2](../1-introduction.md#12-scope)).

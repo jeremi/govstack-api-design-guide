@@ -64,7 +64,7 @@ proxy: operations with effective nonempty security declare W3C traceparent reque
 
 <!-- rule-class: M -->
 
-New custom headers introduced by this guide or by BBs **MUST NOT** use the `X-` prefix, per RFC 6648. Existing private `X-` headers **MUST NOT** be introduced on a new surface or new major version.
+New custom headers introduced by the guide or by BBs **MUST NOT** use the `X-` prefix, per RFC 6648. Existing private `X-` headers **MUST NOT** be introduced on a new surface or new major version.
 
 Existing private `X-` headers **MAY** remain only on an unchanged legacy major version.
 
@@ -104,7 +104,7 @@ proxy: 429 responses declare Retry-After (SHOULD-level rule, proxy at info); str
 
 <!-- rule-class: M+R -->
 
-A custom header defined for use across BBs, whether by this guide, by a shared GovStack component, or by an interoperability mediator, **SHOULD** carry the `GovStack-` prefix, for example `GovStack-Client`. A custom header local to one BB **SHOULD** use a plain descriptive name without a vendor prefix ([§8.5](#85-no-new-x--prefixed-headers) already forbids `X-`). A header name **SHOULD NOT** embed a BB code or a version number. Business identifiers (record identifiers, case numbers, tenant or organisation identifiers), callback URLs, and personal data **SHOULD NOT** be carried in custom request headers; they belong in the path ([§5](5-url-structure-and-versioning.md)), the request body, or claims of the presented token. Headers carry transport and cross-cutting concerns such as tracing, idempotency, conditional requests, rate limits, and content negotiation. [§8.6](#86-no-personal-data-in-addressable-locations) separately forbids personal data in header values, and [§15.8](../part-d/15-asynchronous-operations.md#158-per-request-callback-url) governs per-request callback URLs.
+A custom header defined for use across BBs, whether by the guide, by a shared GovStack component, or by an interoperability mediator, **SHOULD** carry the `GovStack-` prefix, for example `GovStack-Client`. A custom header local to one BB **SHOULD** use a plain descriptive name without a vendor prefix ([§8.5](#85-no-new-x--prefixed-headers) already forbids `X-`). A header name **SHOULD NOT** embed a BB code or a version number. Business identifiers (record identifiers, case numbers, tenant or organisation identifiers), callback URLs, and personal data **SHOULD NOT** be carried in custom request headers; they belong in the path ([§5](5-url-structure-and-versioning.md)), the request body, or claims of the presented token. Headers carry transport and cross-cutting concerns such as tracing, idempotency, conditional requests, rate limits, and content negotiation. [§8.6](#86-no-personal-data-in-addressable-locations) separately forbids personal data in header values, and [§15.8](../part-d/15-asynchronous-operations.md#158-per-request-callback-url) governs per-request callback URLs.
 
 A header required by an interoperability mediator, for example the client-identification header defined by the Information Mediator BB, is defined by that mediator's contract; a BB specification references it and does not redefine it.
 

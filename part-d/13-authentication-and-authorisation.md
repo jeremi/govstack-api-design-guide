@@ -94,13 +94,13 @@ proxy: apiKey applied only to operational (/health-like) ops
 
 ## Note on consent propagation <a href="#note-on-consent-propagation" id="note-on-consent-propagation"></a>
 
-Cross-service propagation of end-user consent or authorisation context (for example, when one BB calls another on behalf of a data subject) is not specified by this guide. The expected mechanism is OAuth-native (scopes, claims, or RFC 9396 Rich Authorization Requests inside the access token), and the concrete shape belongs in the relevant consent, authorisation, and inter-BB trust specifications, not here.
+Cross-service propagation of end-user consent or authorisation context (for example, when one BB calls another on behalf of a data subject) is not specified by the guide. The expected mechanism is OAuth-native (scopes, claims, or RFC 9396 Rich Authorization Requests inside the access token), and the concrete shape belongs in the relevant consent, authorisation, and inter-BB trust specifications, not here.
 
 ## 13.7 Protected transport <a href="#137-protected-transport" id="137-protected-transport"></a>
 
 <!-- rule-class: M+R -->
 
-Every externally reachable OpenAPI server URL and HTTP webhook callback URL **MUST** use `https`. Every AsyncAPI server **MUST** declare a TLS-protected transport or a protocol security binding that provides equivalent confidentiality, integrity, and server authentication. Cleartext transport **MUST NOT** carry credentials, personal data, or GovStack domain events. Negotiated TLS **MUST** be version 1.3 or higher, inherited from `govstack-cfr-security#req-1` and not relaxable by a BB specification. Remaining TLS deployment configuration **MUST** follow RFC 9325 or its successor; concrete certificate trust and cipher configuration are outside this guide.
+Every externally reachable OpenAPI server URL and HTTP webhook callback URL **MUST** use `https`. Every AsyncAPI server **MUST** declare a TLS-protected transport or a protocol security binding that provides equivalent confidentiality, integrity, and server authentication. Cleartext transport **MUST NOT** carry credentials, personal data, or GovStack domain events. Negotiated TLS **MUST** be version 1.3 or higher, inherited from `govstack-cfr-security#req-1` and not relaxable by a BB specification. Remaining TLS deployment configuration **MUST** follow RFC 9325 or its successor; concrete certificate trust and cipher configuration are out of scope ([§1.2](../1-introduction.md#12-scope)).
 
 <!-- verification:start -->
 **Verification:** Review or evidence assessment required. Semantic review is also required.

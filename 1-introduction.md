@@ -78,6 +78,8 @@ The guide's candidate specification identifier is `govstack-cfr-api`, its curren
 
 These mappings are alignment references, not formal inheritance declarations. They become formal only after the conflicting parent wording is resolved and each normative guide rule has a CFR identifier and classifiers. This guide does not replace `govstack-cfr-architecture#req-7`; while that requirement remains in CFR, it continues to apply independently. Passing this guide's linter therefore does not by itself prove complete CFR conformance.
 
+The binding [GovStack common terminology](https://specs.govstack.global/architecture/2-common-terminology) applies to this guide. Terms defined there keep that meaning here, and the guide defines only the terms it adds.
+
 ## 1.4 Audience <a href="#14-audience" id="14-audience"></a>
 
 1. **Primary.** GovStack BB specification editors (the people writing the OpenAPI files).

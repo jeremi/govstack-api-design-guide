@@ -16,7 +16,7 @@ description: "Rules governing SemVer versioning, backward-compatible and breakin
 
 `info.version` **MUST** follow SemVer and identify the version of that surface's published contract, not the implementation version. When a surface also exposes a major version in a path, channel, or protocol field, the two **MUST** agree. An implementation may therefore be at `0.16.3` while the contract it serves is at `1.4.0`.
 
-The GovStack Specification Framework (CFR §5.2.2) versions the specification document that contains a BB's requirements. In this guide that document version is independent from `info.version`, which versions the API contract. A specification release **SHOULD** record which `info.version` of each surface it ships with, for example in `api/index.yaml` or in the release notes, so that readers can relate the two numbers.
+The GovStack Specification Framework (CFR §5.2.2) versions the specification document that contains a BB's requirements. In the guide, that document version is independent from `info.version`, which versions the API contract. A specification release **SHOULD** record which `info.version` of each surface it ships with, for example in `api/index.yaml` or in the release notes, so that readers can relate the two numbers.
 
 <!-- verification:start -->
 **Verification:** Partial linter check. Remaining clauses need separate verification.
@@ -70,7 +70,7 @@ breaking change => major bump - needs PREVIOUS spec version (oasdiff, out of sco
 
 Deprecated HTTP endpoints **MUST** return a `Deprecation` header per RFC 9745 (a Structured Field date carrying the deprecation timestamp, for example `Deprecation: @1735689600`) and a `Link` with relation `deprecation` pointing to migration documentation. When removal is planned, they **MUST** additionally return a `Sunset` header per RFC 8594; its timestamp **MUST NOT** precede the deprecation timestamp. The GovStack governance process owns the minimum deprecation window and maximum number of concurrent major versions.
 
-An incompatible security correction still follows [§18.4](#184-breaking-changes-bump-major-version). When continued operation presents an unacceptable security risk, the responsible authority determines whether immediate retirement is justified under GovStack governance; this guide sets no requirement to keep an unsafe endpoint running until a replacement major exists. Retirement calls for direct notification to affected operators and migration guidance, with the headers above where the old endpoint still responds. Those headers do not replace operational communication.
+An incompatible security correction still follows [§18.4](#184-breaking-changes-bump-major-version). When continued operation presents an unacceptable security risk, the responsible authority determines whether immediate retirement is justified under GovStack governance; the guide sets no requirement to keep an unsafe endpoint running until a replacement major exists. Retirement calls for direct notification to affected operators and migration guidance, with the headers above where the old endpoint still responds. Those headers do not replace operational communication.
 
 <!-- verification:start -->
 **Verification:** Automated specification check. Semantic review is also required.
