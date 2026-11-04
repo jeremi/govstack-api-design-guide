@@ -1,0 +1,23 @@
+{
+  "properties": {
+    "geometry": {
+      "$ref": "./geojson/Geometry.schema.json"
+    },
+    "parent_location": {
+      "oneOf": [
+        {
+          "$ref": "./Location.schema.json"
+        }
+      ]
+    },
+    "geocodes": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./Identifier.schema.json"
+          }
+        ]
+      }
+    }
+  }
+}

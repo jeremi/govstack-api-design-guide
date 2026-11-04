@@ -1,0 +1,23 @@
+openapi: 3.1.2
+info:
+  title: Recursive schema fixture
+  version: 1.0.0
+  description: Shared recursive schema references.
+  x-govstack-api-guide:
+    version: 0.3.0-draft
+    rulesetVersion: 0.3.0-draft
+servers:
+  - url: https://registry.example
+    description: Reserved non-production deployment used only by these examples.
+tags:
+  - name: Direct Write examples
+    description: Source-backed direct commits using concrete example inputs.
+  - name: Change request examples
+    description: Immutable proposals with review and application state observed separately.
+paths: {}
+components:
+  schemas:
+    PublicSchemaChangeRequestInput:
+      $ref: ./write-examples.schema.json#/$defs/PublicSchemaChangeRequestInput
+    PublicSchemaChangeRequest:
+      $ref: ./write-examples.schema.json#/$defs/PublicSchemaChangeRequest

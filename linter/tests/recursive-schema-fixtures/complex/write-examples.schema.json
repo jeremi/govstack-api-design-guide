@@ -1,0 +1,329 @@
+{
+  "$defs": {
+    "RequestLocalId": {},
+    "StrongETag": {},
+    "SourceReference": {},
+    "ExistingPersonReference": {},
+    "ExistingHouseholdReference": {},
+    "JsonLdType": {},
+    "PublicSchemaIdentifier": {},
+    "PublicSchemaLocation": {
+      "allOf": [
+        {
+          "$ref": "./publicschema/offline/Location.schema.json"
+        },
+        {
+          "properties": {
+            "parent_location": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/PublicSchemaLocation"
+                }
+              ]
+            },
+            "geocodes": {
+              "items": {
+                "$ref": "#/$defs/PublicSchemaIdentifier"
+              }
+            }
+          }
+        }
+      ],
+      "type": "object"
+    },
+    "PublicSchemaAddress": {},
+    "PublicSchemaPerson": {},
+    "PublicSchemaCrvsPerson": {},
+    "PublicSchemaCrvsParent": {},
+    "BirthChildForDeclaration": {},
+    "BirthParentForDeclaration": {},
+    "PublicSchemaBirth": {
+      "allOf": [
+        {
+          "$ref": "./publicschema/offline/crvs/Birth.schema.json"
+        },
+        {
+          "$ref": "#/$defs/JsonLdType"
+        }
+      ],
+      "type": "object"
+    },
+    "PublicSchemaHousehold": {},
+    "EmbeddedNewPerson": {},
+    "ExistingPersonMembership": {},
+    "EmbeddedPersonMembership": {},
+    "ExistingPersonMembershipForExistingHousehold": {},
+    "EmbeddedPersonMembershipForExistingHousehold": {},
+    "HouseholdWithExistingPersons": {},
+    "HouseholdCompoundCreate": {},
+    "IndividualCreateData": {},
+    "EvidenceReference": {},
+    "BirthAnnotation": {},
+    "BirthEventForDeclaration": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/PublicSchemaBirth"
+        },
+        {
+          "properties": {
+            "@id": {
+              "$ref": "#/$defs/RequestLocalId"
+            },
+            "event_location": {
+              "oneOf": [
+                {
+                  "$ref": "#/$defs/PublicSchemaLocation"
+                }
+              ]
+            },
+            "informant": {
+              "$ref": "#/$defs/ExistingPersonReference"
+            },
+            "child": {
+              "$ref": "#/$defs/BirthChildForDeclaration"
+            },
+            "parents": {
+              "items": {
+                "$ref": "#/$defs/BirthParentForDeclaration"
+              }
+            }
+          }
+        }
+      ],
+      "type": "object"
+    },
+    "BirthProjectionPatch": {},
+    "BirthDeclarationCommand": {
+      "properties": {
+        "birth": {
+          "$ref": "#/$defs/BirthEventForDeclaration"
+        },
+        "annotation": {
+          "$ref": "#/$defs/BirthAnnotation"
+        }
+      },
+      "type": "object"
+    },
+    "BirthCorrectionCommand": {},
+    "BirthDeclarationCreateInput": {
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/BirthDeclarationCommand"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceReference"
+        }
+      },
+      "type": "object"
+    },
+    "BirthCorrectionInput": {
+      "properties": {
+        "parameters": {
+          "$ref": "#/$defs/BirthCorrectionCommand"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceReference"
+        }
+      },
+      "type": "object"
+    },
+    "HouseholdExistingCreateInput": {},
+    "HouseholdCompoundCreateInput": {
+      "properties": {
+        "data": {
+          "$ref": "#/$defs/HouseholdCompoundCreate"
+        },
+        "source": {
+          "$ref": "#/$defs/SourceReference"
+        }
+      },
+      "type": "object"
+    },
+    "HouseholdCreateInput": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/HouseholdExistingCreateInput"
+        },
+        {
+          "$ref": "#/$defs/HouseholdCompoundCreateInput"
+        }
+      ],
+      "type": "object"
+    },
+    "IndividualCreateInput": {},
+    "IndividualUpdateInput": {},
+    "HouseholdAddMemberParameters": {},
+    "HouseholdAddMemberInput": {},
+    "PublicSchemaChangeRequestInput": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/CreateChangeRequest"
+        },
+        {
+          "$ref": "#/$defs/TransitionChangeRequest"
+        }
+      ]
+    },
+    "BirthDeclarationChangeRequest": {
+      "properties": {
+        "input": {
+          "$ref": "#/$defs/BirthDeclarationCreateInput"
+        }
+      },
+      "type": "object"
+    },
+    "BirthCorrectionChangeRequest": {},
+    "HouseholdCreateChangeRequest": {
+      "properties": {
+        "input": {
+          "$ref": "#/$defs/HouseholdCreateInput"
+        }
+      },
+      "type": "object"
+    },
+    "IndividualCreateChangeRequest": {
+      "properties": {
+        "input": {
+          "$ref": "#/$defs/IndividualCreateInput"
+        }
+      },
+      "type": "object"
+    },
+    "HouseholdAddMemberChangeRequest": {},
+    "CreateChangeRequest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/BirthDeclarationChangeRequest"
+        },
+        {
+          "$ref": "#/$defs/HouseholdCreateChangeRequest"
+        },
+        {
+          "$ref": "#/$defs/IndividualCreateChangeRequest"
+        }
+      ],
+      "type": "object"
+    },
+    "TransitionChangeRequest": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/BirthCorrectionChangeRequest"
+        },
+        {
+          "$ref": "#/$defs/HouseholdAddMemberChangeRequest"
+        }
+      ],
+      "type": "object"
+    },
+    "LocalReferenceResolution": {},
+    "PublicSchemaWriteResult": {},
+    "ProcessingError": {
+      "type": "object"
+    },
+    "PublicSchemaChangeRequest": {
+      "properties": {
+        "baseETag": {
+          "$ref": "#/$defs/StrongETag"
+        },
+        "result": {
+          "$ref": "#/$defs/PublicSchemaWriteResult"
+        },
+        "error": {
+          "$ref": "#/$defs/ProcessingError"
+        }
+      },
+      "allOf": [
+        {
+          "then": {
+            "properties": {
+              "input": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/BirthDeclarationCreateInput"
+                  },
+                  {
+                    "$ref": "#/$defs/HouseholdExistingCreateInput"
+                  },
+                  {
+                    "$ref": "#/$defs/HouseholdCompoundCreateInput"
+                  },
+                  {
+                    "$ref": "#/$defs/IndividualCreateInput"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "then": {
+            "properties": {
+              "input": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/BirthCorrectionInput"
+                  },
+                  {
+                    "$ref": "#/$defs/HouseholdAddMemberInput"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "then": {
+            "properties": {
+              "input": {
+                "$ref": "#/$defs/BirthDeclarationCreateInput"
+              }
+            }
+          }
+        },
+        {
+          "then": {
+            "properties": {
+              "input": {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/HouseholdExistingCreateInput"
+                  },
+                  {
+                    "$ref": "#/$defs/HouseholdCompoundCreateInput"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "then": {
+            "properties": {
+              "input": {
+                "$ref": "#/$defs/IndividualCreateInput"
+              }
+            }
+          }
+        },
+        {
+          "then": {
+            "properties": {
+              "input": {
+                "$ref": "#/$defs/BirthCorrectionInput"
+              }
+            }
+          }
+        },
+        {
+          "then": {
+            "properties": {
+              "input": {
+                "$ref": "#/$defs/HouseholdAddMemberInput"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

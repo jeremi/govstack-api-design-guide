@@ -1,0 +1,11 @@
+{
+  "properties": {
+    "location": {
+      "oneOf": [
+        {
+          "$ref": "./Location.schema.json"
+        }
+      ]
+    }
+  }
+}

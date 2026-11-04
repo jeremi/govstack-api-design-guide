@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Person",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "group_memberships": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./group-membership.schema.json"
+          },
+          {
+            "type": "string",
+            "format": "uri"
+          }
+        ]
+      }
+    }
+  }
+}

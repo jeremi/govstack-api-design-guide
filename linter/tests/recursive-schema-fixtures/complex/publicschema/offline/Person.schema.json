@@ -1,0 +1,50 @@
+{
+  "properties": {
+    "identifiers": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./Identifier.schema.json"
+          }
+        ]
+      }
+    },
+    "identity_documents": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./IdentityDocument.schema.json"
+          }
+        ]
+      }
+    },
+    "preferred_name": {
+      "type": "string"
+    },
+    "domicile": {
+      "oneOf": [
+        {
+          "$ref": "./Address.schema.json"
+        }
+      ]
+    },
+    "group_memberships": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./GroupMembership.schema.json"
+          }
+        ]
+      }
+    },
+    "biometric_samples": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./BiometricSample.schema.json"
+          }
+        ]
+      }
+    }
+  }
+}

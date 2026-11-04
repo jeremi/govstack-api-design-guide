@@ -1,0 +1,17 @@
+openapi: 3.1.0
+info:
+  title: Recursive schema fixture
+  version: 1.0.0
+  description: Exercises shared, mutually recursive external schemas.
+  contact:
+    name: Fixture maintainers
+  x-govstack-api-guide:
+    version: 0.3.0-draft
+    rulesetVersion: 0.3.0-draft
+paths: {}
+components:
+  schemas:
+    PersonCreateInput:
+      $ref: './schemas/person.schema.json'
+    MembershipCreateInput:
+      $ref: './schemas/group-membership.schema.json'
