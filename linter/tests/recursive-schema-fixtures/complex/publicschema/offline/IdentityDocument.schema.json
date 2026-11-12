@@ -1,0 +1,20 @@
+{
+  "properties": {
+    "identifiers": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./Identifier.schema.json"
+          }
+        ]
+      }
+    },
+    "issued_to": {
+      "oneOf": [
+        {
+          "$ref": "./Party.schema.json"
+        }
+      ]
+    }
+  }
+}

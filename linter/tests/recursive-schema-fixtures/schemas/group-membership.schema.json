@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GroupMembership",
+  "type": "object",
+  "properties": {
+    "person": {
+      "oneOf": [
+        {
+          "$ref": "./person.schema.json"
+        },
+        {
+          "type": "string",
+          "format": "uri"
+        }
+      ]
+    },
+    "group": {
+      "oneOf": [
+        {
+          "$ref": "./group.schema.json"
+        },
+        {
+          "type": "string",
+          "format": "uri"
+        }
+      ]
+    }
+  }
+}

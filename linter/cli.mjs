@@ -1332,6 +1332,31 @@ async function resolveReferenceGraph(resolver, spec) {
   return resolved.graph;
 }
 
+// json-ref-resolver memoizes mutable runners by resource URI. Concurrent
+// resolution of fragments in a recursive document can re-enter the same
+// runner and overflow Immer. Keep its per-branch cycle detection, readers,
+// parsing, and diagnostics, but do not share runners on that recovery pass.
+function createUncachedReferenceResolver() {
+  const resolver = createHttpAndFileResolver();
+  const uriCache = {
+    get: () => undefined,
+    set: () => undefined,
+    has: () => false,
+    purge: () => undefined,
+    stats: { hits: 0, misses: 0 },
+  };
+  return {
+    uriCache,
+    resolve: (source, options = {}) => resolver.resolve(source, { ...options, uriCache }),
+  };
+}
+
+function isReferenceRecursionFailure(error) {
+  return error instanceof RangeError
+    && /maximum call stack size exceeded/i.test(error.message)
+    && /[\\/]node_modules[\\/](?:immer|@stoplight[\\/]json-ref-resolver)[\\/]/.test(error.stack ?? '');
+}
+
 function isPathPrefix(prefix, candidate) {
   return prefix.length <= candidate.length && prefix.every((token, i) => token === candidate[i]);
 }
@@ -1728,6 +1753,7 @@ async function main(argv) {
 
   // --- Spectral (§20.2) + base validators (§20.1) + guide declaration (§20.3) ----------
   let spectral;
+  let loadedRuleset;
   const spectralFindingStates = new Map();
   for (const spec of [...specs, ...exampleSpecs]) {
     const relSpec = rel(spec.abs);
@@ -1742,22 +1768,38 @@ async function main(argv) {
 
     // §20.2 Spectral.
     if (!spectral) {
-      const ruleset = await loadRuleset(cfg.rulesetPath);
+      loadedRuleset = await loadRuleset(cfg.rulesetPath);
       spectral = new Spectral();
-      spectral.setRuleset(ruleset);
+      spectral.setRuleset(loadedRuleset);
     }
     const doc = new Document(spec.content, Parsers.Yaml, spec.abs);
     let referenceGraph;
+    let specSpectral = spectral;
     try {
       // Use a fresh resolver so its graph retains the complete transitive
-      // refMap. Reusing Spectral's cache would omit nested edges on later passes.
+      // refMap. This also probes recursive graphs before Spectral evaluates
+      // rules: cached runner corruption can hang rule evaluation without throwing.
       referenceGraph = await resolveReferenceGraph(createHttpAndFileResolver(), spec);
     } catch (err) {
-      throw new OperationalError(`Cannot map reference origins for ${relSpec}: ${err.message}`);
+      if (!isReferenceRecursionFailure(err)) {
+        throw new OperationalError(`Cannot map reference origins for ${relSpec}: ${err.message}`);
+      }
+      if (exceptions.size > 0) {
+        try {
+          referenceGraph = await resolveReferenceGraph(createUncachedReferenceResolver(), spec);
+        } catch (retryError) {
+          throw new OperationalError(`Cannot map reference origins for ${relSpec}: ${retryError.message}`);
+        }
+      }
+      // Use a fresh Spectral instance so neither a poisoned cache nor the
+      // uncached resolver affects other documents in the repository run.
+      specSpectral = new Spectral({ resolver: createUncachedReferenceResolver() });
+      specSpectral.setRuleset(loadedRuleset);
+      notices.push(`Resolved recursive references in ${relSpec} without reusing reference runners.`);
     }
     let results;
     try {
-      results = await spectral.run(doc);
+      results = await specSpectral.run(doc);
     } catch (err) {
       throw new OperationalError(`Spectral failed on ${relSpec}: ${err.message}`);
     }
@@ -1771,7 +1813,11 @@ async function main(argv) {
         finding.message,
         finding.jsonPath,
       ]);
-      const declaringPaths = declaringPathsForExternalFinding(spec, r, finding, referenceGraph);
+      // Without an exception for this rule, every occurrence remains a finding.
+      // Enumerating all paths through a recursive graph cannot change that result.
+      const declaringPaths = exceptions.get(finding.guideRule)?.length
+        ? declaringPathsForExternalFinding(spec, r, finding, referenceGraph)
+        : [];
       const occurrenceExceptions = finding.guideRule
         ? declaringPaths.map((jsonPath) => applicableException(exceptions, { ...finding, jsonPath }))
         : [];

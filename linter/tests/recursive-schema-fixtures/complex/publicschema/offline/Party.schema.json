@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "identifiers": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./Identifier.schema.json"
+          }
+        ]
+      }
+    },
+    "identity_documents": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./IdentityDocument.schema.json"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "properties": {
+    "person": {
+      "oneOf": [
+        {
+          "$ref": "../Person.schema.json"
+        }
+      ]
+    },
+    "place_of_usual_residence": {
+      "oneOf": [
+        {
+          "$ref": "../Location.schema.json"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "properties": {
+    "identifiers": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "../Identifier.schema.json"
+          }
+        ]
+      }
+    },
+    "event_date": {
+      "type": "string"
+    },
+    "event_date_estimated": {
+      "type": "boolean"
+    },
+    "event_location": {
+      "oneOf": [
+        {
+          "$ref": "../Location.schema.json"
+        }
+      ]
+    },
+    "registration_location": {
+      "oneOf": [
+        {
+          "$ref": "../Location.schema.json"
+        }
+      ]
+    },
+    "registration_type": {
+      "type": "string"
+    },
+    "registrar": {
+      "oneOf": [
+        {
+          "$ref": "./Person.schema.json"
+        }
+      ]
+    },
+    "informant": {
+      "oneOf": [
+        {
+          "$ref": "./Person.schema.json"
+        }
+      ]
+    },
+    "child": {
+      "oneOf": [
+        {
+          "$ref": "./Person.schema.json"
+        }
+      ]
+    },
+    "parents": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./Parent.schema.json"
+          }
+        ]
+      }
+    },
+    "sex_at_birth": {
+      "type": "string"
+    },
+    "nationality_at_birth": {
+      "type": "string"
+    },
+    "place_type": {
+      "type": "string"
+    },
+    "birth_type": {
+      "type": "string"
+    },
+    "birth_order": {
+      "type": "integer"
+    },
+    "weight_at_birth": {
+      "type": "number"
+    },
+    "attendant_at_birth": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+rules:
+  govstack-4.1-property-description:
+    description: Every property needs a description
+    message: Property description is required
+    given: "$..properties.*"
+    severity: warn
+    then:
+      field: description
+      function: truthy

@@ -1,0 +1,11 @@
+{
+  "properties": {
+    "person": {
+      "oneOf": [
+        {
+          "$ref": "./Person.schema.json"
+        }
+      ]
+    }
+  }
+}

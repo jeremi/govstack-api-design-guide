@@ -1,0 +1,45 @@
+{
+  "properties": {
+    "identifiers": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./Identifier.schema.json"
+          }
+        ]
+      }
+    },
+    "identity_documents": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./IdentityDocument.schema.json"
+          }
+        ]
+      }
+    },
+    "memberships": {
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./GroupMembership.schema.json"
+          }
+        ]
+      }
+    },
+    "address": {
+      "oneOf": [
+        {
+          "$ref": "./Address.schema.json"
+        }
+      ]
+    },
+    "location": {
+      "oneOf": [
+        {
+          "$ref": "./Location.schema.json"
+        }
+      ]
+    }
+  }
+}

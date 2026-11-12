@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Group",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Display name for the group."
+    },
+    "memberships": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "./group-membership.schema.json"
+          },
+          {
+            "type": "string",
+            "format": "uri"
+          }
+        ]
+      }
+    }
+  }
+}
