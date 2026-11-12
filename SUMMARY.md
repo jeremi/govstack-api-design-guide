@@ -1,10 +1,17 @@
 # Table of contents
 
-* [GovStack Cross-BB API Design Guide](README.md)
+* [Overview](README.md)
+
+## Start here
+
 * [How to use this guide](how-to-use-this-guide.md)
-* [Rules at a glance](all-rules.md)
+* [Spec editor checklist](guides/spec-editor-checklist.md)
+* [Validating your spec](guides/validating-your-spec.md)
 * [Rules by API kind](rules-by-kind.md)
-* [Draft changes](draft-changes.md)
+* [Rules at a glance](all-rules.md)
+
+## Scope and conventions
+
 * [1. Introduction](1-introduction.md)
 
 ## API artifacts
@@ -41,15 +48,14 @@
 * [19. Localisation](part-e/19-localisation.md)
 * [20. Conformance and validation](part-e/20-conformance-and-validation.md)
 
-## Appendices
-
-* [Appendix. References](appendix/references.md)
-* [Appendix. Current practice census](appendix/current-practice-census.md)
-
-## Guides
+## Further guidance
 
 * [About these guides](guides/README.md)
-* [Spec editor checklist](guides/spec-editor-checklist.md)
-* [Validating your spec](guides/validating-your-spec.md)
 * [Using this guide with AI agents](guides/using-with-ai-agents.md)
 * [Maintaining this guide](guides/maintaining-this-guide.md)
+
+## Background and references
+
+* [Draft changes](draft-changes.md)
+* [Appendix. References](appendix/references.md)
+* [Appendix. Current practice census](appendix/current-practice-census.md)

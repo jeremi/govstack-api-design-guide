@@ -1,50 +1,66 @@
 ---
-description: "Entry points by audience and guidance for reviewing the draft."
+description: "Choose the right contract files, design one interaction, and prepare a Building Block API specification for review."
 ---
 
 # How to use this guide
 
-The guide is written for lookup, not end-to-end reading ([§1.4](1-introduction.md#14-audience)). Every rule has its own heading and a stable deep link, an identifier like **9.2**, verification details describing the current checks and their limits (see [§1.9](1-introduction.md#19-rule-enforcement-classes)), and RFC 2119 keywords in the body.
+Use this guide while writing the API contract for a Building Block (BB) specification. Start with the kind of interface you are defining, work through one interaction, and check the resulting files before review.
+
+## Find your path <a href="#find-your-path" id="find-your-path"></a>
+
+| What are you specifying? | Start with |
+| --- | --- |
+| An HTTP API that reads or searches data | [OpenAPI document standards](part-a/2-openapi-document-standards.md), then the read-only list in [Rules by API kind](rules-by-kind.md). |
+| An HTTP API that also creates, changes, or deletes data | The HTTP read and mutation rules in [Rules by API kind](rules-by-kind.md). Check [safe retries](part-d/14-idempotency.md) and [asynchronous operations](part-d/15-asynchronous-operations.md) when those behaviours apply. |
+| Events delivered to HTTP subscriber URLs | [CloudEvents and webhooks](part-d/16-cloudevents-and-webhooks.md). Document HTTP push webhooks in OpenAPI. |
+| Brokered events or event streams | [AsyncAPI document standards](part-a/3-asyncapi-document-standards.md), [CloudEvents](part-d/16-cloudevents-and-webhooks.md), and [channel rules](part-d/17-asyncapi-channel-rules.md). |
+| An interface governed by another standard | [Scope and standards-defined surfaces](1-introduction.md#12-scope) and the [surface inventory](part-a/4-documentation-requirements.md#45-api-surface-inventory). The draft's `standard` inventory entries support advisory review only. |
+
+A specification can contain several kinds of interface. Apply each rule where its conditions hold. For an already-published API, read the [transition rules](1-introduction.md#110-applicability-and-transition) before changing a client-visible contract.
 
 ## What a BB publishes <a href="#what-a-bb-publishes" id="what-a-bb-publishes"></a>
 
-Conformance to this guide comes down to a short list of artifacts in the BB repository:
+Keep the API contract and its supporting files in the **BB specification repository**. One canonical file is the authoritative entrypoint for each surface.
 
-1. A canonical `api/openapi.yaml` for each HTTP surface and `api/asyncapi.yaml` for each event surface, at the default paths or listed in `api/index.yaml` ([§2.2](part-a/2-openapi-document-standards.md#22-one-canonical-openapi-entrypoint), [§3.2](part-a/3-asyncapi-document-standards.md#32-one-canonical-asyncapi-entrypoint), [§4.5](part-a/4-documentation-requirements.md#45-api-surface-inventory)).
-2. `api/coverage.yaml`, tracing each active functional requirement to an operation, message, external contract, rationale, or tracked plan ([§4.6](part-a/4-documentation-requirements.md#46-functional-requirement-traceability)).
-3. An `info.x-govstack-api-guide` block in each canonical file pinning the exact guide and ruleset versions ([§20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version)).
-4. A clean run of the linter ([§20.2](part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset)):
+| File | Purpose |
+| --- | --- |
+| `api/openapi.yaml` | Default entrypoint for an HTTP API, including any HTTP push webhooks. See [§2.2](part-a/2-openapi-document-standards.md#22-one-canonical-openapi-entrypoint). |
+| `api/asyncapi.yaml` | Default entrypoint for brokered events or event streams. See [§3.2](part-a/3-asyncapi-document-standards.md#32-one-canonical-asyncapi-entrypoint). |
+| `api/index.yaml` | Lists the canonical files when the default paths are insufficient, for example when there are several HTTP APIs. See [§4.5](part-a/4-documentation-requirements.md#45-api-surface-inventory) for the inventory format and the declaration for a specification with no service interface. |
+| `api/coverage.yaml` | Links active functional requirements to operations, messages, external contracts, or a documented non-API verification boundary. A tracked plan records a gap and prevents full conformance. See [§4.6](part-a/4-documentation-requirements.md#46-functional-requirement-traceability). |
 
-Requires Node.js 20 or newer, npm, and the base validator for each declared API surface. For OpenAPI, install Python and uv; both validator executables must be available on `PATH` when their surface is used. The first two commands below are one-time setup for the applicable surfaces; `npm ci` installs only the linter dependencies.
+Use the contract files that match your interfaces. Each canonical OpenAPI or AsyncAPI file also declares the exact guide and ruleset versions in `info.x-govstack-api-guide` ([§20.3](part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version)).
 
-The commands below assume a checkout of `jeremi/govstack-api-design-guide` placed at `api-design-guide/` inside the BB repository.
+## Work through one interaction
 
-```bash
-uv tool install openapi-spec-validator==0.9.0  # OpenAPI surfaces
-npm install --global @asyncapi/cli@6.0.2       # AsyncAPI surfaces
-cd api-design-guide/linter && npm ci && node cli.mjs --repo-root ../..
-```
+**Example (informative): retrieving a registration application by its identifier.** The existing examples in [§4.6](part-a/4-documentation-requirements.md#46-functional-requirement-traceability) and [§4.7](part-a/4-documentation-requirements.md#47-operation-metadata-extensions) use `retrieveApplication` to connect a requirement to an API operation.
 
-The `api/` folder of the [`bb-template` repository](https://github.com/jeremi/bb-template/tree/feat/api-design-guide-linter/api) is the scaffold for these files: it ships `api/index.yaml` and the shared schemas under `api/common/`. [Rules by API kind](rules-by-kind.md) says which rules apply to a read-only API, an API with mutations, an event surface, and the deployment ([§1.11](1-introduction.md#111-which-rules-apply-to-your-api)).
+1. **Describe the operation.** In the canonical OpenAPI file, define the path, identifier parameter, and `retrieveApplication` operation. Explain what the caller receives and the access it needs.
+2. **Make the responses clear.** Specify the successful response and applicable errors, including the missing-application case. Add useful schema descriptions and representative examples ([§4](part-a/4-documentation-requirements.md), [§7](part-b/7-http-status-codes.md), [§11](part-c/11-errors.md)).
+3. **Connect it to the requirement.** In `api/coverage.yaml`, map the requirement ID to `retrieveApplication`. Use `requirements` for active requirements or the optional `draftRequirements` list for draft mappings, following [§4.6](part-a/4-documentation-requirements.md#46-functional-requirement-traceability).
+4. **Validate and review.** Run the checks in [Validating your spec](guides/validating-your-spec.md), then use the [spec editor checklist](guides/spec-editor-checklist.md). A reviewer checks that the operation actually fulfils the requirement and gives a client enough information to handle success and failure.
 
-## Find your path
-
-- **BB spec editors** (primary audience): publish the artifacts above, read the rules for your API kind in [Rules by API kind](rules-by-kind.md), run the [spec editor checklist](guides/spec-editor-checklist.md), jump to any rule via [Rules at a glance](all-rules.md), and run the commands in [Validating your spec](guides/validating-your-spec.md) before submitting for review.
-- **Implementers** building against a BB spec: read [§1.8](1-introduction.md#18-layering-what-this-guide-constrains) first to see which promises live in the spec, the implementation profile, or the deployment; then the sections for the surfaces you consume (errors [§11](part-c/11-errors.md), pagination [§12](part-c/12-pagination-filtering-sorting.md), idempotency [§14](part-d/14-idempotency.md), events [§16](part-d/16-cloudevents-and-webhooks.md)).
-- **Country teams** adopting BBs: the [Introduction](1-introduction.md) and [§18 Compatibility and lifecycle](part-d/18-compatibility-and-lifecycle.md) describe what consistency you can rely on across the catalogue; concrete deployment values live in implementation profiles, not here.
-- **AI coding agents and tooling**: `rules.yaml` at the folder root is the machine-readable index of every rule, with its level and API kinds; [Using this guide with AI agents](guides/using-with-ai-agents.md) explains it and provides a paste-ready instruction block.
-
-## How to review this draft
-
-This is a strawman of a normative cross-BB API design guide. It is not yet ratified. At this stage, committee feedback should focus on:
-
-1. **Scope of harmonisation** (see [§1.2](1-introduction.md#12-scope)).
-2. **Structure and depth.** 20 numbered sections ([§1](1-introduction.md)–[§20](part-e/20-conformance-and-validation.md)), supported by examples and rule-specific linter coverage where mechanical enforcement is practical.
-3. **Prescriptiveness.** RFC 2119 keywords and linter-backed conformance (see [§1.5](1-introduction.md#15-language) and [§20](part-e/20-conformance-and-validation.md)).
-4. **CFR compatibility.** Confirm that the proposed parent relationships and pending CFR changes in [§1.3](1-introduction.md#13-relationship-to-existing-govstack-documents) are correct.
-
-Review comments should challenge the draft's proposed rules directly through issues or pull-request feedback rather than relying on embedded drafting questions.
+Repeat this process for the other interactions. The example shows the authoring sequence, not a complete API contract or a conformance result.
 
 ## About the rule titles <a href="#about-the-rule-titles" id="about-the-rule-titles"></a>
 
 The short titles on rule headings (for example "9.2 camelCase field names") are navigation aids. They are **non-normative**: only the rule body defines the requirement. If a title and its body ever seem to disagree, the body wins, and please report it.
+
+Use [Rules at a glance](all-rules.md) to look up a rule. **MUST** is mandatory for conformance, **SHOULD** is the default recommendation with written justification needed to depart from it, and **MAY** is optional ([§1.5](1-introduction.md#15-language)). Each rule's Verification details explain which checks are automated and what still needs review.
+
+## Other ways to use the guide
+
+- **Reading a specification to implement it:** [§1.8](1-introduction.md#18-layering-what-this-guide-constrains) distinguishes the API contract, implementation profile, and deployment.
+- **Assessing Building Blocks for adoption:** start with the [Introduction](1-introduction.md) and [Compatibility and lifecycle](part-d/18-compatibility-and-lifecycle.md).
+- **Using an AI assistant:** [Using this guide with AI agents](guides/using-with-ai-agents.md) explains the machine-readable `rules.yaml` index and gives an instruction block for a BB repository.
+
+## How to review this draft <a href="#how-to-review-this-draft" id="how-to-review-this-draft"></a>
+
+This guide is not yet ratified. Committee feedback is most useful when it identifies a concrete rule or an authoring task that needs to change:
+
+1. **Scope:** is a shared rule needed across BB specifications? See [§1.2](1-introduction.md#12-scope).
+2. **Usability:** can an editor find and apply the guidance to a real specification?
+3. **Prescriptiveness:** is the requirement level justified, and can the rule be checked? See [§1.5](1-introduction.md#15-language) and [§20](part-e/20-conformance-and-validation.md).
+4. **CFR compatibility:** are the proposed relationships and pending changes in [§1.3](1-introduction.md#13-relationship-to-existing-govstack-documents) correct?
+
+Submit issues or pull-request feedback with the rule, the difficulty, and an example from specification work.

@@ -128,7 +128,7 @@ Request-only field-selection and sort-key vocabularies **MAY** use closed enums:
 The linter reports, as an information-level finding, string enums in reusable schemas with neither `x-extensible-enum` nor a fallback member such as `UNKNOWN`. It cannot tell which value sets will grow, so a reviewer judges whether a flagged fixed set is acceptable.
 <!-- verification:end -->
 
-## 9.10 GovStack extension prefix <a href="#910-govstack-extension-prefix" id="910-govstack-extension-prefix"></a>
+## 9.10 OpenAPI and AsyncAPI extension naming <a href="#910-govstack-extension-prefix" id="910-govstack-extension-prefix"></a>
 
 <!-- rule-class: M+R -->
 

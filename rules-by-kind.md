@@ -69,7 +69,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [9.7](part-c/9-json-conventions-and-naming.md#97-screaming-snake-case-enum-values) | SHOULD | Partial linter check. Remaining clauses need separate verification. | Screaming snake case enum values |
 | [9.8](part-c/9-json-conventions-and-naming.md#98-forward-compatible-schemas) | MUST | Partial linter check. Remaining clauses need separate verification. | Forward-compatible schemas |
 | [9.9](part-c/9-json-conventions-and-naming.md#99-no-closed-enums-for-growing-sets) | MUST | Partial linter check. Remaining clauses need separate verification. | No closed enums for growing sets |
-| [9.10](part-c/9-json-conventions-and-naming.md#910-govstack-extension-prefix) | MUST | Heuristic check in the optional strict profile. Semantic review is also required. | GovStack extension prefix |
+| [9.10](part-c/9-json-conventions-and-naming.md#910-govstack-extension-prefix) | MUST | Heuristic check in the optional strict profile. Semantic review is also required. | OpenAPI and AsyncAPI extension naming |
 | [9.11](part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Single registered BB code |
 | [10.1](part-c/10-data-types-and-formats.md#101-opaque-server-generated-identifiers) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Opaque server-generated identifiers |
 | [10.2](part-c/10-data-types-and-formats.md#102-rfc-3339-timestamps) | MUST | Partial linter check. Remaining clauses need separate verification. | RFC 3339 timestamps |
@@ -191,7 +191,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [9.7](part-c/9-json-conventions-and-naming.md#97-screaming-snake-case-enum-values) | SHOULD | Partial linter check. Remaining clauses need separate verification. | Screaming snake case enum values |
 | [9.8](part-c/9-json-conventions-and-naming.md#98-forward-compatible-schemas) | MUST | Partial linter check. Remaining clauses need separate verification. | Forward-compatible schemas |
 | [9.9](part-c/9-json-conventions-and-naming.md#99-no-closed-enums-for-growing-sets) | MUST | Partial linter check. Remaining clauses need separate verification. | No closed enums for growing sets |
-| [9.10](part-c/9-json-conventions-and-naming.md#910-govstack-extension-prefix) | MUST | Heuristic check in the optional strict profile. Semantic review is also required. | GovStack extension prefix |
+| [9.10](part-c/9-json-conventions-and-naming.md#910-govstack-extension-prefix) | MUST | Heuristic check in the optional strict profile. Semantic review is also required. | OpenAPI and AsyncAPI extension naming |
 | [9.11](part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Single registered BB code |
 | [10.1](part-c/10-data-types-and-formats.md#101-opaque-server-generated-identifiers) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Opaque server-generated identifiers |
 | [10.2](part-c/10-data-types-and-formats.md#102-rfc-3339-timestamps) | MUST | Partial linter check. Remaining clauses need separate verification. | RFC 3339 timestamps |
@@ -280,7 +280,7 @@ This page is generated from the section pages and `tools/rule-kinds.json` by `to
 | [9.7](part-c/9-json-conventions-and-naming.md#97-screaming-snake-case-enum-values) | SHOULD | Partial linter check. Remaining clauses need separate verification. | Screaming snake case enum values |
 | [9.8](part-c/9-json-conventions-and-naming.md#98-forward-compatible-schemas) | MUST | Partial linter check. Remaining clauses need separate verification. | Forward-compatible schemas |
 | [9.9](part-c/9-json-conventions-and-naming.md#99-no-closed-enums-for-growing-sets) | MUST | Partial linter check. Remaining clauses need separate verification. | No closed enums for growing sets |
-| [9.10](part-c/9-json-conventions-and-naming.md#910-govstack-extension-prefix) | MUST | Heuristic check in the optional strict profile. Semantic review is also required. | GovStack extension prefix |
+| [9.10](part-c/9-json-conventions-and-naming.md#910-govstack-extension-prefix) | MUST | Heuristic check in the optional strict profile. Semantic review is also required. | OpenAPI and AsyncAPI extension naming |
 | [9.11](part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Single registered BB code |
 | [10.1](part-c/10-data-types-and-formats.md#101-opaque-server-generated-identifiers) | MUST | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | Opaque server-generated identifiers |
 | [10.2](part-c/10-data-types-and-formats.md#102-rfc-3339-timestamps) | MUST | Partial linter check. Remaining clauses need separate verification. | RFC 3339 timestamps |

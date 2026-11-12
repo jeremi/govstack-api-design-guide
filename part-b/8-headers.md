@@ -68,6 +68,8 @@ New custom headers introduced by the guide or by BBs **MUST NOT** use the `X-` p
 
 Existing private `X-` headers **MAY** remain only on an unchanged legacy major version.
 
+This rule concerns HTTP header names. Specification metadata keys such as `x-govstack-pii` follow [§9.10](../part-c/9-json-conventions-and-naming.md#910-govstack-extension-prefix).
+
 <!-- verification:start -->
 **Verification:** Automated specification check.
 

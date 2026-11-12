@@ -11,6 +11,7 @@ PRESERVED_RULE_ANCHORS = {
     "3.1": "31-asyncapi-300-required",
     "5.8": "58-actions-as-sub-resources",
     "5.9": "59-unversioned-health-endpoint",
+    "9.10": "910-govstack-extension-prefix",
     "10.6": "106-rfc-5322-email-addresses",
     "12.10": "1210-sparse-fieldsets-out-of-scope",
 }
