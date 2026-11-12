@@ -609,7 +609,7 @@ rules:
   surface: OpenAPI
   page: part-b/8-headers.md
   anchor: 85-no-new-x--prefixed-headers
-  text: "New custom headers introduced by the guide or by BBs **MUST NOT** use the `X-` prefix, per RFC 6648. Existing private `X-` headers **MUST NOT** be introduced on a new surface or new major version.\nExisting private `X-` headers **MAY** remain only on an unchanged legacy major version."
+  text: "New custom headers introduced by the guide or by BBs **MUST NOT** use the `X-` prefix, per RFC 6648. Existing private `X-` headers **MUST NOT** be introduced on a new surface or new major version.\nExisting private `X-` headers **MAY** remain only on an unchanged legacy major version.\nThis rule concerns HTTP header names. Specification metadata keys such as `x-govstack-pii` follow §9.10."
 - id: "8.6"
   title: "No personal data in addressable locations"
   class: R
@@ -719,7 +719,7 @@ rules:
   anchor: 99-no-closed-enums-for-growing-sets
   text: "Fields whose value set is expected to grow **MUST NOT** be declared as a closed OpenAPI `enum`, because client code generated from a closed enum typically rejects values added later, which would make the \"adding enum values is non-breaking\" guarantee of §18.3 false in practice. Such fields **MUST** either be declared as an open `type: string` annotated with `x-extensible-enum` (carrying the known values), or define an explicit fallback member (e.g., `UNKNOWN`) that conforming clients map unrecognised values to.\nTruly fixed value sets (e.g., ISO-defined codes) **MAY** remain closed enums.\nRequest-only field-selection and sort-key vocabularies **MAY** use closed enums: adding an accepted input value does not require an existing client to send it. This exemption does not apply to a schema also emitted in a response or event, where consumers still need the forward-compatible handling above."
 - id: "9.10"
-  title: "GovStack extension prefix"
+  title: "OpenAPI and AsyncAPI extension naming"
   class: M+R
   level: MUST
   kinds: ["read", "write", "events"]

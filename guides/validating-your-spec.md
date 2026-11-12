@@ -4,24 +4,59 @@ description: "The commands to run against a BB's OpenAPI or AsyncAPI file, and a
 
 # Validating your spec
 
+Use this procedure while writing the API contract in a Building Block (BB)
+specification repository. It validates the repository's declared API artifacts;
+it does not deploy the API or test a running implementation.
+
 ## Prerequisites
 
-The guide driver requires Node.js 20 or newer and npm. It also requires a base
-validator for each declared surface: `openapi-spec-validator` for OpenAPI and
-the `asyncapi` executable from `@asyncapi/cli` for AsyncAPI. Install Python and
-uv for the OpenAPI validator. Ensure the uv tool and npm global executable
-directories are on `PATH`; the driver reports unavailable validators rather
-than treating a skipped validation as success.
+The commands assume a checkout of the BB specification repository. Check out
+the [guide repository](https://github.com/jeremi/govstack-api-design-guide) as
+its `api-design-guide/` subdirectory, using a revision that matches the exact
+guide and ruleset versions declared by your specification. This draft uses
+`0.3.0-draft` for both. Run every command on this page from the BB repository
+root unless stated otherwise.
 
-The commands below pin the same validator versions as the guide's CI action.
-Installing the linter with `npm ci` does not install these tools.
+The driver requires Node.js 20 or newer and npm. It also requires the base
+validator for each declared surface: Python, uv, and
+`openapi-spec-validator` for OpenAPI; the `asyncapi` executable from
+`@asyncapi/cli` for AsyncAPI. Ensure that the uv tool and npm global executable
+directories are on `PATH`. Installing the linter dependencies does not install
+these validators.
+
+## The GovStack Spectral ruleset <a href="#the-govstack-spectral-ruleset" id="the-govstack-spectral-ruleset"></a>
+
+Use the full driver for normal specification work. Install only the pinned base
+validator or validators for the surfaces the BB declares, install the linter,
+then run the driver:
+
+```bash
+uv tool install openapi-spec-validator==0.9.0  # OpenAPI surfaces, one-time setup
+npm install --global @asyncapi/cli@6.0.2       # AsyncAPI surfaces, one-time setup
+npm --prefix api-design-guide/linter ci
+node api-design-guide/linter/cli.mjs --repo-root .
+```
+
+The driver discovers the canonical files from the default paths or
+`api/index.yaml`. It checks the repository layout and `api/coverage.yaml`, runs
+the applicable base validators, lints canonical and example contracts, and
+checks the guide declaration and exceptions described in
+[§20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version).
+The same checks are available to CI through `linter/action.yml`.
+
+### Read the result
+
+Fix errors and review every warning and informational finding. With the default
+`--fail-on error`, `PASS` means that no error-level finding remains; it can
+still include findings at lower severities. Exit code `1` means that a finding
+met the configured threshold. Exit code `2` means that validation could not
+complete, for example because a required validator was unavailable.
 
 ## OpenAPI
 
-Install the validator and run it against the canonical entrypoint:
+To isolate OpenAPI structural validation after the setup above, run:
 
 ```bash
-uv tool install openapi-spec-validator==0.9.0
 openapi-spec-validator api/openapi.yaml
 ```
 
@@ -29,38 +64,40 @@ This checks that the entrypoint is structurally valid for its declared qualified
 
 ## AsyncAPI
 
+To isolate AsyncAPI structural validation after the setup above, run:
+
 ```bash
-npm install --global @asyncapi/cli@6.0.2
 asyncapi validate api/asyncapi.yaml
 ```
 
 This checks that the file is a structurally valid AsyncAPI 3 document. It is the mechanical check behind [3.4](../part-a/3-asyncapi-document-standards.md#34-passes-an-asyncapi-validator).
 
-## The GovStack Spectral ruleset
+## Run Spectral directly
 
-The exact `0.3.0-draft` ruleset that implements the automated specification checks ([20.2](../part-e/20-conformance-and-validation.md#202-passes-the-govstack-spectral-ruleset)) ships at [`linter/`](../linter/README.md). The recommended entrypoint is the driver, which discovers default canonical files or consumes `api/index.yaml`, validates `api/coverage.yaml`, runs the base validators and file-layout checks, lints example contracts under `api/examples/`, and applies [20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) exception handling:
-
-```bash
-uv tool install openapi-spec-validator==0.9.0  # OpenAPI surfaces, one-time setup
-npm install --global @asyncapi/cli@6.0.2       # AsyncAPI surfaces, one-time setup
-cd api-design-guide/linter && npm ci
-node cli.mjs --repo-root ../..
-```
-
-Or run Spectral directly against the ruleset:
+To isolate the guide's Spectral checks after the setup above, run:
 
 ```bash
-npx @stoplight/spectral-cli lint -r api-design-guide/linter/ruleset.yaml api/openapi.yaml
+npx --prefix api-design-guide/linter spectral lint -r api-design-guide/linter/ruleset.yaml api/openapi.yaml
 ```
 
-Every finding is prefixed with the guide rule ID it enforces (for example `[7.13][M]`) and links to the rule. Each canonical file must declare `info.x-govstack-api-guide.version: 0.3.0-draft` and `rulesetVersion: 0.3.0-draft`; a missing, unavailable, or different exact version is an error, not a request to use the latest rules. An exception suppresses only the declared `rule` at or below its JSON Pointer `scope`, and only when all governance fields required by [§20.3](../part-e/20-conformance-and-validation.md#203-declared-guide-conformance-version) are valid and unexpired. Offline validation checks the HTTPS record URI syntax but does not dereference it. An opt-in `strict.yaml` adds noisier heuristics; [`linter/coverage.yaml`](../linter/coverage.yaml) records how each guide rule is covered. In CI, the same checks run through `linter/action.yml`.
+Direct Spectral execution omits the driver's repository, coverage, base
+validator, exact-version, and exception-suppression checks. Use it to diagnose
+a ruleset finding, not as a substitute for the full driver. The
+[`linter` reference](../linter/README.md) documents profiles, exceptions, and
+other options.
 
 Running `npx @stoplight/spectral-cli lint api/openapi.yaml` *without* `-r` applies only Spectral's generic built-in rules: useful as a quick structural check, but it knows nothing about this guide.
 
-## The book's own machine layer
-
-Two scripts keep this book itself internally consistent rather than checking a BB's spec: `python3 tools/check_links.py` and `python3 tools/build_rules_index.py --check`. See [Maintaining this guide](../guides/maintaining-this-guide.md) for when and why to run them.
-
 ## What "passing" actually means
 
-Each rule in this guide carries an enforcement-class tag explained in [§1.9](../1-introduction.md#19-rule-enforcement-classes): `[M]` (machine-checkable), `[R]` (requires human review), or `[M+R]` (a linter can check the structural part, a reviewer must confirm the semantic part). The validators above, and the GovStack Spectral ruleset, cover the `[M]` rules and the mechanical half of the `[M+R]` rules (to the extent recorded in [`linter/coverage.yaml`](../linter/coverage.yaml)). Everything else, including every `[R]` rule and the judgement half of every `[M+R]` rule, is verified through specification review, not a command line. A clean validator run is necessary for conformance; it is not sufficient.
+Each numbered rule has a **Verification** note explained in
+[§1.9](../1-introduction.md#19-rule-enforcement-classes). After the driver
+passes, review those notes for every applicable rule and perform the stated
+manual specification checks. Runtime verification belongs to implementation
+conformance, outside this contract-authoring procedure. A clean driver run does
+not establish deployed behaviour or complete conformance by itself.
+
+## The book's own machine layer
+
+For checks on this guide's links and generated rule indexes, see
+[Maintaining this guide](maintaining-this-guide.md).

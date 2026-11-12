@@ -124,7 +124,7 @@ This page is generated from the section pages by `tools/build_rules_index.py`; d
 | [9.7](part-c/9-json-conventions-and-naming.md#97-screaming-snake-case-enum-values) | Partial linter check. Remaining clauses need separate verification. | SHOULD | read, write, events | Universal | Screaming snake case enum values |
 | [9.8](part-c/9-json-conventions-and-naming.md#98-forward-compatible-schemas) | Partial linter check. Remaining clauses need separate verification. | MUST | read, write, events | Universal | Forward-compatible schemas |
 | [9.9](part-c/9-json-conventions-and-naming.md#99-no-closed-enums-for-growing-sets) | Partial linter check. Remaining clauses need separate verification. | MUST | read, write, events | Universal | No closed enums for growing sets |
-| [9.10](part-c/9-json-conventions-and-naming.md#910-govstack-extension-prefix) | Heuristic check in the optional strict profile. Semantic review is also required. | MUST | read, write, events | Universal | GovStack extension prefix |
+| [9.10](part-c/9-json-conventions-and-naming.md#910-govstack-extension-prefix) | Heuristic check in the optional strict profile. Semantic review is also required. | MUST | read, write, events | Universal | OpenAPI and AsyncAPI extension naming |
 | [9.11](part-c/9-json-conventions-and-naming.md#911-single-registered-bb-code) | Partial linter check. Remaining clauses need separate verification. Semantic review is also required. | MUST | read, write, events | Universal | Single registered BB code |
 
 ## 10. Data types and formats

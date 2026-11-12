@@ -6,7 +6,7 @@ from pathlib import Path
 
 from build_rules_index import BuildError, collect_page
 
-KINDS = {"sections": {"1": ["read", "write", "events"], "5": ["read", "write"], "10": ["read", "write", "events"]}, "rules": {}}
+KINDS = {"sections": {"1": ["read", "write", "events"], "5": ["read", "write"], "9": ["read", "write", "events"], "10": ["read", "write", "events"]}, "rules": {}}
 from check_links import Checker
 
 
@@ -44,6 +44,10 @@ class StableAnchorTests(unittest.TestCase):
 
     def test_verification_details_retain_original_anchor(self):
         self.check_heading("1.9 Verification details", "19-rule-enforcement-classes", True)
+
+    def test_specification_extension_heading_retains_original_anchor(self):
+        self.check_heading("9.10 OpenAPI and AsyncAPI extension naming", "910-govstack-extension-prefix", True)
+        self.check_heading("9.10 OpenAPI and AsyncAPI extension naming", "910-openapi-and-asyncapi-extension-naming", False)
 
     def test_renaming_does_not_permit_replacing_a_preserved_anchor(self):
         self.check_heading("5.8 Custom operations", "58-custom-operations", False)
